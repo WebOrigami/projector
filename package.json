@@ -1,5 +1,6 @@
 {
   "name": "origami-studio",
+  "productName": "Origami Studio",
   "version": "1.0.0",
   "description": "Origami project editor",
   "license": "MIT",
