@@ -1,0 +1,24 @@
+{
+  "name": "origami-studio",
+  "version": "1.0.0",
+  "description": "Origami project editor",
+  "license": "MIT",
+  "type": "module",
+  "main": "main.js",
+  "devDependencies": {
+    "electron": "39.2.7",
+    "electron-builder": "^26.0.12"
+  },
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac"
+  },
+  "build": {
+    "appId": "org.weborigami.studio",
+    "productName": "Origami Studio",
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.developer-tools"
+    }
+  }
+}
