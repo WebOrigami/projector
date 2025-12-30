@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu } from "electron";
 import { readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,6 +15,7 @@ ipcMain.on("content-changed", (event) => {
   const state = windowState.get(window);
   if (state) {
     state.dirty = true;
+    updateWindowTitle(window);
   }
 });
 
@@ -95,6 +96,9 @@ function createWindow() {
     dirty: false,
   });
 
+  // Force initial window title so it doesn't show app name
+  updateWindowTitle(window);
+
   // Handle window close event
   window.on("close", (event) => {
     const state = windowState.get(window);
@@ -114,6 +118,12 @@ function createWindow() {
   });
 
   window.loadFile("renderer/index.html");
+
+  // Set window title after page loads
+  window.webContents.on("did-finish-load", () => {
+    updateWindowTitle(window);
+  });
+
   return window;
 }
 
@@ -134,6 +144,7 @@ async function fileNew(_menuItem, browserWindow) {
   );
   state.filePath = null;
   state.dirty = false;
+  updateWindowTitle(browserWindow);
 }
 
 async function fileOpen(_menuItem, browserWindow) {
@@ -166,6 +177,7 @@ async function fileOpen(_menuItem, browserWindow) {
   browserWindow.webContents.executeJavaScript(
     `document.getElementById('editor').value = ${JSON.stringify(fileContents)};`
   );
+  updateWindowTitle(browserWindow);
 }
 
 async function fileSave(_menuItem, browserWindow) {
@@ -183,6 +195,7 @@ async function fileSave(_menuItem, browserWindow) {
 
   // Mark as clean
   state.dirty = false;
+  updateWindowTitle(browserWindow);
 }
 
 async function fileSaveAs(_menuItem, browserWindow) {
@@ -204,12 +217,18 @@ async function fileSaveAs(_menuItem, browserWindow) {
 
   // Mark as clean
   state.dirty = false;
+  updateWindowTitle(browserWindow);
 }
 
 async function getEditorContents(browserWindow) {
   return await browserWindow.webContents.executeJavaScript(
     `document.getElementById('editor').value`
   );
+}
+
+function getFileTitle(window) {
+  const state = windowState.get(window);
+  return state.filePath ? basename(state.filePath) : "Untitled";
 }
 
 async function promptSaveChanges(browserWindow) {
@@ -232,6 +251,22 @@ async function promptSaveChanges(browserWindow) {
     // Cancel
     return false;
   }
+}
+
+function updateWindowTitle(window) {
+  const state = windowState.get(window);
+
+  let title = getFileTitle(window);
+  if (state.dirty) {
+    title += " ⚫︎";
+  }
+  window.setTitle(title);
+
+  // Set represented filename for macOS
+  const representedFilename = state.filePath ? state.filePath : "";
+  window.setRepresentedFilename(representedFilename);
+
+  window.setDocumentEdited(state.dirty);
 }
 
 app.whenReady().then(() => {

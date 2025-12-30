@@ -19,6 +19,7 @@ File menu:
 
 - **New**
 - **Open…**. Shows a standard File Open dialog.
+- **Open Recent**. A submenu showing recently opened files; see below.
 - **Close**. Closes the current window.
 - **Save**
 - **Save As…**. Shows a standard File Save As dialog.
@@ -34,7 +35,11 @@ Debug menu:
 
 - **Toggle Developer Tools**
 
+The Open Recent submenu tracks the 10 most recently opened files. Selecting a file from this submenu opens it in the current window. The menu also includes a "Clear Menu" command to clear the recent files list.
+
 ## Window state
+
+The window title displays the name of the currently opened file, or "Untitled" if the file has not been saved yet. If the current file has unsaved changes, an circle (`⚫︎`) is appended to the title.
 
 Each window tracks the following state:
 
