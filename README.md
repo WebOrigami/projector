@@ -26,6 +26,8 @@ File menu:
 
 Edit menu:
 
+- **Undo**
+- **Redo**
 - **Cut**
 - **Copy**
 - **Paste**
