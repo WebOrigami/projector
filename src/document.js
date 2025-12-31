@@ -8,15 +8,23 @@ export default class Document {
     this.filePath = null;
     this.dirty = false;
   }
+
   async getText() {
-    return this.window.webContents.executeJavaScript(
-      `document.getElementById('editor').value;`
-    );
+    return this.window.webContents.executeJavaScript(`editor.value;`);
+  }
+
+  async run() {
+    // Force iframe to reload. Because the frame's origin will be different than
+    // the file: origin for the main window, the simplest way to reload it is to
+    // reset its src attribute.
+    await this.window.webContents.executeJavaScript(`
+      result.src = "origami://root";
+    `);
   }
 
   async setText(value) {
     await this.window.webContents.executeJavaScript(
-      `document.getElementById('editor').value = ${JSON.stringify(value)};`
+      `editor.value = ${JSON.stringify(value)};`
     );
   }
 

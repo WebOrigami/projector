@@ -72,6 +72,8 @@ export function createMenu() {
           accelerator: "CmdOrCtrl+Shift+S",
           click: fileSaveAs,
         },
+        { type: "separator" },
+        { label: "Run", accelerator: "CmdOrCtrl+R", click: fileRun },
       ],
     },
     {
@@ -166,6 +168,10 @@ async function fileOpenRecent(filePath, window) {
   }
 
   await openFile(filePath, window);
+}
+
+async function fileRun(_menuItem, window) {
+  window.document.run();
 }
 
 async function fileSave(_menuItem, window) {

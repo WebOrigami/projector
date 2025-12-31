@@ -23,6 +23,7 @@ File menu:
 - **Close**. Closes the current window.
 - **Save**
 - **Save As…**. Shows a standard File Save As dialog.
+- **Run**.
 
 Edit menu:
 

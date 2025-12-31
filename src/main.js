@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import Document from "./document.js";
 import { createMenu, promptSaveChanges } from "./menu.js";
+import { registerOrigamiProtocol } from "./protocol.js";
 import * as recentFiles from "./recentFiles.js";
 import updateWindowTitle from "./updateWindowTitle.js";
 
@@ -20,8 +21,8 @@ function createWindow() {
   const preload = join(moduleDirectory, "preload.js");
 
   const window = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1200,
+    height: 800,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -63,6 +64,10 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
+  // Register custom protocol
+  registerOrigamiProtocol();
+
+  // Set up UI
   await recentFiles.loadFiles();
   createMenu();
   createWindow();
