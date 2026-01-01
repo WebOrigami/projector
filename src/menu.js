@@ -74,6 +74,12 @@ export function createMenu() {
         },
         { type: "separator" },
         { label: "Run", accelerator: "CmdOrCtrl+R", click: fileRun },
+        {
+          label: "Run2",
+          visible: false,
+          accelerator: "CmdOrCtrl+Return",
+          click: fileRun,
+        },
       ],
     },
     {
