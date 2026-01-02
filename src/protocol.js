@@ -1,4 +1,4 @@
-import { compile, jsGlobals } from "@weborigami/language";
+import { compile } from "@weborigami/language";
 import { BrowserWindow, protocol } from "electron";
 
 // Register the custom protocol at the module's top level so it happens before
@@ -10,11 +10,8 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
-async function evaluate(source) {
-  const fn = compile.expression(source, {
-    globals: jsGlobals,
-    parent: null,
-  });
+async function evaluate(source, options = {}) {
+  const fn = compile.expression(source, options);
 
   let value = await fn();
   if (value instanceof Function) {
@@ -26,9 +23,18 @@ async function evaluate(source) {
 
 async function handleRequest(request) {
   const window = BrowserWindow.getFocusedWindow();
-  const source = await window.document.getText();
+  const { document } = window;
+  const globals = await document.getGlobals();
+  const parent = await document.getParent();
 
-  const text = await evaluate(source);
+  let source;
+  if (document.filePath) {
+    source = `<${document.filePath}>/`;
+  } else {
+    source = await document.getText();
+  }
+
+  const text = await evaluate(source, { globals, parent });
   const body = `<pre>${text}</pre>`;
 
   return new Response(body, {

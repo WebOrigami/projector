@@ -177,7 +177,11 @@ async function fileOpenRecent(filePath, window) {
 }
 
 async function fileRun(_menuItem, window) {
-  window.document.run();
+  // Save before running
+  const saved = await fileSave(_menuItem, window);
+  if (saved) {
+    window.document.run();
+  }
 }
 
 async function fileSave(_menuItem, window) {
@@ -186,7 +190,7 @@ async function fileSave(_menuItem, window) {
     await fileSaveAs(_menuItem, window);
     return;
   }
-  await saveFile(window);
+  return saveFile(window);
 }
 
 async function fileSaveAs(_menuItem, window) {
@@ -194,7 +198,7 @@ async function fileSaveAs(_menuItem, window) {
 
   if (result.canceled) {
     // User canceled
-    return;
+    return false;
   }
 
   // Update the document's path
@@ -206,6 +210,8 @@ async function fileSaveAs(_menuItem, window) {
     createMenu();
     updateWindowTitle(window);
   }
+
+  return saved;
 }
 
 async function openFile(filePath, window) {
