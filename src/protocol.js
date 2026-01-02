@@ -1,4 +1,5 @@
 import { compile } from "@weborigami/language";
+import { constructResponse } from "@weborigami/origami";
 import { BrowserWindow, protocol } from "electron";
 
 // Register the custom protocol at the module's top level so it happens before
@@ -27,24 +28,24 @@ async function handleRequest(request) {
   const globals = await document.getGlobals();
   const parent = await document.getParent();
 
-  let source;
-  if (document.filePath) {
+  let source = await document.getCommand();
+  if (!source) {
     source = `<${document.filePath}>/`;
-  } else {
-    source = await document.getText();
   }
 
-  const text = await evaluate(source, { globals, parent });
-  const body = `<pre>${text}</pre>`;
-
-  return new Response(body, {
-    status: 200,
-    headers: {
-      "content-type": "text/html; charset=UTF-8",
-      "Cross-Origin-Opener-Policy": "same-origin",
-      "Cross-Origin-Embedder-Policy": "require-corp",
-    },
+  const text = await evaluate(source, {
+    globals,
+    mode: "shell",
+    parent,
   });
+
+  const response = await constructResponse(null, text);
+  Object.assign(response.headers, {
+    "Cross-Origin-Embedder-Policy": "require-corp",
+    "Cross-Origin-Opener-Policy": "same-origin",
+  });
+
+  return response;
 }
 
 export function registerOrigamiProtocol() {

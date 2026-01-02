@@ -73,13 +73,7 @@ export function createMenu() {
           click: fileSaveAs,
         },
         { type: "separator" },
-        { label: "Run", accelerator: "CmdOrCtrl+R", click: fileRun },
-        {
-          label: "Run2",
-          visible: false,
-          accelerator: "CmdOrCtrl+Return",
-          click: fileRun,
-        },
+        { label: "Run", accelerator: "CmdOrCtrl+Enter", click: fileRun },
       ],
     },
     {
@@ -177,8 +171,12 @@ async function fileOpenRecent(filePath, window) {
 }
 
 async function fileRun(_menuItem, window) {
-  // Save before running
-  const saved = await fileSave(_menuItem, window);
+  const text = await window.document.getText();
+  let saved = true;
+  if (text.trim().length > 0) {
+    // Save before running
+    saved = await fileSave(_menuItem, window);
+  }
   if (saved) {
     window.document.run();
   }

@@ -11,7 +11,7 @@
     "electron-builder": "^26.0.12"
   },
   "dependencies": {
-    "@weborigami/language": "0.6.5"
+    "@weborigami/origami": "0.6.5"
   },
   "scripts": {
     "start": "electron .",

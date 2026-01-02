@@ -11,6 +11,7 @@ body {
   font-family: monospace;
   font-size: 16px;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr;
   height: 100%;
   margin: 0;
   padding: 0;
@@ -18,6 +19,17 @@ body {
 
 input, textarea {
   font-family: inherit;
+}
+
+.toolbar {
+  background: #333;
+  display: grid;
+  padding: 0.25rem;
+}
+
+#command {
+  border: 1px solid #555;
+  padding: 0.25rem;
 }
 
 #editor {

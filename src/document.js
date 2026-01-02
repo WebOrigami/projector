@@ -13,6 +13,10 @@ export default class Document {
     this._parent = null;
   }
 
+  async getCommand() {
+    return this.window.webContents.executeJavaScript(`command.value;`);
+  }
+
   get filePath() {
     return this._filePath;
   }
@@ -55,9 +59,7 @@ export default class Document {
     // Force iframe to reload. Because the frame's origin will be different than
     // the file: origin for the main window, the simplest way to reload it is to
     // reset its src attribute.
-    await this.window.webContents.executeJavaScript(`
-      result.src = "origami://root";
-    `);
+    await this.window.webContents.executeJavaScript(`runCommand();`);
   }
 
   async setText(value) {
