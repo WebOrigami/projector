@@ -63,7 +63,7 @@ export default class Document {
     // Force iframe to reload. Because the frame's origin will be different than
     // the file: origin for the main window, the simplest way to reload it is to
     // reset its src attribute.
-    await this.window.webContents.executeJavaScript(`runCommand();`);
+    await this.window.webContents.executeJavaScript(`reloadResult();`);
   }
 
   async setText(value) {

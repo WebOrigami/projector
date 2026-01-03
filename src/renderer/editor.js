@@ -1,4 +1,4 @@
-window.runCommand = () => {
+window.reloadResult = () => {
   // Force iframe to reload
   result.src = "origami://root";
 };
@@ -18,7 +18,7 @@ window.addEventListener("DOMContentLoaded", () => {
       !(event.shiftKey || event.ctrlKey || event.altKey)
     ) {
       event.preventDefault();
-      window.runCommand();
+      window.api.runCommand();
     }
   });
 

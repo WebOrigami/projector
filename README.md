@@ -9,6 +9,7 @@ This prototype is a simple Electron application that can edit a single text file
 
 ## Basic application behavior
 
+- When the application starts, it opens the most recently opened file. If no files have been opened yet, it opens a new, unsaved file called "Untitled".
 - When the last application window closes, the application exits.
 
 ## Menu bar

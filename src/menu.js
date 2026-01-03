@@ -170,7 +170,7 @@ async function fileOpenRecent(filePath, window) {
   await openFile(filePath, window);
 }
 
-async function fileRun(_menuItem, window) {
+export async function fileRun(_menuItem, window) {
   const text = await window.document.getText();
   let saved = true;
   if (text.trim().length > 0) {

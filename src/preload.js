@@ -3,7 +3,11 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 // Expose safe IPC API to renderer process
 contextBridge.exposeInMainWorld("api", {
-  notifyContentChanged: () => {
+  notifyContentChanged() {
     ipcRenderer.send("content-changed");
+  },
+
+  runCommand() {
+    ipcRenderer.send("run-command");
   },
 });
