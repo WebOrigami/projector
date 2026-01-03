@@ -1,6 +1,6 @@
 import { app, dialog, Menu } from "electron";
 import { access, readFile, writeFile } from "node:fs/promises";
-import { basename } from "node:path";
+import { basename, dirname } from "node:path";
 import * as recentFiles from "./recentFiles.js";
 import updateWindowTitle from "./updateWindowTitle.js";
 
@@ -86,6 +86,12 @@ export async function createMenu() {
         { role: "copy" },
         { role: "paste" },
         { role: "selectAll" },
+        {
+          label: "Focus Command",
+          visible: false,
+          accelerator: "CmdOrCtrl+L",
+          click: focusCommand,
+        },
       ],
     },
     {
@@ -127,9 +133,16 @@ async function fileOpen(_menuItem, window) {
     }
   }
 
-  const result = await dialog.showOpenDialog(window, {
+  const dialogOptions = {
     properties: ["openFile"],
-  });
+  };
+
+  // Set default directory to current document's directory if available
+  if (document.filePath) {
+    dialogOptions.defaultPath = dirname(document.filePath);
+  }
+
+  const result = await dialog.showOpenDialog(window, dialogOptions);
 
   if (result.canceled) {
     // User canceled
@@ -205,11 +218,16 @@ async function fileSaveAs(_menuItem, window) {
   const saved = await saveFile(window);
   if (saved) {
     // Add to recent files
+    await recentFiles.addFile(result.filePath);
     createMenu();
     updateWindowTitle(window);
   }
 
   return saved;
+}
+
+function focusCommand(_menuItem, window) {
+  window.document.focusCommand();
 }
 
 async function openFile(filePath, window) {

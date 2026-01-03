@@ -29,6 +29,10 @@ export default class Document {
     this._globals = null;
   }
 
+  focusCommand() {
+    return this.window.webContents.executeJavaScript(`command.focus();`);
+  }
+
   async getGlobals() {
     if (this._globals || this.filePath === null) {
       return this._globals;

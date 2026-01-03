@@ -1,4 +1,4 @@
-import { compile, formatError } from "@weborigami/language";
+import { compile, formatError, moduleCache } from "@weborigami/language";
 import { constructResponse } from "@weborigami/origami";
 import { BrowserWindow, protocol } from "electron";
 
@@ -33,6 +33,9 @@ async function handleRequest(request) {
     source = `<${document.filePath}>/`;
   }
 
+  // Reset the module cache so that modules are reloaded on each request
+  moduleCache.resetTimestamp();
+
   let resource;
   try {
     resource = await evaluate(source, {
@@ -46,10 +49,12 @@ async function handleRequest(request) {
   }
 
   const response = await constructResponse(null, resource);
-  Object.assign(response.headers, {
-    "Cross-Origin-Embedder-Policy": "require-corp",
-    "Cross-Origin-Opener-Policy": "same-origin",
-  });
+  if (response) {
+    Object.assign(response.headers, {
+      "Cross-Origin-Embedder-Policy": "require-corp",
+      "Cross-Origin-Opener-Policy": "same-origin",
+    });
+  }
 
   return response;
 }
