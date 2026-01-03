@@ -11,11 +11,14 @@
     "electron-builder": "^26.0.12"
   },
   "dependencies": {
-    "@weborigami/origami": "0.6.5"
+    "@emnapi/runtime": "^1.7.1",
+    "@weborigami/origami": "0.6.5",
+    "sharp": "^0.34.5"
   },
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --mac"
+    "build": "electron-builder --mac",
+    "postinstall": "electron-builder install-app-deps"
   },
   "build": {
     "appId": "org.weborigami.studio",
@@ -23,6 +26,14 @@
     "mac": {
       "target": "dmg",
       "category": "public.app-category.developer-tools"
-    }
+    },
+    "asar": true,
+    "asarUnpack": [
+      "**/node_modules/sharp/**/*",
+      "**/node_modules/@img/**/*",
+      "**/node_modules/@emnapi/**/*"
+    ],
+    "npmRebuild": true,
+    "buildDependenciesFromSource": true
   }
 }
