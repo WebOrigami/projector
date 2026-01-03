@@ -6,7 +6,7 @@ export async function addFile(filePath) {
   const recentFiles = await getFiles();
 
   // Remove if already in list
-  const newFiles = recentFiles.filter((path) => path !== filePath);
+  let newFiles = recentFiles.filter((path) => path !== filePath);
 
   // Add to front
   newFiles.unshift(filePath);
