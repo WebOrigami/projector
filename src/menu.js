@@ -4,9 +4,9 @@ import { basename } from "node:path";
 import * as recentFiles from "./recentFiles.js";
 import updateWindowTitle from "./updateWindowTitle.js";
 
-export function createMenu() {
+export async function createMenu() {
   // Build Open Recent submenu
-  const paths = recentFiles.getFiles();
+  const paths = await recentFiles.getFiles();
   const recentFilesSubmenu = [];
   if (paths.length > 0) {
     paths.forEach((filePath) => {

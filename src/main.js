@@ -4,7 +4,6 @@ import { fileURLToPath } from "node:url";
 import Document from "./document.js";
 import { createMenu, promptSaveChanges } from "./menu.js";
 import { registerOrigamiProtocol } from "./protocol.js";
-import * as recentFiles from "./recentFiles.js";
 import updateWindowTitle from "./updateWindowTitle.js";
 
 // Handle content-changed messages from renderer
@@ -68,8 +67,7 @@ app.whenReady().then(async () => {
   registerOrigamiProtocol();
 
   // Set up UI
-  await recentFiles.loadFiles();
-  createMenu();
+  await createMenu();
   createWindow();
 
   app.on("activate", () => {

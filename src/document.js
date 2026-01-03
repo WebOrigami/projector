@@ -1,5 +1,6 @@
 import { Tree } from "@weborigami/async-tree";
 import { projectGlobals, projectRoot } from "@weborigami/language";
+import { initializeBuiltins } from "@weborigami/origami";
 import * as path from "node:path";
 
 // Document state. A Document doesn't store text directly but gets/sets it via
@@ -32,6 +33,9 @@ export default class Document {
     if (this._globals || this.filePath === null) {
       return this._globals;
     }
+
+    // Need to add Origami builtins to the globals
+    initializeBuiltins();
 
     const dirname = path.dirname(this.filePath);
     this._globals = await projectGlobals(dirname);
