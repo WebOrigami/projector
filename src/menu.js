@@ -6,7 +6,11 @@ import updateWindowTitle from "./updateWindowTitle.js";
 
 export async function createMenu() {
   // Build Open Recent submenu
-  const paths = await recentFiles.getFiles();
+  let paths = await recentFiles.getFiles();
+
+  // Reverse order to show most recent at top
+  paths = paths.slice().reverse();
+
   const recentFilesSubmenu = [];
   if (paths.length > 0) {
     paths.forEach((filePath) => {

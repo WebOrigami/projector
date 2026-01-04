@@ -1,6 +1,7 @@
 import { compile, formatError, moduleCache } from "@weborigami/language";
 import { constructResponse } from "@weborigami/origami";
 import { BrowserWindow, protocol } from "electron";
+import * as recentCommands from "./recentCommands.js";
 
 // Register the custom protocol at the module's top level so it happens before
 // the app is ready
@@ -28,9 +29,11 @@ async function handleRequest(request) {
   const globals = await document.getGlobals();
   const parent = await document.getParent();
 
-  let source = await document.getCommand();
-  if (!source) {
-    source = `<${document.filePath}>/`;
+  let command = await document.getCommand();
+  if (command) {
+    recentCommands.addCommand(command);
+  } else {
+    command = `<${document.filePath}>/`;
   }
 
   // Reset the module cache so that modules are reloaded on each request
@@ -38,7 +41,7 @@ async function handleRequest(request) {
 
   let resource;
   try {
-    resource = await evaluate(source, {
+    resource = await evaluate(command, {
       globals,
       mode: "shell",
       parent,

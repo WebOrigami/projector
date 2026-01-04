@@ -8,12 +8,12 @@ export async function addFile(filePath) {
   // Remove if already in list
   let newFiles = recentFiles.filter((path) => path !== filePath);
 
-  // Add to front
-  newFiles.unshift(filePath);
+  // Add to end
+  newFiles.push(filePath);
 
   // Limit to MAX_RECENT_FILES
   if (newFiles.length > MAX_RECENT_FILES) {
-    newFiles = newFiles.slice(0, MAX_RECENT_FILES);
+    newFiles = newFiles.slice(newFiles.length - MAX_RECENT_FILES);
   }
 
   // Save to disk

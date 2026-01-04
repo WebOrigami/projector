@@ -20,6 +20,12 @@ window.addEventListener("DOMContentLoaded", () => {
     ) {
       event.preventDefault();
       window.api.runCommand();
+    } else if (event.key === "ArrowDown") {
+      event.preventDefault();
+      window.api.nextCommand();
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      window.api.previousCommand();
     }
   });
 

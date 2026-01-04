@@ -21,6 +21,20 @@ ipcMain.on("content-changed", (event) => {
   }
 });
 
+ipcMain.on("previous-command", (event) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  if (window?.document) {
+    window.document.previousCommand();
+  }
+});
+
+ipcMain.on("next-command", (event) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  if (window?.document) {
+    window.document.nextCommand();
+  }
+});
+
 ipcMain.on("run-command", async (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
   if (window) {
@@ -78,7 +92,7 @@ function createWindow() {
     // Open most recent file if available
     const files = await recentFiles.getFiles();
     if (files.length > 0) {
-      const mostRecentFile = files[0];
+      const mostRecentFile = files[files.length - 1];
 
       // Check if file still exists
       try {

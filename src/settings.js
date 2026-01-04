@@ -18,7 +18,8 @@ export async function loadSettings() {
 
 export async function saveSettings(settings) {
   try {
-    await writeFile(settingsPath, JSON.stringify(settings, null, 2), "utf8");
+    const json = JSON.stringify(settings, null, 2);
+    await writeFile(settingsPath, json, "utf8");
   } catch (error) {
     console.error("Failed to save settings:", error);
   }

@@ -2,6 +2,7 @@ import { Tree } from "@weborigami/async-tree";
 import { projectGlobals, projectRoot } from "@weborigami/language";
 import { initializeBuiltins } from "@weborigami/origami";
 import * as path from "node:path";
+import * as recentCommands from "./recentCommands.js";
 
 // Document state. A Document doesn't store text directly but gets/sets it via
 // the renderer process.
@@ -63,11 +64,40 @@ export default class Document {
     return this.window.webContents.executeJavaScript(`editor.value;`);
   }
 
+  async nextCommand() {
+    const command = await this.getCommand();
+    const commands = await recentCommands.getCommands();
+    const index = commands.indexOf(command);
+    if (index >= 0 && index < commands.length - 1) {
+      const nextCommand = commands[index + 1];
+      await this.setCommand(nextCommand);
+    }
+  }
+
+  async previousCommand() {
+    const command = await this.getCommand();
+    const commands = await recentCommands.getCommands();
+    const index = commands.indexOf(command);
+    if (index > 0) {
+      const previousCommand = commands[index - 1];
+      await this.setCommand(previousCommand);
+    } else if (commands.length > 0) {
+      const lastCommand = commands[commands.length - 1];
+      await this.setCommand(lastCommand);
+    }
+  }
+
   async run() {
     // Force iframe to reload. Because the frame's origin will be different than
     // the file: origin for the main window, the simplest way to reload it is to
     // reset its src attribute.
     await this.window.webContents.executeJavaScript(`reloadResult();`);
+  }
+
+  async setCommand(command) {
+    await this.window.webContents.executeJavaScript(
+      `command.value = ${JSON.stringify(command)};`
+    );
   }
 
   async setText(value) {
