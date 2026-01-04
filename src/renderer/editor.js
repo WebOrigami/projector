@@ -9,6 +9,7 @@ window.addEventListener("DOMContentLoaded", () => {
   editor.addEventListener("input", () => {
     // Notify main process that the content has changed
     window.api.notifyContentChanged();
+    result.classList.add("pending");
   });
 
   const command = document.getElementById("command");
@@ -20,6 +21,10 @@ window.addEventListener("DOMContentLoaded", () => {
       event.preventDefault();
       window.api.runCommand();
     }
+  });
+
+  result.addEventListener("load", () => {
+    result.classList.remove("pending");
   });
 
   editor.focus();

@@ -43,5 +43,10 @@ input, textarea {
   border: none;
   display: block;
   height: 100%;
+  transition: opacity 0.3s;
   width: 100%;
+
+  &.pending {
+    opacity: 0.5;
+  }
 }

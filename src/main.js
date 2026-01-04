@@ -8,18 +8,26 @@ import { registerOrigamiProtocol } from "./protocol.js";
 import * as recentFiles from "./recentFiles.js";
 import updateWindowTitle from "./updateWindowTitle.js";
 
+const REFRESH_DELAY_MS = 1000;
+let refreshTimeout = null;
+
 // Handle content-changed messages from renderer
 ipcMain.on("content-changed", (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
-  if (window.document) {
+  if (window?.document) {
     window.document.dirty = true;
     updateWindowTitle(window);
+    restartRefreshTimeout(window);
   }
 });
 
 ipcMain.on("run-command", async (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
   if (window) {
+    if (refreshTimeout) {
+      // Explicitly running command cancels pending refresh
+      clearTimeout(refreshTimeout);
+    }
     await fileRun(null, window);
   }
 });
@@ -92,6 +100,20 @@ function createWindow() {
   });
 
   return window;
+}
+
+function restartRefreshTimeout(window) {
+  if (refreshTimeout) {
+    clearTimeout(refreshTimeout);
+  }
+  refreshTimeout = setTimeout(() => {
+    refreshTimeout = null;
+    if (window.document && window.document.dirty) {
+      if (window.document.filePath) {
+        fileRun(null, window);
+      }
+    }
+  }, REFRESH_DELAY_MS);
 }
 
 app.whenReady().then(async () => {
