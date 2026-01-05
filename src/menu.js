@@ -109,7 +109,7 @@ export async function createMenu() {
 }
 
 async function fileNew(_menuItem, window) {
-  const document = window.document;
+  const document = window.project;
 
   // Check if there are unsaved changes
   if (document.dirty) {
@@ -120,14 +120,14 @@ async function fileNew(_menuItem, window) {
   }
 
   // Clear the editor and reset state
-  await window.document.setText("");
+  await window.project.setText("");
   document.filePath = null;
   document.dirty = false;
   updateWindowTitle(window);
 }
 
 async function fileOpen(_menuItem, window) {
-  const document = window.document;
+  const document = window.project;
 
   // Check if there are unsaved changes
   if (document.dirty) {
@@ -159,7 +159,7 @@ async function fileOpen(_menuItem, window) {
 }
 
 async function fileOpenRecent(filePath, window) {
-  const document = window.document;
+  const document = window.project;
 
   // Check if there are unsaved changes
   if (document.dirty) {
@@ -188,20 +188,20 @@ async function fileOpenRecent(filePath, window) {
 }
 
 export async function fileRun(_menuItem, window) {
-  const text = await window.document.getText();
+  const text = await window.project.getText();
   let saved = true;
   if (text.trim().length > 0) {
     // Save before running
     saved = await fileSave(_menuItem, window);
   }
   if (saved) {
-    window.document.run();
+    window.project.run();
   }
 }
 
 async function fileSave(_menuItem, window) {
   // If no file path, show Save As dialog instead
-  if (window.document.filePath === null) {
+  if (window.project.filePath === null) {
     await fileSaveAs(_menuItem, window);
     return;
   }
@@ -217,7 +217,7 @@ async function fileSaveAs(_menuItem, window) {
   }
 
   // Update the document's path
-  window.document.filePath = result.filePath;
+  window.project.filePath = result.filePath;
 
   const saved = await saveFile(window);
   if (saved) {
@@ -231,11 +231,11 @@ async function fileSaveAs(_menuItem, window) {
 }
 
 function focusCommand(_menuItem, window) {
-  window.document.focusCommand();
+  window.project.focusCommand();
 }
 
 async function openFile(filePath, window) {
-  const document = window.document;
+  const document = window.project;
 
   // Update state
   document.filePath = filePath;
@@ -243,7 +243,7 @@ async function openFile(filePath, window) {
 
   // Read file
   const text = await readFile(filePath, "utf8");
-  await window.document.setText(text);
+  await window.project.setText(text);
 
   // Add to recent files and update title
   await recentFiles.addFile(filePath);
@@ -274,10 +274,10 @@ export async function promptSaveChanges(window) {
 }
 
 async function saveFile(window) {
-  const document = window.document;
+  const document = window.project;
 
   // Get editor contents and write to file
-  const text = await window.document.getText();
+  const text = await window.project.getText();
   try {
     await writeFile(document.filePath, text, "utf8");
   } catch (error) {

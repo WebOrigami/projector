@@ -2,8 +2,8 @@ import { app, BrowserWindow, ipcMain, session } from "electron";
 import { access, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import Document from "./document.js";
 import { createMenu, fileRun, promptSaveChanges } from "./menu.js";
+import Project from "./project.js";
 import { registerOrigamiProtocol } from "./protocol.js";
 import * as recentFiles from "./recentFiles.js";
 import updateWindowTitle from "./updateWindowTitle.js";
@@ -12,10 +12,10 @@ const REFRESH_DELAY_MS = 250;
 let refreshTimeout = null;
 
 // Handle content-changed messages from renderer
-ipcMain.on("content-changed", (event) => {
+ipcMain.on("content-changed", (event, ...args) => {
   const window = BrowserWindow.fromWebContents(event.sender);
-  if (window?.document) {
-    window.document.dirty = true;
+  if (window?.project) {
+    window.project.dirty = true;
     updateWindowTitle(window);
     restartRefreshTimeout(window);
   }
@@ -23,15 +23,15 @@ ipcMain.on("content-changed", (event) => {
 
 ipcMain.on("previous-command", (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
-  if (window?.document) {
-    window.document.previousCommand();
+  if (window?.project) {
+    window.project.previousCommand();
   }
 });
 
 ipcMain.on("next-command", (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
-  if (window?.document) {
-    window.document.nextCommand();
+  if (window?.project) {
+    window.project.nextCommand();
   }
 });
 
@@ -59,22 +59,22 @@ function createWindow(windowKey) {
     width: 1200,
     height: 800,
     webPreferences: {
-      nodeIntegration: false,
       contextIsolation: true,
-      preload,
+      nodeIntegration: false,
       partition,
+      preload,
     },
   });
 
   // Initialize document
-  window.document = new Document(window);
+  window.project = new Project(window);
 
   // Force initial window title so it doesn't show app name
   updateWindowTitle(window);
 
   // Handle window close event
   window.on("close", (event) => {
-    if (window.document.dirty) {
+    if (window.project.dirty) {
       // Prevent the window from closing immediately
       event.preventDefault();
 
@@ -82,7 +82,7 @@ function createWindow(windowKey) {
       promptSaveChanges(window).then((shouldContinue) => {
         if (shouldContinue) {
           // Mark as clean to avoid infinite loop, then close
-          window.document.dirty = false;
+          window.project.dirty = false;
           window.close();
         }
       });
@@ -106,9 +106,9 @@ function createWindow(windowKey) {
 
         // Load the file
         const text = await readFile(mostRecentFile, "utf8");
-        await window.document.setText(text);
-        window.document.filePath = mostRecentFile;
-        window.document.dirty = false;
+        await window.project.setText(text);
+        window.project.filePath = mostRecentFile;
+        window.project.dirty = false;
         updateWindowTitle(window);
       } catch (error) {
         // File doesn't exist, remove from recent files
@@ -128,8 +128,8 @@ function restartRefreshTimeout(window) {
   }
   refreshTimeout = setTimeout(() => {
     refreshTimeout = null;
-    if (window.document && window.document.dirty) {
-      if (window.document.filePath) {
+    if (window.project && window.project.dirty) {
+      if (window.project.filePath) {
         fileRun(null, window);
       }
     }

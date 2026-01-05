@@ -1,5 +1,5 @@
 export default function updateWindowTitle(window) {
-  const document = window.document;
+  const document = window.project;
 
   let title = document.title;
   if (document.dirty) {

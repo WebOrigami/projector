@@ -7,8 +7,8 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.send("next-command");
   },
 
-  notifyContentChanged() {
-    ipcRenderer.send("content-changed");
+  notifyContentChanged(...args) {
+    ipcRenderer.send("content-changed", ...args);
   },
 
   previousCommand() {

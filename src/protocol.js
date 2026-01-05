@@ -30,15 +30,15 @@ async function evaluate(source, options = {}) {
 
 async function handleRequest(request) {
   const window = BrowserWindow.getFocusedWindow();
-  const { document } = window;
-  const globals = await document.getGlobals();
-  const parent = await document.getParent();
+  const { project } = window;
+  const globals = await project.getGlobals();
+  const parent = await project.getParent();
 
-  let command = await document.getCommand();
+  let command = await project.getCommand();
   if (command) {
     recentCommands.addCommand(command);
   } else {
-    command = `<${document.filePath}>/`;
+    command = `<${project.filePath}>/`;
   }
 
   // Reset the module cache so that modules are reloaded on each request

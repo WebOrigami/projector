@@ -1,6 +1,6 @@
 {
   "name": "origami-studio",
-  "productName": "Origami Studio",
+  "productName": "Origami Presto",
   "version": "1.0.0",
   "description": "Origami project editor",
   "license": "MIT",
@@ -22,7 +22,7 @@
   },
   "build": {
     "appId": "org.weborigami.studio",
-    "productName": "Origami Studio",
+    "productName": "Origami Presto",
     "mac": {
       "target": "dmg",
       "category": "public.app-category.developer-tools"

@@ -4,19 +4,19 @@ import { initializeBuiltins } from "@weborigami/origami";
 import * as path from "node:path";
 import * as recentCommands from "./recentCommands.js";
 
-// Document state. A Document doesn't store text directly but gets/sets it via
-// the renderer process.
-export default class Document {
+//
+// Project state
+//
+export default class Project {
   constructor(window) {
     this.window = window;
-    this.dirty = false;
+    this.state = {
+      command: "",
+    };
     this._filePath = null;
     this._globals = null;
     this._parent = null;
-  }
-
-  async getCommand() {
-    return this.window.webContents.executeJavaScript(`command.value;`);
+    this.dirty = false;
   }
 
   get filePath() {
@@ -30,8 +30,16 @@ export default class Document {
     this._globals = null;
   }
 
+  executeJavaScript(js) {
+    return this.window.webContents.executeJavaScript(js);
+  }
+
   focusCommand() {
-    return this.window.webContents.executeJavaScript(`command.focus();`);
+    return this.executeJavaScript(`command.focus();`);
+  }
+
+  async getCommand() {
+    return this.executeJavaScript(`command.value;`);
   }
 
   async getGlobals() {
@@ -61,7 +69,7 @@ export default class Document {
   }
 
   async getText() {
-    return this.window.webContents.executeJavaScript(`editor.value;`);
+    return this.executeJavaScript(`editor.value;`);
   }
 
   async nextCommand() {
@@ -91,19 +99,15 @@ export default class Document {
     // Force iframe to reload. Because the frame's origin will be different than
     // the file: origin for the main window, the simplest way to reload it is to
     // reset its src attribute.
-    await this.window.webContents.executeJavaScript(`reloadResult();`);
+    await this.executeJavaScript(`reloadResult();`);
   }
 
   async setCommand(command) {
-    await this.window.webContents.executeJavaScript(
-      `command.value = ${JSON.stringify(command)};`
-    );
+    await this.executeJavaScript(`command.value = ${JSON.stringify(command)};`);
   }
 
   async setText(value) {
-    await this.window.webContents.executeJavaScript(
-      `editor.value = ${JSON.stringify(value)};`
-    );
+    await this.executeJavaScript(`editor.value = ${JSON.stringify(value)};`);
   }
 
   get title() {

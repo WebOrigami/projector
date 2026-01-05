@@ -8,7 +8,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   editor.addEventListener("input", () => {
     // Notify main process that the content has changed
-    window.api.notifyContentChanged();
+    window.api.notifyContentChanged(editor.value);
     result.classList.add("pending");
   });
 
