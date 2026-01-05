@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, session } from "electron";
 import { access, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,7 +8,7 @@ import { registerOrigamiProtocol } from "./protocol.js";
 import * as recentFiles from "./recentFiles.js";
 import updateWindowTitle from "./updateWindowTitle.js";
 
-const REFRESH_DELAY_MS = 1000;
+const REFRESH_DELAY_MS = 250;
 let refreshTimeout = null;
 
 // Handle content-changed messages from renderer
@@ -46,10 +46,15 @@ ipcMain.on("run-command", async (event) => {
   }
 });
 
-function createWindow() {
+function createWindow(windowKey) {
   const moduleDirectory = dirname(fileURLToPath(import.meta.url));
   const preload = join(moduleDirectory, "preload.js");
 
+  // Register custom protocol
+  const partition = `window-${windowKey}`;
+  registerOrigamiProtocol(session.fromPartition(partition));
+
+  // Create the browser window
   const window = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -57,6 +62,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       preload,
+      partition,
     },
   });
 
@@ -131,14 +137,11 @@ function restartRefreshTimeout(window) {
 }
 
 app.whenReady().then(async () => {
-  // Register custom protocol
-  registerOrigamiProtocol();
-
-  createWindow();
+  createWindow("main");
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      createWindow("main");
     }
   });
 });

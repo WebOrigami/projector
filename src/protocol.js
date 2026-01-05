@@ -8,7 +8,12 @@ import * as recentCommands from "./recentCommands.js";
 protocol.registerSchemesAsPrivileged([
   {
     scheme: "origami",
-    privileges: { standard: true, secure: true, supportFetchAPI: true },
+    privileges: {
+      corsEnabled: true,
+      secure: true,
+      standard: true,
+      supportFetchAPI: true,
+    },
   },
 ]);
 
@@ -62,8 +67,8 @@ async function handleRequest(request) {
   return response;
 }
 
-export function registerOrigamiProtocol() {
-  protocol.handle("origami", handleRequest);
+export function registerOrigamiProtocol(ses) {
+  ses.protocol.handle("origami", handleRequest);
 }
 
 // Copied from Origami server -- should be shared but that implementation
