@@ -36,7 +36,7 @@ export async function removeFile(filePath) {
   await saveFiles(newFiles);
 }
 
-async function saveFiles(recentFiles) {
+export async function saveFiles(recentFiles) {
   const settings = await loadSettings();
   settings.recentFiles = recentFiles;
   await saveSettings(settings);

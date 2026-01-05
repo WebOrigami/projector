@@ -1,8 +1,7 @@
 import { app, dialog, Menu } from "electron";
-import { access, readFile, writeFile } from "node:fs/promises";
+import { access } from "node:fs/promises";
 import { basename, dirname } from "node:path";
 import * as recentFiles from "./recentFiles.js";
-import updateWindowTitle from "./updateWindowTitle.js";
 
 export async function createMenu() {
   // Build Open Recent submenu
@@ -76,8 +75,8 @@ export async function createMenu() {
           accelerator: "CmdOrCtrl+Shift+S",
           click: fileSaveAs,
         },
-        { type: "separator" },
-        { label: "Run", accelerator: "CmdOrCtrl+Enter", click: fileRun },
+        // { type: "separator" },
+        // { label: "Run", accelerator: "CmdOrCtrl+Enter", click: fileRun },
       ],
     },
     {
@@ -109,28 +108,26 @@ export async function createMenu() {
 }
 
 async function fileNew(_menuItem, window) {
-  const document = window.project;
+  const project = window.project;
 
   // Check if there are unsaved changes
-  if (document.dirty) {
+  if (project.dirty) {
     const shouldContinue = await promptSaveChanges(window);
     if (!shouldContinue) {
       return;
     }
   }
 
-  // Clear the editor and reset state
-  await window.project.setText("");
-  document.filePath = null;
-  document.dirty = false;
-  updateWindowTitle(window);
+  // Set to new document state
+  project.filePath = null;
+  project.text = "";
 }
 
 async function fileOpen(_menuItem, window) {
-  const document = window.project;
+  const project = window.project;
 
   // Check if there are unsaved changes
-  if (document.dirty) {
+  if (project.dirty) {
     const shouldContinue = await promptSaveChanges(window);
     if (!shouldContinue) {
       return;
@@ -142,8 +139,8 @@ async function fileOpen(_menuItem, window) {
   };
 
   // Set default directory to current document's directory if available
-  if (document.filePath) {
-    dialogOptions.defaultPath = dirname(document.filePath);
+  if (project.filePath) {
+    dialogOptions.defaultPath = dirname(project.filePath);
   }
 
   const result = await dialog.showOpenDialog(window, dialogOptions);
@@ -153,16 +150,20 @@ async function fileOpen(_menuItem, window) {
     return;
   }
 
-  // Get the selected file path
-  const filePath = result.filePaths[0];
-  await openFile(filePath, window);
+  // Load the selected file path
+  project.filePath = result.filePaths[0];
+  await project.load();
+
+  // Add to recent files and update title
+  await recentFiles.addFile(project.filePath);
+  createMenu();
 }
 
 async function fileOpenRecent(filePath, window) {
-  const document = window.project;
+  const project = window.project;
 
   // Check if there are unsaved changes
-  if (document.dirty) {
+  if (project.dirty) {
     const shouldContinue = await promptSaveChanges(window);
     if (!shouldContinue) {
       return;
@@ -184,19 +185,15 @@ async function fileOpenRecent(filePath, window) {
     return;
   }
 
-  await openFile(filePath, window);
+  project.filePath = filePath;
+  await project.load();
+
+  await recentFiles.addFile(project.filePath);
+  createMenu();
 }
 
 export async function fileRun(_menuItem, window) {
-  const text = await window.project.getText();
-  let saved = true;
-  if (text.trim().length > 0) {
-    // Save before running
-    saved = await fileSave(_menuItem, window);
-  }
-  if (saved) {
-    window.project.run();
-  }
+  window.project.run();
 }
 
 async function fileSave(_menuItem, window) {
@@ -205,7 +202,7 @@ async function fileSave(_menuItem, window) {
     await fileSaveAs(_menuItem, window);
     return;
   }
-  return saveFile(window);
+  return window.project.save();
 }
 
 async function fileSaveAs(_menuItem, window) {
@@ -216,15 +213,13 @@ async function fileSaveAs(_menuItem, window) {
     return false;
   }
 
-  // Update the document's path
+  // Update the document's path and save
   window.project.filePath = result.filePath;
-
-  const saved = await saveFile(window);
+  const saved = await window.project.save();
   if (saved) {
     // Add to recent files
     await recentFiles.addFile(result.filePath);
     createMenu();
-    updateWindowTitle(window);
   }
 
   return saved;
@@ -232,23 +227,6 @@ async function fileSaveAs(_menuItem, window) {
 
 function focusCommand(_menuItem, window) {
   window.project.focusCommand();
-}
-
-async function openFile(filePath, window) {
-  const document = window.project;
-
-  // Update state
-  document.filePath = filePath;
-  document.dirty = false;
-
-  // Read file
-  const text = await readFile(filePath, "utf8");
-  await window.project.setText(text);
-
-  // Add to recent files and update title
-  await recentFiles.addFile(filePath);
-  createMenu();
-  updateWindowTitle(window);
 }
 
 export async function promptSaveChanges(window) {
@@ -262,7 +240,7 @@ export async function promptSaveChanges(window) {
 
   if (result.response === 0) {
     // Save
-    await fileSave(null, window);
+    await window.project.save();
     return true;
   } else if (result.response === 1) {
     // Don't Save
@@ -271,27 +249,4 @@ export async function promptSaveChanges(window) {
     // Cancel
     return false;
   }
-}
-
-async function saveFile(window) {
-  const document = window.project;
-
-  // Get editor contents and write to file
-  const text = await window.project.getText();
-  try {
-    await writeFile(document.filePath, text, "utf8");
-  } catch (error) {
-    dialog.showMessageBox(window, {
-      type: "error",
-      message: "Save Failed",
-      detail: `Failed to save file "${document.filePath}": ${error.message}`,
-    });
-    return false;
-  }
-
-  // Mark as clean
-  document.dirty = false;
-  updateWindowTitle(window);
-
-  return true;
 }

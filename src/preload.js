@@ -7,8 +7,13 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.send("next-command");
   },
 
-  notifyContentChanged(...args) {
-    ipcRenderer.send("content-changed", ...args);
+  // Subscribe to pushed snapshots
+  onStateChanged(handler) {
+    const listener = (_event, snapshot) => handler(snapshot);
+    ipcRenderer.on("state:changed", listener);
+
+    // Return unsubscribe
+    return () => ipcRenderer.removeListener("state:changed", listener);
   },
 
   previousCommand() {
@@ -17,5 +22,9 @@ contextBridge.exposeInMainWorld("api", {
 
   runCommand() {
     ipcRenderer.send("run-command");
+  },
+
+  updateState(changes) {
+    ipcRenderer.invoke("state:update", changes);
   },
 });

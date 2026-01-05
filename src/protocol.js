@@ -1,6 +1,6 @@
 import { compile, formatError, moduleCache } from "@weborigami/language";
 import { constructResponse } from "@weborigami/origami";
-import { BrowserWindow, protocol } from "electron";
+import { protocol } from "electron";
 import * as recentCommands from "./recentCommands.js";
 
 // Register the custom protocol at the module's top level so it happens before
@@ -28,13 +28,12 @@ async function evaluate(source, options = {}) {
   return value;
 }
 
-async function handleRequest(request) {
-  const window = BrowserWindow.getFocusedWindow();
-  const { project } = window;
+async function handleRequest(request, session) {
+  const project = session.project;
   const globals = await project.getGlobals();
   const parent = await project.getParent();
 
-  let command = await project.getCommand();
+  let command = project.command;
   if (command) {
     recentCommands.addCommand(command);
   } else {
@@ -68,7 +67,7 @@ async function handleRequest(request) {
 }
 
 export function registerOrigamiProtocol(ses) {
-  ses.protocol.handle("origami", handleRequest);
+  ses.protocol.handle("origami", (request) => handleRequest(request, ses));
 }
 
 // Copied from Origami server -- should be shared but that implementation
