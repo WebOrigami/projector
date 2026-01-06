@@ -1,6 +1,13 @@
+import { FileMap, ObjectMap, Tree } from "@weborigami/async-tree";
 import { formatError } from "@weborigami/language";
-import { constructResponse } from "@weborigami/origami";
+import { constructResponse, keysFromUrl } from "@weborigami/origami";
 import { protocol } from "electron";
+
+const treeForSession = new WeakMap();
+
+// Client-side files used by the renderer are also served via origami: protocol
+const rendererUrl = new URL("renderer", import.meta.url);
+const renderer = new FileMap(rendererUrl);
 
 // Register the custom protocol at the module's top level so it happens before
 // the app is ready
@@ -17,14 +24,36 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 async function handleRequest(request, session) {
-  const project = session.project;
-  let resource = project.result;
-
-  if (resource instanceof Error) {
-    return respondWithError(resource, new Response(null));
+  let tree = treeForSession.get(session);
+  if (!tree) {
+    tree = new ObjectMap({
+      get _result() {
+        return session.project.result;
+      },
+      renderer,
+    });
+    treeForSession.set(session, tree);
   }
 
-  const response = await constructResponse(null, resource);
+  // The request `url` is a string
+  const url = new URL(request.url, "origami://");
+  const keys = keysFromUrl(url);
+
+  let resource;
+  try {
+    resource = await Tree.traverseOrThrow(tree, ...keys);
+  } catch (error) {
+    resource = error;
+  }
+
+  if (resource === undefined) {
+    return new Response(null, { status: 404 });
+  }
+  if (resource instanceof Error) {
+    return respondWithError(resource);
+  }
+
+  const response = await constructResponse(request, resource);
   if (response) {
     Object.assign(response.headers, {
       "Cross-Origin-Embedder-Policy": "require-corp",

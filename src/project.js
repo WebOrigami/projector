@@ -177,7 +177,7 @@ export default class Project {
     if (command) {
       recentCommands.addCommand(command);
     } else {
-      command = `<${this.filePath}>/`;
+      command = `<${this.filePath}>`;
     }
 
     try {

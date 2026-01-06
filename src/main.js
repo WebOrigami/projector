@@ -78,7 +78,7 @@ function createWindow(windowKey) {
     }
   });
 
-  window.loadFile("src/renderer/index.html");
+  window.loadURL("origami://app/renderer/index.html");
 
   // Set window title after page loads
   window.webContents.on("did-finish-load", async () => {

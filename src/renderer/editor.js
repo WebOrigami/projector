@@ -21,7 +21,7 @@ function renderState(changes) {
 
 window.reloadResult = () => {
   // Force iframe to reload
-  result.src = "origami://root";
+  result.src = "origami://app/_result";
 };
 
 window.addEventListener("DOMContentLoaded", () => {
