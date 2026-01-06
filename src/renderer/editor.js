@@ -1,10 +1,14 @@
 import updateState from "./updateState.js";
-let state = {};
 
-function renderState(changes) {
-  const { newState, changed } = updateState(state, changes);
-  state = newState;
+// Page state
+window.state = {
+  lastScroll: {
+    x: 0,
+    y: 0,
+  },
+};
 
+function render(state, changed) {
   if (changed.command) {
     console.log("Updating command:", state.command);
     if (command.value !== state.command) {
@@ -19,7 +23,20 @@ function renderState(changes) {
   }
 }
 
+function setState(changes) {
+  const { newState, changed } = updateState(state, changes);
+  state = newState;
+  render(state, changed);
+}
+
 window.reloadResult = () => {
+  // Save scroll position
+  const lastScroll = {
+    x: result.contentWindow.scrollX,
+    y: result.contentWindow.scrollY,
+  };
+  setState({ lastScroll });
+
   // Force iframe to reload
   result.src = "origami://app/_result";
 };
@@ -56,13 +73,20 @@ window.addEventListener("DOMContentLoaded", () => {
 
   result.addEventListener("load", () => {
     result.classList.remove("pending");
+
+    // Give frame a tick to finishing layout, then restore scroll position
+    // requestAnimationFrame(() =>
+    //   requestAnimationFrame(() => {
+    result.contentWindow.scrollTo(state.lastScroll.x, state.lastScroll.y);
+    //   })
+    // );
   });
 
   editor.focus();
 });
 
 // Subscribe to state changes from main process
-const unsubscribe = window.api.onStateChanged(renderState);
+const unsubscribe = window.api.onStateChanged(setState);
 
 window.addEventListener("beforeunload", () => {
   // Unsubscribe from state changes when the window is unloaded
