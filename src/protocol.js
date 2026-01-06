@@ -1,7 +1,6 @@
-import { compile, formatError, moduleCache } from "@weborigami/language";
+import { formatError } from "@weborigami/language";
 import { constructResponse } from "@weborigami/origami";
 import { protocol } from "electron";
-import * as recentCommands from "./recentCommands.js";
 
 // Register the custom protocol at the module's top level so it happens before
 // the app is ready
@@ -17,42 +16,12 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
-async function evaluate(source, options = {}) {
-  const fn = compile.expression(source, options);
-
-  let value = await fn();
-  if (value instanceof Function) {
-    value = await value();
-  }
-
-  return value;
-}
-
 async function handleRequest(request, session) {
   const project = session.project;
-  const globals = await project.getGlobals();
-  const parent = await project.getParent();
+  let resource = project.result;
 
-  let command = project.command;
-  if (command) {
-    recentCommands.addCommand(command);
-  } else {
-    command = `<${project.filePath}>/`;
-  }
-
-  // Reset the module cache so that modules are reloaded on each request
-  moduleCache.resetTimestamp();
-
-  let resource;
-  try {
-    resource = await evaluate(command, {
-      globals,
-      mode: "shell",
-      parent,
-    });
-  } catch (error) {
-    const response = new Response(null);
-    return respondWithError(error, response);
+  if (resource instanceof Error) {
+    return respondWithError(resource, new Response(null));
   }
 
   const response = await constructResponse(null, resource);

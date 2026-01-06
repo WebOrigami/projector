@@ -1,5 +1,10 @@
 import { Tree } from "@weborigami/async-tree";
-import { projectGlobals, projectRoot } from "@weborigami/language";
+import {
+  compile,
+  moduleCache,
+  projectGlobals,
+  projectRoot,
+} from "@weborigami/language";
 import { initializeBuiltins } from "@weborigami/origami";
 import fs from "node:fs/promises";
 import * as path from "node:path";
@@ -15,15 +20,18 @@ const REFRESH_DELAY_MS = 250;
 export default class Project {
   constructor(window) {
     this.window = window;
+    // State shared with the renderer
     this.state = {
       command: "",
       dirty: false,
+      // error: null,
       text: "",
     };
     this._filePath = null;
     this._globals = null;
     this._parent = null;
     this._refreshTimeout = null;
+    this._result = null;
   }
 
   broadcastState() {
@@ -122,19 +130,13 @@ export default class Project {
     this.setState({ command: previousCommand });
   }
 
-  restartRefreshTimeout() {
-    if (this._refreshTimeout) {
-      clearTimeout(this._refreshTimeout);
+  // Save and run
+  async refresh() {
+    if (!this.filePath) {
+      // Refresh disabled until file has been saved
+      return;
     }
-    this._refreshTimeout = setTimeout(() => {
-      this._refreshTimeout = null;
-      if (this.filePath && this.command) {
-        this.run();
-      }
-    }, REFRESH_DELAY_MS);
-  }
 
-  async run() {
     // Save before running
     if (this.dirty) {
       const saved = await this.save();
@@ -143,10 +145,52 @@ export default class Project {
       }
     }
 
+    this.run();
+  }
+
+  async reload() {
     // Force iframe to reload. Because the frame's origin will be different than
     // the file: origin for the main window, the simplest way to reload it is to
     // reset its src attribute.
     await this.executeJavaScript(`reloadResult();`);
+  }
+
+  restartRefreshTimeout() {
+    if (this._refreshTimeout) {
+      clearTimeout(this._refreshTimeout);
+    }
+    this._refreshTimeout = setTimeout(() => {
+      this._refreshTimeout = null;
+      this.refresh();
+    }, REFRESH_DELAY_MS);
+  }
+
+  get result() {
+    return this._result;
+  }
+
+  async run() {
+    const globals = await this.getGlobals();
+    const parent = await this.getParent();
+
+    let command = this.command;
+    if (command) {
+      recentCommands.addCommand(command);
+    } else {
+      command = `<${this.filePath}>/`;
+    }
+
+    try {
+      this._result = await evaluate(command, {
+        globals,
+        mode: "shell",
+        parent,
+      });
+    } catch (error) {
+      this._result = error;
+    }
+
+    this.reload();
   }
 
   // Write text to file
@@ -174,9 +218,9 @@ export default class Project {
 
     if (changed.dirty) {
       updateWindowTitle(this.window);
-    }
-    if (changed.text) {
-      this.restartRefreshTimeout();
+      if (newState.dirty) {
+        this.restartRefreshTimeout();
+      }
     }
 
     this.broadcastState();
@@ -195,4 +239,18 @@ export default class Project {
   get title() {
     return this.filePath ? path.basename(this.filePath) : "Untitled";
   }
+}
+
+async function evaluate(source, options = {}) {
+  const fn = compile.expression(source, options);
+
+  // Reset the module cache so that modules are reloaded on each request
+  moduleCache.resetTimestamp();
+
+  let value = await fn();
+  if (value instanceof Function) {
+    value = await value();
+  }
+
+  return value;
 }
