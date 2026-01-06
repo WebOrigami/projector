@@ -1,4 +1,4 @@
-import { Tree } from "@weborigami/async-tree";
+import { toString, Tree } from "@weborigami/async-tree";
 import {
   compile,
   moduleCache,
@@ -32,6 +32,7 @@ export default class Project {
     this._parent = null;
     this._refreshTimeout = null;
     this._result = null;
+    this._site = null;
   }
 
   broadcastState() {
@@ -61,6 +62,7 @@ export default class Project {
     // Recalculate these the next time they're requested
     this._parent = null;
     this._globals = null;
+    this._site = null;
   }
 
   executeJavaScript(js) {
@@ -90,11 +92,71 @@ export default class Project {
     }
 
     // Traverse from the project root to the current directory.
+    const root = await this.getRoot();
     const dirname = path.dirname(this.filePath);
-    const root = await projectRoot(dirname);
     const relative = path.relative(root.path, dirname);
     this._parent = await Tree.traversePath(root, relative);
     return this._parent;
+  }
+
+  async getRoot() {
+    if (this.filePath === null) {
+      return null;
+    }
+
+    const dirname = path.dirname(this.filePath);
+    const root = await projectRoot(dirname);
+    return root;
+  }
+
+  async getSite() {
+    if (this._site || this.filePath === null) {
+      return this._site;
+    }
+
+    // Look in project root for package.json
+    const root = await this.getRoot();
+    const packageJson = await root.get("package.json");
+    if (!packageJson) {
+      return null;
+    }
+
+    // Get the `start` script
+    let packageData;
+    try {
+      packageData = JSON.parse(toString(packageJson));
+    } catch (error) {
+      return null;
+    }
+    const startScript = packageData.scripts?.start;
+    if (!startScript) {
+      return null;
+    }
+
+    // Look for the first path to a .ori file in the start script
+    const sitePathRegex = /[A-Za-z0-9\/\.\-]*\.ori/;
+    const match = startScript.match(sitePathRegex);
+    if (!match) {
+      return null;
+    }
+
+    // Get the site file
+    const sitePath = match[0];
+    const siteFile = await Tree.traversePath(root, sitePath);
+    if (!siteFile) {
+      return null;
+    }
+
+    // Evaluate the site file to get the site object
+    let site;
+    try {
+      site = await siteFile.unpack();
+    } catch (error) {
+      return null;
+    }
+
+    this._site = site;
+    return this._site;
   }
 
   // Read file

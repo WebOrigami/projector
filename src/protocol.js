@@ -23,16 +23,30 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
-async function handleRequest(request, session) {
+async function getSessionTree(session) {
   let tree = treeForSession.get(session);
   if (!tree) {
+    // The basic tree is the result and the renderer files
     tree = new ObjectMap({
       get _result() {
         return session.project.result;
       },
       renderer,
     });
+
     treeForSession.set(session, tree);
+  }
+
+  return tree;
+}
+
+async function handleRequest(request, session) {
+  let tree = await getSessionTree(session);
+
+  // If the project has a site, merge that in
+  const site = await session.project.getSite();
+  if (site) {
+    tree = await Tree.merge(tree, site);
   }
 
   // The request `url` is a string
