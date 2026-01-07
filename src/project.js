@@ -112,56 +112,59 @@ export default class Project {
   }
 
   async getSite() {
-    const globals = await this.getGlobals();
-    return globals?.$site;
+    if (this._site || this.filePath === null) {
+      return this._site;
+    }
 
-    // if (this._site || this.filePath === null) {
-    //   return this._site;
-    // }
+    const globals = await this.getGlobals();
+    if (globals?.$site) {
+      this._site = globals.$site;
+      return this._site;
+    }
 
     // Look in project root for package.json
-    // const root = await this.getRoot();
-    // const packageJson = await root.get("package.json");
-    // if (!packageJson) {
-    //   return null;
-    // }
+    const root = await this.getRoot();
+    const packageJson = await root.get("package.json");
+    if (!packageJson) {
+      return null;
+    }
 
-    // // Get the `start` script
-    // let packageData;
-    // try {
-    //   packageData = JSON.parse(toString(packageJson));
-    // } catch (error) {
-    //   return null;
-    // }
-    // const startScript = packageData.scripts?.start;
-    // if (!startScript) {
-    //   return null;
-    // }
+    // Get the `start` script
+    let packageData;
+    try {
+      packageData = JSON.parse(toString(packageJson));
+    } catch (error) {
+      return null;
+    }
+    const startScript = packageData.scripts?.start;
+    if (!startScript) {
+      return null;
+    }
 
-    // // Look for the first path to a .ori file in the start script
-    // const sitePathRegex = /[A-Za-z0-9\/\.\-]*\.ori/;
-    // const match = startScript.match(sitePathRegex);
-    // if (!match) {
-    //   return null;
-    // }
+    // Look for the first path to a .ori file in the start script
+    const sitePathRegex = /[A-Za-z0-9\/\.\-]*\.ori/;
+    const match = startScript.match(sitePathRegex);
+    if (!match) {
+      return null;
+    }
 
-    // // Get the site file
-    // const sitePath = match[0];
-    // const siteFile = await Tree.traversePath(root, sitePath);
-    // if (!siteFile) {
-    //   return null;
-    // }
+    // Get the site file
+    const sitePath = match[0];
+    const siteFile = await Tree.traversePath(root, sitePath);
+    if (!siteFile) {
+      return null;
+    }
 
-    // // Evaluate the site file to get the site object
-    // let site;
-    // try {
-    //   site = await siteFile.unpack();
-    // } catch (error) {
-    //   return null;
-    // }
+    // Evaluate the site file to get the site object
+    let site;
+    try {
+      site = await siteFile.unpack();
+    } catch (error) {
+      return null;
+    }
 
-    // this._site = site;
-    // return this._site;
+    this._site = site;
+    return this._site;
   }
 
   // Read file
@@ -246,9 +249,6 @@ export default class Project {
     } else {
       command = `<${this.filePath}>`;
     }
-
-    // Clear session cache
-    await this.session.clearCache();
 
     try {
       this._result = await evaluate(command, {

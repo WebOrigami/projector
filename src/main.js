@@ -8,12 +8,6 @@ import { registerOrigamiProtocol } from "./protocol.js";
 import * as recentFiles from "./recentFiles.js";
 import updateWindowTitle from "./updateWindowTitle.js";
 
-// Disable all caching at the Chromium level
-app.commandLine.appendSwitch("disable-http-cache");
-app.commandLine.appendSwitch("disable-application-cache");
-app.commandLine.appendSwitch("disk-cache-size", "0");
-app.commandLine.appendSwitch("media-cache-size", "0");
-
 ipcMain.on("previous-command", (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
   if (window?.project) {
@@ -45,7 +39,7 @@ function createWindow(windowKey) {
   // Create a unique session for the window
   // Disable caching so resources are always reloaded afresh
   const partition = `window-${windowKey}`;
-  const ses = session.fromPartition(partition, { cache: false });
+  const ses = session.fromPartition(partition);
 
   // Register custom protocol
   registerOrigamiProtocol(ses);
