@@ -51,6 +51,8 @@ async function handleRequest(request, session) {
 
   // The request `url` is a string
   const url = new URL(request.url, "origami://");
+  console.log(request.url);
+
   const keys = keysFromUrl(url);
 
   let resource;
@@ -69,9 +71,13 @@ async function handleRequest(request, session) {
 
   const response = await constructResponse(request, resource);
   if (response) {
+    // Disable caching
     Object.assign(response.headers, {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
       "Cross-Origin-Embedder-Policy": "require-corp",
       "Cross-Origin-Opener-Policy": "same-origin",
+      Expires: "0",
+      Pragma: "no-cache",
     });
   }
 

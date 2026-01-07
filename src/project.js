@@ -247,8 +247,12 @@ export default class Project {
       command = `<${this.filePath}>`;
     }
 
+    // Clear session cache
+    await this.session.clearCache();
+
     try {
       this._result = await evaluate(command, {
+        enableCaching: false,
         globals,
         mode: "shell",
         parent,

@@ -8,6 +8,12 @@ import { registerOrigamiProtocol } from "./protocol.js";
 import * as recentFiles from "./recentFiles.js";
 import updateWindowTitle from "./updateWindowTitle.js";
 
+// Disable all caching at the Chromium level
+app.commandLine.appendSwitch("disable-http-cache");
+app.commandLine.appendSwitch("disable-application-cache");
+app.commandLine.appendSwitch("disk-cache-size", "0");
+app.commandLine.appendSwitch("media-cache-size", "0");
+
 ipcMain.on("previous-command", (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
   if (window?.project) {
@@ -36,9 +42,12 @@ function createWindow(windowKey) {
   const moduleDirectory = dirname(fileURLToPath(import.meta.url));
   const preload = join(moduleDirectory, "preload.js");
 
-  // Register custom protocol
+  // Create a unique session for the window
+  // Disable caching so resources are always reloaded afresh
   const partition = `window-${windowKey}`;
-  const ses = session.fromPartition(partition);
+  const ses = session.fromPartition(partition, { cache: false });
+
+  // Register custom protocol
   registerOrigamiProtocol(ses);
 
   // Create the browser window
@@ -53,8 +62,16 @@ function createWindow(windowKey) {
     },
   });
 
+  // Disable caching via Chrome DevTools Protocol
+  window.webContents.debugger.attach("1.3");
+  window.webContents.debugger.sendCommand("Network.enable");
+  window.webContents.debugger.sendCommand("Network.setCacheDisabled", {
+    cacheDisabled: true,
+  });
+
   // Initialize project and associate it with window and session
   const project = new Project(window);
+  project.session = ses;
   window.project = project;
   ses.project = project;
 

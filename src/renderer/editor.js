@@ -37,8 +37,11 @@ window.reloadResult = () => {
   };
   setState({ lastScroll });
 
-  // Force iframe to reload
-  result.src = "origami://app/_result";
+  // Force iframe to hard reload by clearing src first, then setting with cache-busting parameter
+  result.src = "about:blank";
+  requestAnimationFrame(() => {
+    result.src = `origami://app/_result?_=${Date.now()}`;
+  });
 };
 
 window.addEventListener("DOMContentLoaded", () => {
