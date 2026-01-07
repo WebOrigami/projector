@@ -1,4 +1,4 @@
-import { Tree } from "@weborigami/async-tree";
+import { Tree, toString } from "@weborigami/async-tree";
 import {
   compile,
   moduleCache,
