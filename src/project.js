@@ -75,16 +75,23 @@ export default class Project {
     this._filePath = filePath;
 
     if (filePath === null) {
+      this._globals = null;
+
       this._root = null;
       this._parent = null;
-      this._globals = null;
       this._packageData = null;
       this._site = null;
       this.text = "";
     } else {
+      // As of 2026-01-08, a timing issue requires that we get globals first so
+      // that we can then make calls like getParent or getPackageData that
+      // require that things like extension handlers are registered. This is
+      // because the language package caches the set of globals when it
+      // shouldn't.
+      this._globals = await getGlobals(filePath);
+
       this._root = await getRoot(filePath);
       this._parent = await getParent(this._root, filePath);
-      this._globals = await getGlobals(filePath);
       this._packageData = await getPackageData(this._root);
       this._site = await getSite(this._globals, this._root, this._packageData);
       this.text = await fs.readFile(filePath, "utf8");
