@@ -1,32 +1,106 @@
 # Origami Studio
 
-This prototype is a simple Electron application that can edit a single text file at a time.
+Origami Studio (hereafter, “Studio”) is an experimental editor and evaluation system for quickly iterating on code, data, and content.
 
-## Architecture
+Studio shortens the conventional cycle in which you edit a text file (e.g., a markdown file), run some code to generate an affected artifact (a HTML file incorporating that content), view the artifact, then edit again.
 
-- The HTML for the window is completely vanilla HTML and has no CSS or JavaScript.
-- Beyond the necessary dependencies for Electron, this project has no other dependencies.
+Edit → Run → View → repeat
+
+Studio is aimed at traditional developers, designers, as well as other people that may have a degree of technical proficiency but do not think of themselves as coders. To that end, Studio is envisioned as a standalone application for performing tasks which are normally done with a terminal.
+
+Studio is designed to coexist with other design and development tools such as IDEs (e.g., Microsoft VS Code, NeoVim), text editing applications (Obsidian, iA Writer), and command-line tools (Origami, node).
+
+## Current status
+
+Studio is an experimental application. The initial feature set is small and designed to be reasonably self-consistent.
+
+The focus at this early stage is confirming the idea’s viability and working out the proper shape of the tool. The current app experience is all but certain to have bugs or rough edges, but hopefully it’s good enough to envision what you’d really like the application to do and be motivated to provide feedback. Experience suggests that feedback will direct the app’s evolution in directions that are hard to imagine at this point; don’t get too attached to anything yet.
+
+The application should be sufficient to perform basic editing of Origami projects. You should be able to:
+
+* Install the application on macOS.
+* Open and save text files.
+* Issue Origami commands and see the results immediately appear in the result pane.
+* Edit a text file and automatically reload the result.
+* If the displayed HTML contains links, browse within the local site.
+
+Out of scope for now:
+
+- Window or Linux versions
+- Dark mode
+- Window pane management (showing, hiding, resizing)
+- In-app File Explorer
+- Watching file edits made outside the application
+- Reloading project settings when `config.ori` or `package.json` is edited
+- Real code editor
+- LSP integration
+- JavaScript file cache resets
+- Build or serve
+- Deploy a site
+- Help
+
+# User model
+
+Studio’s user model is organized around:
+
+* Projects. A project is a folder tree of related files. Studio identifies projects in several ways; see below.
+* Files. Studio can edit text files: plain text, markdown, CSS, JSON, YAML, JavaScript, Origami, etc.
+
+Files are always viewed in the context of a project.
+
+## Project root and type
+
+For any given file (or folder, in the case of the Open Folder menu item), Studio establishes its associated root folder and type based on the file/folder’s location:
+
+1. From the location, Studio walks up the folder hierarchy looking for an Origami configuration file called `config.ori`. If found, the folder containing that file is the project root. The project type will be `origami`. Note: an `origami` project may also have a `package.json` at the root level.
+2. From the location, Studio walks up the folder hierarchy looking for an npm `package.json` file. If found, the folder containing that file is the project root. The project type will be `npm`.
+3. Otherwise, the file’s containing folder is the project root; or, if the given object was a folder, the folder itself is the project root. The project type will be `folder`.
+
+It is also possible to open a new Untitled file. Such a file will open in a project window of type `unsaved` with a null project root.
+
+## Project friendly name
+
+* For an `origami` or `npm` project with a package.json at its root, the friendly name is the `name` field from that file.
+* For a new project, the friendly name is “New project”.
+* Otherwise the friendly name is the name of the project’s root folder. E.g., for `/Users/Jan/hello`, the friendly name is “hello”.
+
+# User interface
 
 ## Basic application behavior
 
-- When the application starts, it opens the most recently opened file. If no files have been opened yet, it opens a new, unsaved file called "Untitled".
-- When the last application window closes, the application exits.
+When the application starts, it opens a window for the most recently opened project where the project folder still exists. If no such recent project exists, no window is opened.
+
+### Settings
+
+The application persists the following settings:
+
+- paths of recent projects
+- paths of recent files within each project
+- recent commands used within each project
+
+These settings are saved whenever the values change so that they can survive application crashes.
 
 ## Menu bar
 
-The application menu bar offers the standard commands for a rudimentary text editor.
+The application menu bar offers the standard commands for a text editor.
 
-File menu:
+### File menu
 
 - **New**
-- **Open…**. Shows a standard File Open dialog.
-- **Open Recent**. A submenu showing recently opened files; see below.
+- **Open…**. Shows a standard File Open dialog to pick an existing file.
+- **Open Folder**. Shows a standard File Open dialog to pick an existing folder.
+- **Open Recent Project**. A submenu showing the friendly names of recently opened projects.
 - **Close**. Closes the current window.
 - **Save**
 - **Save As…**. Shows a standard File Save As dialog.
-- **Run**.
 
-Edit menu:
+Opening a file via the Open menu implies opening the associated project. If that project is already open in a window, the file is opened in that project window. Otherwise a file opens in a new window for that project.
+
+The Open Recent Project submenu tracks the 10 most recently opened project. Selecting a project from this submenu opens it in a new window (or, if the project is already open, it activates that window). The submenu also includes a "Clear Menu" command to clear the recent projects list.
+
+Using Save As to save a file outside of the project’s folder tree will save that text to the indicated location and close the file in that project window. A project window for the file’s new location will open (or, if that new location’s project is already open, that window will activate).
+
+### Edit menu
 
 - **Undo**
 - **Redo**
@@ -35,29 +109,80 @@ Edit menu:
 - **Paste**
 - **Select All**
 
-Debug menu:
+### Debug menu
 
-- **Toggle Developer Tools**
+- **Toggle Developer Tools**. Shows standard Chromium Dev Tools.
 
-The Open Recent submenu tracks the 10 most recently opened files. Selecting a file from this submenu opens it in the current window. The menu also includes a "Clear Menu" command to clear the recent files list.
+### Window menu
 
-## Window state
+- **Minimize**
+- **Zoom**
+- **Bring All to Front**
+- **Toggle Full Screen**
+- List of friendly names of open project windows. A checkmark is shown next to the active window.
 
-The window title displays the name of the currently opened file, or "Untitled" if the file has not been saved yet. If the current file has unsaved changes, an circle (`⚫︎`) is appended to the title.
+## Project window
 
-Each window tracks the following state:
+Each open project is represented by a single window.
 
-- `filePath`: The path of the currently opened file, or `null` if no file is open.
-- `dirty`: A boolean indicating whether the file has unsaved changes.
+The window is divided into a 2x2 grid:
 
-File behavior:
+- Tab bar in upper left
+- Editing area in main part of left side
+- Command bar in upper right
+- Result pane in main part of right side
 
-- When a file is opened, its contents are read and displayed in the textarea. The `dirty` state is set to `false`.
-- When the user modifies the contents of the textarea, the `dirty` state is set to `true`.
+## Title bar
+
+The window shows the project’s friendly name.
+
+## Tab bar
+
+Studio tracks the 10 most recently opened files for a given project. These are rendered as tabs across the top of the editing area. The tab bar shows as many tabs as can fit horizontally; the remainder are clipped.
+
+Each tab displays the name of the associated file, or "Untitled" if the file has not been saved yet. If the file is `dirty` (has unsaved changes), an circle (`⚫︎`) is appended to the title.
+
+The active file is always the most recent one, and always shown in the leftmost tab. Opening another file in the project (via File / Open, or by clicking a different tab) makes that new file the recent file, and therefore the active and leftmost tab.
+
+If the user selects a recent file from either the tab bar or the Open Recent File and that file no longer exists, the file is removed from both locations.
+
+In an `unsaved` project, it is possible to have no file open and so no file tabs visible.
+
+## Editing area
+
+- When a file is opened, its contents are loaded and displayed in the editing area. The `dirty` state is set to `false`.
+- When the user modifies the contents of the editing area, the `dirty` state is set to `true`.
 - If the user tries to save the file but the file has not yet been saved (i.e., `filePath` is `null`), a Save As dialog is shown first. The `filePath` is then set to the selected path.
-- When the user saves the file via the Save or Save As menu commands, the contents of the textarea are written to the file, and the `dirty` state is set to `false`.
+- When the user saves the file via the Save or Save As menu commands, the contents of the editing area are written to the file, and the `dirty` state is set to `false`.
 - If the user attempts to create a new file, open an existing file via Open, or close the window while the current file has unsaved changes -- i.e., `dirty` is `true` -- the application prompts the user with a Yes/No/Cancel dialog to "Save changes?" before proceeding.
 
-## Notes
+## Command bar
+
+A text box in the upper right lets the user enter Origami commands.
+
+Pressing Return evaluates the current command in the context of the project root folder. (An empty command has no effect.)
+
+Each project records the 10 most recent commands for that project. Issuing a command makes it the most recent command.
+
+While the command bar has focus, the user can press the Up or Down arrow keys to navigate to, respectively, the previous or next command in the recent command list.
+
+## Result pane
+
+The result pane shows the result of the most recently-issued command: an HTML page, text file, etc.
+
+## Architecture
+
+Studio is an Electron application, so it includes both the Node runtime and the Chromium browser engine.
+
+Some important pieces:
+
+- Main process. This defines overall application behavior, including startup and shutdown.
+- Project. An object representing the state of an open project.
+- Project window. There is one Electron window for each open project.
+- Session. Each project window has an associated browser session.
+- Renderer. Each project window has an associated renderer process that can communicate with the main application or, through it, with the associated project or session.
+- Client page. The content of each project window is defined with an HTML page that loads client-side JavaScript.
+
+## Developer notes
 
 - The @weborigami/origami package has a dependency on "sharp", which has an optional dependency on "@emnapi/runtime". There are known issues using sharp in Electron; it appears that npm doesn't always install the @emnapi/runtime package, which causes electron-builder to fail. The package.json contains several workarounds for this, including explicitly installing @emnapi/runtime and sharp; setting `asar` options to unpack these packages; and using the `npmRebuild` and `buildDependenciesFromSource` options. It would be nice to find a cleaner solution in the future.
