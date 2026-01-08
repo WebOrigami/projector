@@ -7,8 +7,9 @@ html {
 }
 
 body {
+  --font-code: monospace;
   display: grid;
-  font-family: monospace;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 16px;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto 1fr;
@@ -23,17 +24,32 @@ input, textarea {
 
 .toolbar {
   background: #333;
-  display: grid;
+  color: #f8f8f8;
   padding: 0.25rem;
 }
 
-#command {
-  border: 1px solid #555;
-  padding: 0.25rem;
+#tabBar {
+  display: flex;
+
+  .tab {
+    background: none;
+    border: none;    
+    color: inherit;
+  }
+}
+
+#commandBar {
+  display: grid;
+  #command {
+    border: 1px solid #555;
+    font-family: var(--font-code);
+    padding: 0.25rem;
+  }
 }
 
 #editor {
   border: none;
+  font-family: var(--font-code);
   resize: none;
   margin: 0.5rem;
   outline: none;
