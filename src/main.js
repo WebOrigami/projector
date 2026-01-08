@@ -57,11 +57,11 @@ function createWindow(windowKey) {
   });
 
   // Disable caching via Chrome DevTools Protocol
-  window.webContents.debugger.attach("1.3");
-  window.webContents.debugger.sendCommand("Network.enable");
-  window.webContents.debugger.sendCommand("Network.setCacheDisabled", {
-    cacheDisabled: true,
-  });
+  // window.webContents.debugger.attach("1.3");
+  // window.webContents.debugger.sendCommand("Network.enable");
+  // window.webContents.debugger.sendCommand("Network.setCacheDisabled", {
+  //   cacheDisabled: true,
+  // });
 
   // Initialize project and associate it with window and session
   const project = new Project(window);
@@ -105,8 +105,7 @@ function createWindow(windowKey) {
         await fs.access(mostRecentFile);
 
         // Load the file
-        window.project.filePath = mostRecentFile;
-        await window.project.load();
+        await window.project.load(mostRecentFile);
         break;
       } catch (error) {
         // File doesn't exist, remove from recent files

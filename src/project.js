@@ -1,8 +1,9 @@
-import { Tree, toString } from "@weborigami/async-tree";
+import { Tree, isUnpackable, toString } from "@weborigami/async-tree";
 import {
   compile,
+  coreGlobals,
   moduleCache,
-  projectGlobals,
+  projectConfig,
   projectRoot,
 } from "@weborigami/language";
 import { initializeBuiltins } from "@weborigami/origami";
@@ -32,6 +33,7 @@ export default class Project {
     this._parent = null;
     this._refreshTimeout = null;
     this._result = null;
+    this._root = null;
     this._site = null;
   }
 
@@ -56,16 +58,6 @@ export default class Project {
   get filePath() {
     return this._filePath;
   }
-  set filePath(filePath) {
-    this._filePath = filePath;
-
-    // Recalculate these the next time they're requested
-    this._parent = null;
-    this._globals = null;
-    this._site = null;
-
-    updateWindowTitle(this.window);
-  }
 
   executeJavaScript(js) {
     return this.window.webContents.executeJavaScript(js);
@@ -75,101 +67,25 @@ export default class Project {
     return this.executeJavaScript(`command.focus();`);
   }
 
-  async getGlobals() {
-    if (this._globals || this.filePath === null) {
-      return this._globals;
-    }
-
-    // Need to add Origami builtins to the globals
-    initializeBuiltins();
-
-    const dirname = path.dirname(this.filePath);
-    this._globals = await projectGlobals(dirname);
-    return this._globals;
-  }
-
-  async getParent() {
-    if (this._parent || this.filePath === null) {
-      return this._parent;
-    }
-
-    // Traverse from the project root to the current directory.
-    const root = await this.getRoot();
-    const dirname = path.dirname(this.filePath);
-    const relative = path.relative(root.path, dirname);
-    this._parent = await Tree.traversePath(root, relative);
-    return this._parent;
-  }
-
-  async getRoot() {
-    if (this.filePath === null) {
-      return null;
-    }
-
-    const dirname = path.dirname(this.filePath);
-    const root = await projectRoot(dirname);
-    return root;
-  }
-
-  async getSite() {
-    if (this._site || this.filePath === null) {
-      return this._site;
-    }
-
-    const globals = await this.getGlobals();
-    if (globals?.$site) {
-      this._site = globals.$site;
-      return this._site;
-    }
-
-    // Look in project root for package.json
-    const root = await this.getRoot();
-    const packageJson = await root.get("package.json");
-    if (!packageJson) {
-      return null;
-    }
-
-    // Get the `start` script
-    let packageData;
-    try {
-      packageData = JSON.parse(toString(packageJson));
-    } catch (error) {
-      return null;
-    }
-    const startScript = packageData.scripts?.start;
-    if (!startScript) {
-      return null;
-    }
-
-    // Look for the first path to a .ori file in the start script
-    const sitePathRegex = /[A-Za-z0-9\/\.\-]*\.ori/;
-    const match = startScript.match(sitePathRegex);
-    if (!match) {
-      return null;
-    }
-
-    // Get the site file
-    const sitePath = match[0];
-    const siteFile = await Tree.traversePath(root, sitePath);
-    if (!siteFile) {
-      return null;
-    }
-
-    // Evaluate the site file to get the site object
-    let site;
-    try {
-      site = await siteFile.unpack();
-    } catch (error) {
-      return null;
-    }
-
-    this._site = site;
-    return this._site;
-  }
-
   // Read file
-  async load() {
-    this.text = await fs.readFile(this.filePath, "utf8");
+  async load(filePath) {
+    this._filePath = filePath;
+
+    if (filePath === null) {
+      this._root = null;
+      this._parent = null;
+      this._globals = null;
+      this._site = null;
+      this.text = "";
+    } else {
+      this._root = await getRoot(filePath);
+      this._parent = await getParent(this._root, filePath);
+      this._globals = await getGlobals(filePath);
+      this._site = await getSite(this._globals, this._root);
+      this.text = await fs.readFile(filePath, "utf8");
+    }
+
+    updateWindowTitle(this.window);
   }
 
   async nextCommand() {
@@ -225,6 +141,10 @@ export default class Project {
     await this.executeJavaScript(`reloadResult();`);
   }
 
+  get root() {
+    return this._root;
+  }
+
   restartRefreshTimeout() {
     if (this._refreshTimeout) {
       clearTimeout(this._refreshTimeout);
@@ -240,9 +160,6 @@ export default class Project {
   }
 
   async run() {
-    const globals = await this.getGlobals();
-    const parent = await this.getParent();
-
     let command = this.command;
     if (command) {
       recentCommands.addCommand(command);
@@ -253,9 +170,9 @@ export default class Project {
     try {
       this._result = await evaluate(command, {
         enableCaching: false,
-        globals,
+        globals: this._globals,
         mode: "shell",
-        parent,
+        parent: this._parent,
       });
     } catch (error) {
       this._result = error;
@@ -297,6 +214,10 @@ export default class Project {
     this.broadcastState();
   }
 
+  get site() {
+    return this._site;
+  }
+
   get text() {
     return this.state.text;
   }
@@ -324,4 +245,89 @@ async function evaluate(source, options = {}) {
   }
 
   return value;
+}
+
+async function getGlobals(filePath) {
+  // Need to add Origami builtins to the globals before getting them
+  initializeBuiltins();
+
+  const globals = await coreGlobals();
+
+  // Now get config. The config.ori file may require access to globals,
+  // which will obtain the core globals set above. Once we've got the
+  // config, we add it to the globals.
+  const dirname = path.dirname(filePath);
+  const config = await projectConfig(dirname);
+
+  const merged = Object.assign({}, globals, config);
+  return merged;
+}
+
+async function getParent(root, filePath) {
+  // Traverse from the project root to the current directory.
+  const dirname = path.dirname(filePath);
+  const relative = path.relative(root.path, dirname);
+  return await Tree.traversePath(root, relative);
+}
+
+async function getRoot(filePath) {
+  if (filePath === null) {
+    return null;
+  }
+  const dirname = path.dirname(filePath);
+  const root = await projectRoot(dirname);
+  return root;
+}
+
+async function getSite(globals, root) {
+  // Check for `$` global first
+  if (globals?.$) {
+    let site = globals.$;
+    if (isUnpackable(site)) {
+      site = await site.unpack();
+    }
+    return site;
+  }
+
+  // Look in project root for package.json
+  const packageJson = await root.get("package.json");
+  if (!packageJson) {
+    return null;
+  }
+
+  // Get the `start` script
+  let packageData;
+  try {
+    packageData = JSON.parse(toString(packageJson));
+  } catch (error) {
+    return null;
+  }
+  const startScript = packageData.scripts?.start;
+  if (!startScript) {
+    return null;
+  }
+
+  // Look for the first path to a .ori file in the start script
+  const sitePathRegex = /[A-Za-z0-9\/\.\-]*\.ori/;
+  const match = startScript.match(sitePathRegex);
+  if (!match) {
+    return null;
+  }
+
+  // Get the site file
+  const sitePath = match[0];
+  const siteFile = await Tree.traversePath(root, sitePath);
+  if (!siteFile) {
+    return null;
+  }
+
+  // Evaluate the site file to get the site object
+  let site;
+  try {
+    site = await siteFile.unpack();
+  } catch (error) {
+    return null;
+  }
+
+  return site;
 }

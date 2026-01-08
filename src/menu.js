@@ -151,8 +151,7 @@ async function fileOpen(_menuItem, window) {
   }
 
   // Load the selected file path
-  project.filePath = result.filePaths[0];
-  await project.load();
+  await project.load(result.filePaths[0]);
 
   // Add to recent files and update title
   await recentFiles.addFile(project.filePath);
@@ -185,10 +184,9 @@ async function fileOpenRecent(filePath, window) {
     return;
   }
 
-  project.filePath = filePath;
-  await project.load();
+  await project.load(filePath);
 
-  await recentFiles.addFile(project.filePath);
+  await recentFiles.addFile(filePath);
   createMenu();
 }
 
