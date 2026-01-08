@@ -1,4 +1,4 @@
-import { Tree, isUnpackable, toString } from "@weborigami/async-tree";
+import { Tree, isUnpackable } from "@weborigami/async-tree";
 import {
   compile,
   coreGlobals,
@@ -11,7 +11,6 @@ import fs from "node:fs/promises";
 import * as path from "node:path";
 import * as recentCommands from "./recentCommands.js";
 import updateState from "./renderer/updateState.js"; // Shared with renderer
-import updateWindowTitle from "./updateWindowTitle.js";
 
 const REFRESH_DELAY_MS = 250;
 
@@ -22,19 +21,23 @@ export default class Project {
   constructor(window) {
     this.window = window;
     // State shared with the renderer
-    this.state = {
-      command: "",
-      dirty: false,
-      // error: null,
-      text: "",
-    };
+    this.state = {};
     this._filePath = null;
     this._globals = null;
+    this._packageData = null;
     this._parent = null;
     this._refreshTimeout = null;
     this._result = null;
     this._root = null;
     this._site = null;
+
+    this.setState({
+      command: "",
+      dirty: false,
+      fileName: "",
+      projectName: "New project",
+      text: "",
+    });
   }
 
   broadcastState() {
@@ -75,17 +78,24 @@ export default class Project {
       this._root = null;
       this._parent = null;
       this._globals = null;
+      this._packageData = null;
       this._site = null;
       this.text = "";
     } else {
       this._root = await getRoot(filePath);
       this._parent = await getParent(this._root, filePath);
       this._globals = await getGlobals(filePath);
-      this._site = await getSite(this._globals, this._root);
+      this._packageData = await getPackageData(this._root);
+      this._site = await getSite(this._globals, this._root, this._packageData);
       this.text = await fs.readFile(filePath, "utf8");
     }
 
-    updateWindowTitle(this.window);
+    this.setState({
+      fileName: getFileName(filePath),
+      projectName: getProjectName(filePath, this._root, this._packageData),
+    });
+
+    updateWindow(this);
   }
 
   async nextCommand() {
@@ -205,12 +215,12 @@ export default class Project {
     this.state = newState;
 
     if (changed.dirty) {
-      updateWindowTitle(this.window);
       if (newState.dirty) {
         this.restartRefreshTimeout();
       }
     }
 
+    updateWindow(this);
     this.broadcastState();
   }
 
@@ -226,10 +236,6 @@ export default class Project {
       dirty: false, // Setting text resets dirty flag
       text,
     });
-  }
-
-  get title() {
-    return this.filePath ? path.basename(this.filePath) : "Untitled";
   }
 }
 
@@ -263,6 +269,26 @@ async function getGlobals(filePath) {
   return merged;
 }
 
+function getFileName(filePath) {
+  return filePath ? path.basename(filePath) : "Untitled";
+}
+
+function getProjectName(filePath, root, packageData) {
+  if (!filePath) {
+    return "New project";
+  }
+  if (packageData?.name) {
+    return packageData.name;
+  }
+  if (!root) {
+    return "";
+  }
+
+  // Name is the name of the root folder
+  const rootPath = root.path;
+  return path.basename(rootPath);
+}
+
 async function getParent(root, filePath) {
   // Traverse from the project root to the current directory.
   const dirname = path.dirname(filePath);
@@ -279,7 +305,12 @@ async function getRoot(filePath) {
   return root;
 }
 
-async function getSite(globals, root) {
+async function getPackageData(root) {
+  const packageJson = await root?.get("package.json");
+  return packageJson?.unpack();
+}
+
+async function getSite(globals, root, packageData) {
   // Check for `$` global first
   if (globals?.$) {
     let site = globals.$;
@@ -289,19 +320,12 @@ async function getSite(globals, root) {
     return site;
   }
 
-  // Look in project root for package.json
-  const packageJson = await root.get("package.json");
-  if (!packageJson) {
+  // Check if we have package.json data
+  if (!packageData) {
     return null;
   }
 
   // Get the `start` script
-  let packageData;
-  try {
-    packageData = JSON.parse(toString(packageJson));
-  } catch (error) {
-    return null;
-  }
   const startScript = packageData.scripts?.start;
   if (!startScript) {
     return null;
@@ -330,4 +354,12 @@ async function getSite(globals, root) {
   }
 
   return site;
+}
+
+// Reflect project state in the window
+function updateWindow(project) {
+  const { window, filePath, state } = project;
+  window.setTitle(state.projectName);
+  window.setRepresentedFilename(filePath ?? "");
+  window.setDocumentEdited(state.dirty);
 }

@@ -61,7 +61,7 @@ It is also possible to open a new Untitled file. Such a file will open in a proj
 ## Project friendly name
 
 * For an `origami` or `npm` project with a package.json at its root, the friendly name is the `name` field from that file.
-* For a new project, the friendly name is “New project”.
+* For a new project (no unsaved files), the friendly name is “New project”.
 * Otherwise the friendly name is the name of the project’s root folder. E.g., for `/Users/Jan/hello`, the friendly name is “hello”.
 
 # User interface

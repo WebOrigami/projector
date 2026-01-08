@@ -6,7 +6,6 @@ import { createMenu, promptSaveChanges } from "./menu.js";
 import Project from "./project.js";
 import { registerOrigamiProtocol } from "./protocol.js";
 import * as recentFiles from "./recentFiles.js";
-import updateWindowTitle from "./updateWindowTitle.js";
 
 ipcMain.on("previous-command", (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
@@ -70,7 +69,7 @@ function createWindow(windowKey) {
   ses.project = project;
 
   // Force initial window title so it doesn't show app name
-  updateWindowTitle(window);
+  // updateWindowTitle(window);
 
   // Handle window close event
   window.on("close", (event) => {
@@ -93,8 +92,6 @@ function createWindow(windowKey) {
 
   // Set window title after page loads
   window.webContents.on("did-finish-load", async () => {
-    updateWindowTitle(window);
-
     // Open most recent file if available
     const files = await recentFiles.getFiles();
     while (files.length > 0) {

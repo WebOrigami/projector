@@ -15,6 +15,15 @@ function render(state, changed) {
       command.value = state.command;
     }
   }
+
+  if (changed.dirty || changed.fileName) {
+    let name = state.fileName;
+    if (state.dirty) {
+      name += " ⚫︎";
+    }
+    fileName.textContent = name;
+  }
+
   if (changed.text) {
     console.log("Updating text");
     if (editor.value !== state.text) {
