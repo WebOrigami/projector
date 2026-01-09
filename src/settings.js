@@ -1,34 +1,66 @@
 import { app } from "electron";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import updateState from "./renderer/updateState.js";
 
 const settingsPath = join(app.getPath("userData"), "settings.json");
 
+let state = null;
+
 export async function loadSettings() {
+  if (state) {
+    return state;
+  }
+
   try {
     const data = await readFile(settingsPath, "utf8");
-    return JSON.parse(data);
+    state = JSON.parse(data);
   } catch (error) {
-    // Return default settings if file doesn't exist or is invalid
-    return {
-      recentFiles: [],
+    // File doesn't exist or is invalid
+    state = {
+      recentProjects: [],
+      projects: {},
     };
   }
+
+  return state;
 }
 
-export async function saveSettings(settings) {
+export async function saveProjectSettings(project) {
+  const { root, settings } = project;
+  if (!root?.path) {
+    return;
+  }
+
+  const { newProjects, changed } = updateState(state.projects, {
+    [root.path]: settings,
+  });
+  if (Object.keys(changed).length === 0) {
+    // No changes
+    return;
+  }
+
+  return saveSettings({
+    projects: newProjects,
+  });
+}
+
+export async function saveSettings(changes) {
+  if (!state) {
+    await loadSettings();
+  }
+
+  const { newState, changed } = updateState(state, changes);
+  if (Object.keys(changed).length === 0) {
+    // No changes
+    return;
+  }
+
+  state = newState;
+
+  // Save updated settings to disk
   try {
-    const json = JSON.stringify(settings, null, 2);
-
-    // Assert that JSON is valid
-    try {
-      JSON.parse(json);
-    } catch (error) {
-      debugger;
-      console.error("Invalid settings JSON:", error);
-      return;
-    }
-
+    const json = JSON.stringify(state, null, 2);
     await writeFile(settingsPath, json, "utf8");
   } catch (error) {
     console.error("Failed to save settings:", error);

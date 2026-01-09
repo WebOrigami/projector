@@ -37,7 +37,5 @@ export async function removeCommand(command) {
 }
 
 async function saveCommands(recentCommands) {
-  const settings = await loadSettings();
-  settings.recentCommands = recentCommands;
-  await saveSettings(settings);
+  await saveSettings({ recentCommands });
 }
