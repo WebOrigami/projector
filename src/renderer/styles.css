@@ -40,10 +40,15 @@ input, textarea {
 
 #commandBar {
   display: grid;
+
   #command {
     border: 1px solid #555;
     font-family: var(--font-code);
     padding: 0.25rem;
+
+    &.error {
+      background: pink;
+    }
   }
 }
 

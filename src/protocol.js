@@ -62,7 +62,7 @@ async function handleRequest(request, session) {
     resource = error;
   }
 
-  if (resource === undefined) {
+  if (resource == null) {
     return new Response(null, { status: 404 });
   }
   if (resource instanceof Error) {

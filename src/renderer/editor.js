@@ -24,6 +24,10 @@ function render(state, changed) {
     fileName.textContent = name;
   }
 
+  if (changed.error) {
+    command.classList.toggle("error", state.error);
+  }
+
   if (changed.text && state.textSource === "file") {
     console.log("server text changed");
     editor.value = state.text;

@@ -191,7 +191,7 @@ export default class Project {
       return;
     }
 
-    let error;
+    let errorFlag;
     try {
       this._result = await evaluate(command, {
         enableCaching: false,
@@ -199,13 +199,16 @@ export default class Project {
         mode: "shell",
         parent: this._parent,
       });
-      error = false;
+      errorFlag = false;
     } catch (error) {
-      error = true;
+      this._result = null;
+      errorFlag = true;
     }
 
-    this.setState({ error });
-    this.reload();
+    this.setState({ error: errorFlag });
+    if (!errorFlag) {
+      this.reload();
+    }
   }
 
   // Write text to file
@@ -371,12 +374,7 @@ async function getSite(globals, root, packageData) {
 function updateWindow(project) {
   const { window, filePath, state } = project;
 
-  let title = state.projectName;
-  if (state.error) {
-    title += " ❌";
-  }
-
-  window.setTitle(title);
+  window.setTitle(state.projectName);
   window.setRepresentedFilename(filePath ?? "");
   window.setDocumentEdited(state.dirty);
 }
