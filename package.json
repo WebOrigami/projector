@@ -16,9 +16,10 @@
     "sharp": "^0.34.5"
   },
   "scripts": {
-    "start": "electron .",
     "build": "electron-builder --mac",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "start": "electron .",
+    "test": "node --test --test-reporter=spec"
   },
   "build": {
     "appId": "org.weborigami.studio",
