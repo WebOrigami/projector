@@ -14,18 +14,27 @@ import updateState from "./renderer/updateState.js"; // Shared with renderer
 
 const REFRESH_DELAY_MS = 250;
 
-//
-// Project state
-//
+/**
+ * Project state
+ */
 export default class Project {
+  /**
+   * Create a Project instance.
+   *
+   * To be used, the project must be loaded via loadFile() or loadFolder();
+   * those methods are async so they can't be called from the constructor.
+   *
+   * @param {import("electron").BrowserWindow} window
+   */
   constructor(window) {
     this.window = window;
+
     // State shared with the renderer
     this.state = {};
+    this._fileParent = null;
     this._filePath = null;
     this._globals = null;
     this._packageData = null;
-    this._parent = null;
     this._refreshTimeout = null;
     this._result = null;
     this._root = null;
@@ -35,7 +44,7 @@ export default class Project {
       command: "",
       dirty: false,
       error: false,
-      fileName: "",
+      fileName: getFileName(this._filePath),
       projectName: "New project",
       text: "",
       textSource: "file",
@@ -72,49 +81,57 @@ export default class Project {
     return this.executeJavaScript(`command.focus();`);
   }
 
-  static async getRoot(filePath) {
-    if (filePath === null) {
-      return null;
-    }
-    const dirname = path.dirname(filePath);
-    const root = await projectRoot(dirname);
-    return root;
-  }
-
   // Read file
-  async load(filePath) {
-    this._filePath = filePath;
-
-    let text;
-    if (filePath === null) {
-      this._globals = null;
-
-      this._root = null;
-      this._parent = null;
-      this._packageData = null;
-      this._site = null;
-      text = "";
+  async loadFile(filePath) {
+    if (this._root === null) {
+      // Load project first
+      const folderPath = path.dirname(filePath);
+      await this.loadFolder(folderPath);
     } else {
-      // As of 2026-01-08, a timing issue requires that we get globals first so
-      // that we can then make calls like getParent or getPackageData that
-      // require that things like extension handlers are registered. This is
-      // because the language package caches the set of globals when it
-      // shouldn't.
-      this._globals = await getGlobals(filePath);
-
-      this._root = await Project.getRoot(filePath);
-      this._parent = await getParent(this._root, filePath);
-      this._packageData = await getPackageData(this._root);
-      this._site = await getSite(this._globals, this._root, this._packageData);
-      text = await fs.readFile(filePath, "utf8");
+      // Assert that filePath is contained within project root
+      const relative = path.relative(this._root.path, filePath);
+      if (relative.startsWith("..")) {
+        throw new Error(
+          `File "${filePath}" is outside of project root "${this._root.path}"`
+        );
+      }
     }
+
+    this._filePath = filePath;
+    this._fileParent = await getParent(this._root, filePath);
+
+    const text = await fs.readFile(filePath, "utf8");
 
     this.setState({
       dirty: false,
       fileName: getFileName(filePath),
-      projectName: getProjectName(filePath, this._root, this._packageData),
       text,
       textSource: "file",
+    });
+  }
+
+  /**
+   * The project root will be determined from the given folder path. This will
+   * typically be the expected root folder, but if a subfolder is provided, the
+   * actual root will be determined by looking up the folder hierarchy for the
+   * closest config.ori or package.json file.
+   */
+  async loadFolder(folderPath) {
+    // As of 2026-01-08, a timing issue requires that we get globals first so
+    // that we can then make calls like getParent or getPackageData that
+    // require that things like extension handlers are registered. This is
+    // because the language package caches the set of globals when it
+    // shouldn't.
+    this._globals = await getGlobals(folderPath);
+
+    // Look for root *after* getting globals
+    this._root = await projectRoot(folderPath);
+
+    this._packageData = await getPackageData(this._root);
+    this._site = await getSite(this._globals, this._root, this._packageData);
+
+    this.setState({
+      projectName: getProjectName(folderPath, this._root, this._packageData),
     });
 
     updateWindow(this);
@@ -206,7 +223,7 @@ export default class Project {
         enableCaching: false,
         globals: this._globals,
         mode: "shell",
-        parent: this._parent,
+        parent: this._fileParent,
       });
       errorFlag = false;
     } catch (error) {

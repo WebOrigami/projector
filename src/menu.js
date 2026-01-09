@@ -1,6 +1,6 @@
 import { app, dialog, Menu } from "electron";
 import { access } from "node:fs/promises";
-import { basename, dirname } from "node:path";
+import * as path from "node:path";
 import * as recentFiles from "./recentFiles.js";
 import * as windowManager from "./windowManager.js";
 
@@ -15,7 +15,7 @@ export async function createMenu() {
   if (paths.length > 0) {
     paths.forEach((filePath) => {
       recentFilesSubmenu.push({
-        label: basename(filePath),
+        label: path.basename(filePath),
         click: (_menuItem, window) => fileOpenRecent(filePath, window),
       });
     });
@@ -141,7 +141,7 @@ async function fileOpen(_menuItem, window) {
 
   // Set default directory to current document's directory if available
   if (project.filePath) {
-    dialogOptions.defaultPath = dirname(project.filePath);
+    dialogOptions.defaultPath = path.dirname(project.filePath);
   }
 
   const result = await dialog.showOpenDialog(window, dialogOptions);
@@ -230,15 +230,18 @@ export async function promptSaveChanges(window) {
     message: "Save changes?",
   });
 
+  let shouldContinue;
   if (result.response === 0) {
     // Save
     await window.project.save();
-    return true;
+    shouldContinue = true;
   } else if (result.response === 1) {
     // Don't Save
-    return true;
+    shouldContinue = true;
   } else {
     // Cancel
-    return false;
+    shouldContinue = false;
   }
+
+  return shouldContinue;
 }
