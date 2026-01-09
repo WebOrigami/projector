@@ -24,11 +24,9 @@ function render(state, changed) {
     fileName.textContent = name;
   }
 
-  if (changed.text) {
-    console.log("Updating text");
-    if (editor.value !== state.text) {
-      editor.value = state.text;
-    }
+  if (changed.text && state.textSource === "file") {
+    console.log("server text changed");
+    editor.value = state.text;
   }
 }
 
@@ -56,6 +54,7 @@ window.addEventListener("DOMContentLoaded", () => {
     window.api.updateState({
       dirty: true,
       text: editor.value,
+      textSource: "editor",
     });
     result.classList.add("pending");
   });

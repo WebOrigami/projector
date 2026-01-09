@@ -34,9 +34,11 @@ export default class Project {
     this.setState({
       command: "",
       dirty: false,
+      error: false,
       fileName: "",
       projectName: "New project",
       text: "",
+      textSource: "file",
     });
   }
 
@@ -74,6 +76,7 @@ export default class Project {
   async load(filePath) {
     this._filePath = filePath;
 
+    let text;
     if (filePath === null) {
       this._globals = null;
 
@@ -81,7 +84,7 @@ export default class Project {
       this._parent = null;
       this._packageData = null;
       this._site = null;
-      this.text = "";
+      text = "";
     } else {
       // As of 2026-01-08, a timing issue requires that we get globals first so
       // that we can then make calls like getParent or getPackageData that
@@ -94,12 +97,15 @@ export default class Project {
       this._parent = await getParent(this._root, filePath);
       this._packageData = await getPackageData(this._root);
       this._site = await getSite(this._globals, this._root, this._packageData);
-      this.text = await fs.readFile(filePath, "utf8");
+      text = await fs.readFile(filePath, "utf8");
     }
 
     this.setState({
+      dirty: false,
       fileName: getFileName(filePath),
       projectName: getProjectName(filePath, this._root, this._packageData),
+      text,
+      textSource: "file",
     });
 
     updateWindow(this);
@@ -181,9 +187,11 @@ export default class Project {
     if (command) {
       recentCommands.addCommand(command);
     } else {
-      command = `<${this.filePath}>`;
+      // command = `<${this.filePath}>`;
+      return;
     }
 
+    let error;
     try {
       this._result = await evaluate(command, {
         enableCaching: false,
@@ -191,10 +199,12 @@ export default class Project {
         mode: "shell",
         parent: this._parent,
       });
+      error = false;
     } catch (error) {
-      this._result = error;
+      error = true;
     }
 
+    this.setState({ error });
     this.reload();
   }
 
@@ -237,12 +247,6 @@ export default class Project {
 
   get text() {
     return this.state.text;
-  }
-  set text(text) {
-    this.setState({
-      dirty: false, // Setting text resets dirty flag
-      text,
-    });
   }
 }
 
@@ -366,7 +370,13 @@ async function getSite(globals, root, packageData) {
 // Reflect project state in the window
 function updateWindow(project) {
   const { window, filePath, state } = project;
-  window.setTitle(state.projectName);
+
+  let title = state.projectName;
+  if (state.error) {
+    title += " ❌";
+  }
+
+  window.setTitle(title);
   window.setRepresentedFilename(filePath ?? "");
   window.setDocumentEdited(state.dirty);
 }
