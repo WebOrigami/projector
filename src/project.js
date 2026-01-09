@@ -72,6 +72,15 @@ export default class Project {
     return this.executeJavaScript(`command.focus();`);
   }
 
+  static async getRoot(filePath) {
+    if (filePath === null) {
+      return null;
+    }
+    const dirname = path.dirname(filePath);
+    const root = await projectRoot(dirname);
+    return root;
+  }
+
   // Read file
   async load(filePath) {
     this._filePath = filePath;
@@ -93,7 +102,7 @@ export default class Project {
       // shouldn't.
       this._globals = await getGlobals(filePath);
 
-      this._root = await getRoot(filePath);
+      this._root = await Project.getRoot(filePath);
       this._parent = await getParent(this._root, filePath);
       this._packageData = await getPackageData(this._root);
       this._site = await getSite(this._globals, this._root, this._packageData);
@@ -317,15 +326,6 @@ async function getParent(root, filePath) {
   const dirname = path.dirname(filePath);
   const relative = path.relative(root.path, dirname);
   return await Tree.traversePath(root, relative);
-}
-
-async function getRoot(filePath) {
-  if (filePath === null) {
-    return null;
-  }
-  const dirname = path.dirname(filePath);
-  const root = await projectRoot(dirname);
-  return root;
 }
 
 async function getPackageData(root) {

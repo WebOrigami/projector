@@ -2,6 +2,7 @@ import { app, dialog, Menu } from "electron";
 import { access } from "node:fs/promises";
 import { basename, dirname } from "node:path";
 import * as recentFiles from "./recentFiles.js";
+import * as windowManager from "./windowManager.js";
 
 export async function createMenu() {
   // Build Open Recent submenu
@@ -150,12 +151,9 @@ async function fileOpen(_menuItem, window) {
     return;
   }
 
-  // Load the selected file path
-  await project.load(result.filePaths[0]);
-
-  // Add to recent files and update title
-  await recentFiles.addFile(project.filePath);
-  createMenu();
+  // Open the selected file
+  const selectedPath = result.filePaths[0];
+  await windowManager.openFile(selectedPath);
 }
 
 async function fileOpenRecent(filePath, window) {
@@ -180,14 +178,11 @@ async function fileOpenRecent(filePath, window) {
     });
     // Remove from recent files
     await recentFiles.removeFile(filePath);
-    createMenu(menuCallbacks);
+    await createMenu(menuCallbacks);
     return;
   }
 
-  await project.load(filePath);
-
-  await recentFiles.addFile(filePath);
-  createMenu();
+  await windowManager.openFile(filePath);
 }
 
 export async function fileRun(_menuItem, window) {

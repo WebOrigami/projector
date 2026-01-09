@@ -1,11 +1,10 @@
 import { app, BrowserWindow, ipcMain, session } from "electron";
-import fs from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createMenu, promptSaveChanges } from "./menu.js";
 import Project from "./project.js";
 import { registerOrigamiProtocol } from "./protocol.js";
-import * as recentFiles from "./recentFiles.js";
+import * as windowManager from "./windowManager.js";
 
 ipcMain.on("previous-command", (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
@@ -92,26 +91,7 @@ function createWindow(windowKey) {
 
   // Set window title after page loads
   window.webContents.on("did-finish-load", async () => {
-    // Open most recent file if available
-    const files = await recentFiles.getFiles();
-    while (files.length > 0) {
-      const mostRecentFile = files.at(-1);
-
-      // Check if file still exists
-      try {
-        await fs.access(mostRecentFile);
-
-        // Load the file
-        await window.project.load(mostRecentFile);
-        break;
-      } catch (error) {
-        // File doesn't exist, remove from recent files
-        files.pop();
-      }
-    }
-
-    // Save any changes to recent files list
-    await recentFiles.saveFiles(files);
+    windowManager.restoreProjectWindows();
 
     // Broadcast initial state
     window.project.broadcastState();
