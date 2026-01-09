@@ -212,8 +212,7 @@ async function fileSaveAs(_menuItem, window) {
   }
 
   // Update the document's path and save
-  window.project.filePath = result.filePath;
-  const saved = await window.project.save();
+  const saved = await window.project.saveAs(result.filePath);
   if (saved) {
     // Add to recent files
     await recentFiles.addFile(result.filePath);

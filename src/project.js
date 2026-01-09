@@ -230,6 +230,15 @@ export default class Project {
     return true;
   }
 
+  async saveAs(filePath) {
+    // Hack: set the filePath first so that save() works correctly
+    this._filePath = filePath;
+    const saved = await this.save();
+    // Then reload the project from the new file path
+    await this.load(filePath);
+    return saved;
+  }
+
   async setState(changes) {
     const { newState, changed } = updateState(this.state, changes);
     this.state = newState;
