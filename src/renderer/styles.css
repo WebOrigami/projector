@@ -37,8 +37,11 @@ input, textarea {
     background: none;
     border: none;
     display: grid;
-    padding: 0;
-    margin-right: 0.5rem;
+    padding: 0 0.25rem;
+
+    &:hover {
+      background: #444;
+    }
   }
 
   .tab {
