@@ -1,6 +1,6 @@
 {
   "name": "origami-studio",
-  "productName": "Origami Transform",
+  "productName": "Origami Mirror",
   "version": "1.0.0",
   "description": "Origami project editor",
   "license": "MIT",
@@ -23,7 +23,7 @@
   },
   "build": {
     "appId": "org.weborigami.studio",
-    "productName": "Origami Transform",
+    "productName": "Origami Mirror",
     "mac": {
       "target": "dmg",
       "category": "public.app-category.developer-tools"
