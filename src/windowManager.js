@@ -39,6 +39,16 @@ async function createProjectWindow(rootPath) {
     },
   });
 
+  // Apply cascade offset after window is created
+  const CASCADE_OFFSET = 22;
+  const windows = BrowserWindow.getAllWindows();
+  const offset = (windows.length - 1) * CASCADE_OFFSET;
+
+  if (offset > 0) {
+    const [x, y] = window.getPosition();
+    window.setPosition(x + offset, y + offset);
+  }
+
   // Disable caching via Chrome DevTools Protocol
   // window.webContents.debugger.attach("1.3");
   // window.webContents.debugger.sendCommand("Network.enable");
