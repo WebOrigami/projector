@@ -7,7 +7,8 @@ html {
 }
 
 body {
-  --font-code: monospace;
+  --font-code: Consolas, Monaco, monospace;
+  --text-color: #f8f8f8;
   display: grid;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 16px;
@@ -23,8 +24,8 @@ input, textarea {
 }
 
 .toolbar {
-  background: #333;
-  color: #f8f8f8;
+  background: #222;
+  color: var(--text-color);
   padding: 0.25rem;
 }
 
@@ -40,11 +41,11 @@ input, textarea {
 
 #commandBar {
   display: grid;
+  padding-left: 0; /* to align left edge with result pane */
 
   #command {
     border: 1px solid #555;
     font-family: var(--font-code);
-    padding: 0.25rem;
 
     &.error {
       background: pink;
@@ -53,11 +54,13 @@ input, textarea {
 }
 
 #editor {
+  background: #333;
   border: none;
   font-family: var(--font-code);
+  color: var(--text-color);
   resize: none;
-  margin: 0.5rem;
   outline: none;
+  padding: 0.5rem;
 }
 
 #result {

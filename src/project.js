@@ -401,6 +401,5 @@ function updateWindow(project) {
   const { window, filePath, state } = project;
 
   window.setTitle(state.projectName);
-  window.setRepresentedFilename(filePath ?? "");
   window.setDocumentEdited(state.dirty);
 }
