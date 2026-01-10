@@ -32,6 +32,15 @@ input, textarea {
 #tabBar {
   display: flex;
 
+  #fileOpen {
+    align-items: center;
+    background: none;
+    border: none;
+    display: grid;
+    padding: 0;
+    margin-right: 0.5rem;
+  }
+
   .tab {
     background: none;
     border: none;    

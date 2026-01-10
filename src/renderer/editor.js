@@ -83,6 +83,10 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  fileOpen.addEventListener("click", () => {
+    window.api.openFileDialog();
+  });
+
   result.addEventListener("load", () => {
     result.classList.remove("pending");
 

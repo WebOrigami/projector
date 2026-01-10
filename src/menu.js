@@ -150,7 +150,7 @@ async function fileNew(_menuItem, window) {
   project.text = "";
 }
 
-async function fileOpen(_menuItem, window) {
+export async function fileOpen(_menuItem, window) {
   const dialogOptions = {
     properties: ["openFile"],
   };

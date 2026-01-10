@@ -1,18 +1,24 @@
 import { app, BrowserWindow, ipcMain } from "electron";
+import { fileOpen } from "./menu.js";
 import * as windowManager from "./windowManager.js";
 
 // Main application startup, shutdown, and interprocess communication
+
+ipcMain.handle("file-open-dialog", async (event) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  await fileOpen(null, window);
+});
+
+ipcMain.on("next-command", (event) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  window.project.nextCommand();
+});
 
 ipcMain.on("previous-command", (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
   if (window?.project) {
     window.project.previousCommand();
   }
-});
-
-ipcMain.on("next-command", (event) => {
-  const window = BrowserWindow.fromWebContents(event.sender);
-  window.project.nextCommand();
 });
 
 ipcMain.on("run-command", async (event) => {
