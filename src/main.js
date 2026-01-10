@@ -34,3 +34,8 @@ app.whenReady().then(async () => {
   app.show();
   app.focus();
 });
+
+app.on("window-all-closed", () => {
+  // Don't quit the app when all windows are closed
+  // User must explicitly quit via Cmd+Q or menu
+});

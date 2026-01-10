@@ -35,7 +35,7 @@ export async function createMenu() {
   }
 
   // Do we have an open project?
-  const projectOpen = BrowserWindow.getAllWindows().length > 0;
+  const isProjectOpen = BrowserWindow.getAllWindows().length > 0;
 
   const template = [
     {
@@ -57,7 +57,7 @@ export async function createMenu() {
           label: "New",
           accelerator: "CmdOrCtrl+N",
           click: fileNew,
-          enabled: projectOpen,
+          enabled: isProjectOpen,
         },
         {
           label: "Open File…",
@@ -74,18 +74,21 @@ export async function createMenu() {
           submenu: recentFilesSubmenu,
         },
         { type: "separator" },
-        { role: "close" },
+        {
+          role: "close",
+          enabled: isProjectOpen,
+        },
         {
           label: "Save",
           accelerator: "CmdOrCtrl+S",
           click: fileSave,
-          enabled: projectOpen,
+          enabled: isProjectOpen,
         },
         {
           label: "Save As…",
           accelerator: "CmdOrCtrl+Shift+S",
           click: fileSaveAs,
-          enabled: projectOpen,
+          enabled: isProjectOpen,
         },
         // { type: "separator" },
         // { label: "Run", accelerator: "CmdOrCtrl+Enter", click: fileRun },
@@ -93,7 +96,7 @@ export async function createMenu() {
     },
     {
       label: "Edit",
-      enabled: projectOpen,
+      enabled: isProjectOpen,
       submenu: [
         { role: "undo" },
         { role: "redo" },
@@ -112,8 +115,17 @@ export async function createMenu() {
     },
     {
       label: "Debug",
-      enabled: projectOpen,
+      enabled: isProjectOpen,
       submenu: [{ role: "toggleDevTools" }],
+    },
+    {
+      role: "window",
+      submenu: [
+        { role: "minimize" },
+        { role: "zoom" },
+        { type: "separator" },
+        { role: "front" },
+      ],
     },
   ];
 
@@ -233,6 +245,8 @@ function focusCommand(_menuItem, window) {
 
 async function folderOpen(_menuItem, window) {
   const result = await dialog.showOpenDialog(window, {
+    createDirectory: true,
+    message: "Select a project folder",
     properties: ["openDirectory"],
   });
 
@@ -241,7 +255,7 @@ async function folderOpen(_menuItem, window) {
     return;
   }
 
-  // Open the selected file
+  // Open the selected folder
   const folderPath = result.filePaths[0];
   await windowManager.openProject(folderPath);
 }
