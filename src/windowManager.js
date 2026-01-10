@@ -89,6 +89,7 @@ async function createProjectWindow(rootPath) {
       // settings to remove this window from the open projects.
       await saveProjectWindows();
     }
+    await createMenu();
   });
 
   return window;

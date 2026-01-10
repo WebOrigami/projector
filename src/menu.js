@@ -75,6 +75,7 @@ export async function createMenu() {
         },
         { type: "separator" },
         {
+          label: "Close",
           role: "close",
           enabled: isProjectOpen,
         },
