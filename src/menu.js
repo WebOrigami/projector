@@ -1,4 +1,4 @@
-import { app, dialog, Menu } from "electron";
+import { app, BrowserWindow, dialog, Menu } from "electron";
 import { access } from "node:fs/promises";
 import * as path from "node:path";
 import * as recentFiles from "./recentFiles.js";
@@ -34,6 +34,9 @@ export async function createMenu() {
     });
   }
 
+  // Do we have an open project?
+  const projectOpen = BrowserWindow.getAllWindows().length > 0;
+
   const template = [
     {
       label: app.name,
@@ -54,11 +57,17 @@ export async function createMenu() {
           label: "New",
           accelerator: "CmdOrCtrl+N",
           click: fileNew,
+          enabled: projectOpen,
         },
         {
-          label: "Open…",
+          label: "Open File…",
           accelerator: "CmdOrCtrl+O",
           click: fileOpen,
+        },
+        {
+          label: "Open Folder…",
+          accelerator: "CmdOrCtrl+Shift+O",
+          click: folderOpen,
         },
         {
           label: "Open Recent",
@@ -70,11 +79,13 @@ export async function createMenu() {
           label: "Save",
           accelerator: "CmdOrCtrl+S",
           click: fileSave,
+          enabled: projectOpen,
         },
         {
           label: "Save As…",
           accelerator: "CmdOrCtrl+Shift+S",
           click: fileSaveAs,
+          enabled: projectOpen,
         },
         // { type: "separator" },
         // { label: "Run", accelerator: "CmdOrCtrl+Enter", click: fileRun },
@@ -82,6 +93,7 @@ export async function createMenu() {
     },
     {
       label: "Edit",
+      enabled: projectOpen,
       submenu: [
         { role: "undo" },
         { role: "redo" },
@@ -100,6 +112,7 @@ export async function createMenu() {
     },
     {
       label: "Debug",
+      enabled: projectOpen,
       submenu: [{ role: "toggleDevTools" }],
     },
   ];
@@ -125,45 +138,42 @@ async function fileNew(_menuItem, window) {
 }
 
 async function fileOpen(_menuItem, window) {
-  const project = window.project;
-
-  // Check if there are unsaved changes
-  if (project.dirty) {
-    const shouldContinue = await promptSaveChanges(window);
-    if (!shouldContinue) {
-      return;
-    }
-  }
-
   const dialogOptions = {
     properties: ["openFile"],
   };
 
-  // Set default directory to current document's directory if available
-  if (project.filePath) {
-    dialogOptions.defaultPath = path.dirname(project.filePath);
+  if (window) {
+    // Check if there are unsaved changes
+    if (window.project.dirty) {
+      const shouldContinue = await promptSaveChanges(window);
+      if (!shouldContinue) {
+        return;
+      }
+    }
+    if (window.project.filePath) {
+      dialogOptions.defaultPath = path.dirname(window.project.filePath);
+    }
   }
 
   const result = await dialog.showOpenDialog(window, dialogOptions);
-
   if (result.canceled) {
     // User canceled
     return;
   }
 
   // Open the selected file
-  const selectedPath = result.filePaths[0];
-  await windowManager.openFile(selectedPath);
+  const filePath = result.filePaths[0];
+  await windowManager.openFile(filePath);
 }
 
 async function fileOpenRecent(filePath, window) {
-  const project = window.project;
-
-  // Check if there are unsaved changes
-  if (project.dirty) {
-    const shouldContinue = await promptSaveChanges(window);
-    if (!shouldContinue) {
-      return;
+  if (window) {
+    // Check if there are unsaved changes
+    if (window.project.dirty) {
+      const shouldContinue = await promptSaveChanges(window);
+      if (!shouldContinue) {
+        return;
+      }
     }
   }
 
@@ -177,8 +187,8 @@ async function fileOpenRecent(filePath, window) {
       detail: `The file "${filePath}" could not be found.`,
     });
     // Remove from recent files
+    // Menu will be rebuilt on file open
     await recentFiles.removeFile(filePath);
-    await createMenu(menuCallbacks);
     return;
   }
 
@@ -219,6 +229,21 @@ async function fileSaveAs(_menuItem, window) {
 
 function focusCommand(_menuItem, window) {
   window.project.focusCommand();
+}
+
+async function folderOpen(_menuItem, window) {
+  const result = await dialog.showOpenDialog(window, {
+    properties: ["openDirectory"],
+  });
+
+  if (result.canceled) {
+    // User canceled
+    return;
+  }
+
+  // Open the selected file
+  const folderPath = result.filePaths[0];
+  await windowManager.openProject(folderPath);
 }
 
 export async function promptSaveChanges(window) {

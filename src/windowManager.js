@@ -1,5 +1,5 @@
 import { projectRoot } from "@weborigami/language";
-import { BrowserWindow, session } from "electron";
+import { app, BrowserWindow, session } from "electron";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createMenu } from "./menu.js";
@@ -9,6 +9,7 @@ import * as recentFiles from "./recentFiles.js";
 import * as settings from "./settings.js";
 
 let windowCount = 0;
+let quitting = false; // Distinguish app quit vs window close
 
 // Main application state and window management
 
@@ -55,32 +56,28 @@ async function createProjectWindow(rootPath) {
 
   // Set window title after page loads
   window.webContents.on("did-finish-load", async () => {
-    await restoreProjectWindows();
-
     // Broadcast initial state
     window.project.broadcastState();
-
-    await createMenu();
   });
 
-  // Handle window close event
+  // If the user closes the window while the open file is dirty, prompt to save.
   window.on("close", async (event) => {
     if (window.project.dirty) {
-      // Prevent the window from closing immediately
-      event.preventDefault();
-
-      // Show save prompt and handle the response
+      // Show save prompt
       const shouldContinue = await promptSaveChanges(window);
-      if (shouldContinue) {
-        // Mark as clean to avoid infinite loop, then close
-        window.project.dirty = false;
-        window.close();
+      if (!shouldContinue) {
+        // Prevent the window from closing
+        event.preventDefault();
       }
-    } else {
-      // Window is about to close - save remaining windows after this one closes
-      setImmediate(() => {
-        saveProjectWindows();
-      });
+    }
+  });
+
+  // Clean up after the window is closed
+  window.on("closed", async () => {
+    if (!quitting) {
+      // The user is closing the window, not quitting the app. We update the
+      // settings to remove this window from the open projects.
+      await saveProjectWindows();
     }
   });
 
@@ -126,6 +123,7 @@ export async function openProject(rootPath) {
   } else {
     // Create a new window for a new Project
     const window = await createProjectWindow(rootPath);
+    await saveProjectWindows();
     return window.project;
   }
 }
@@ -141,6 +139,8 @@ export async function restoreProjectWindows() {
       console.error(`Failed to restore project: ${rootPath}`, error);
     }
   }
+
+  await createMenu();
 }
 
 // At shutdown, save project windows to settings
@@ -159,3 +159,7 @@ export async function saveProjectWindows() {
     openProjects,
   });
 }
+
+app.on("before-quit", () => {
+  quitting = true;
+});

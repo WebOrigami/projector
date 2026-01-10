@@ -29,8 +29,8 @@ ipcMain.handle("state:update", (_evt, changes) => {
 
 app.whenReady().then(async () => {
   await windowManager.restoreProjectWindows();
-});
 
-app.on("window-all-closed", () => {
-  app.quit();
+  // Bring the app to the foreground; only works if we have windows open
+  app.show();
+  app.focus();
 });

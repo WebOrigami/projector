@@ -18,11 +18,11 @@ The focus at this early stage is confirming the idea’s viability and working o
 
 The application should be sufficient to perform basic editing of Origami projects. You should be able to:
 
-* Install the application on macOS.
-* Open and save text files.
-* Issue Origami commands and see the results immediately appear in the result pane.
-* Edit a text file and automatically reload the result.
-* If the displayed HTML contains links, browse within the local site.
+- Install the application on macOS.
+- Open and save text files.
+- Issue Origami commands and see the results immediately appear in the result pane.
+- Edit a text file and automatically reload the result.
+- If the displayed HTML contains links, browse within the local site.
 
 Out of scope for now:
 
@@ -43,8 +43,8 @@ Out of scope for now:
 
 Studio’s user model is organized around:
 
-* Projects. A project is a folder tree of related files. Studio identifies projects in several ways; see below.
-* Files. Studio can edit text files: plain text, markdown, CSS, JSON, YAML, JavaScript, Origami, etc.
+- Projects. A project is a folder tree of related files. Studio identifies projects in several ways; see below.
+- Files. Studio can edit text files: plain text, markdown, CSS, JSON, YAML, JavaScript, Origami, etc.
 
 Files are always viewed in the context of a project.
 
@@ -60,9 +60,9 @@ It is also possible to open a new Untitled file. Such a file will open in a proj
 
 ## Project friendly name
 
-* For an `origami` or `npm` project with a package.json at its root, the friendly name is the `name` field from that file.
-* For a new project (no unsaved files), the friendly name is “New project”.
-* Otherwise the friendly name is the name of the project’s root folder. E.g., for `/Users/Jan/hello`, the friendly name is “hello”.
+- For an `origami` or `npm` project with a package.json at its root, the friendly name is the `name` field from that file.
+- For a new project (no unsaved files), the friendly name is “New project”.
+- Otherwise the friendly name is the name of the project’s root folder. E.g., for `/Users/Jan/hello`, the friendly name is “hello”.
 
 # User interface
 
@@ -87,8 +87,8 @@ The application menu bar offers the standard commands for a text editor.
 ### File menu
 
 - **New**
-- **Open…**. Shows a standard File Open dialog to pick an existing file.
-- **Open Folder**. Shows a standard File Open dialog to pick an existing folder.
+- **Open File…**. Shows a standard File Open dialog to pick an existing file.
+- **Open Folder…**. Shows a standard File Open dialog to pick an existing folder.
 - **Open Recent Project**. A submenu showing the friendly names of recently opened projects.
 - **Close**. Closes the current window.
 - **Save**
