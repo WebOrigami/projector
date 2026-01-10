@@ -69,7 +69,20 @@ async function handleRequest(request, session) {
     return respondWithError(resource);
   }
 
-  const response = await constructResponse(request, resource);
+  let requestForResponse = request;
+  if (url.pathname === "/_result") {
+    // Use command as URL, might be able to use file extension to determine
+    // media type
+    requestForResponse = Object.create(request);
+    Object.defineProperty(requestForResponse, "url", {
+      value: new URL(session.project.command, "origami://").toString(),
+      writable: false,
+      enumerable: true,
+      configurable: true,
+    });
+  }
+
+  const response = await constructResponse(requestForResponse, resource);
   if (response) {
     // Disable caching
     Object.assign(response.headers, {
