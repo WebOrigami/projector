@@ -1,4 +1,4 @@
-import { projectRoot } from "@weborigami/language";
+import { projectRootFromPath } from "@weborigami/language";
 import { app, BrowserWindow, session } from "electron";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -111,7 +111,7 @@ function getWindowForProject(rootPath) {
 export async function openFile(filePath) {
   // Open the project
   const folderPath = path.dirname(filePath);
-  const root = await projectRoot(folderPath);
+  const root = await projectRootFromPath(folderPath);
   const project = await openProject(root.path);
 
   // Load the selected file

@@ -4,7 +4,7 @@ import {
   coreGlobals,
   moduleCache,
   projectConfig,
-  projectRoot,
+  projectRootFromPath,
 } from "@weborigami/language";
 import { initializeBuiltins } from "@weborigami/origami";
 import fs from "node:fs/promises";
@@ -125,7 +125,7 @@ export default class Project {
     this._globals = await getGlobals(folderPath);
 
     // Look for root *after* getting globals
-    this._root = await projectRoot(folderPath);
+    this._root = await projectRootFromPath(folderPath);
 
     this._packageData = await getPackageData(this._root);
     this._site = await getSite(this._globals, this._root, this._packageData);
