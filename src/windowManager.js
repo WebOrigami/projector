@@ -11,11 +11,13 @@ import * as settings from "./settings.js";
 let windowCount = 0;
 let quitting = false; // Distinguish app quit vs window close
 
-// Main application state and window management
-
-export async function closeProject(window) {}
+/**
+ * Main application state and window management
+ */
 
 async function createProjectWindow(rootPath) {
+  // Load the preload.js script, which will expose the safe IPC API to the
+  // renderer process
   const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
   const preload = path.join(moduleDirectory, "preload.js");
 
@@ -56,18 +58,17 @@ async function createProjectWindow(rootPath) {
   //   cacheDisabled: true,
   // });
 
+  // Create the Project instance for this window
   const project = new Project(window);
   await project.loadFolder(rootPath);
 
   window.project = project;
   windowSession.project = project;
 
-  window.loadURL("origami://app/renderer/index.html");
-
-  // Set window title after page loads
+  // Broadcast state after page loads
   window.webContents.on("did-finish-load", async () => {
     // Broadcast initial state
-    window.project.broadcastState();
+    await window.project.broadcastState();
   });
 
   // If the user closes the window while the open file is dirty, prompt to save.
@@ -91,6 +92,9 @@ async function createProjectWindow(rootPath) {
     }
     await createMenu();
   });
+
+  // Load the renderer HTML file via our custom protocol
+  await window.loadURL("origami://app/renderer/index.html");
 
   return window;
 }

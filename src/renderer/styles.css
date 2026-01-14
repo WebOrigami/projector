@@ -113,10 +113,6 @@ input, textarea {
     height: 100%;
     /* transition: opacity 0.3s; */
     width: 100%;
-    
-    &.pending {
-      /* opacity: 0.5; */
-    }
   }
 
   #error {

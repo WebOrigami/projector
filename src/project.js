@@ -10,6 +10,7 @@ import {
 import { initializeBuiltins } from "@weborigami/origami";
 import fs from "node:fs/promises";
 import * as path from "node:path";
+import * as menu from "./menu.js";
 import recent from "./recent.js";
 import * as recentCommands from "./recentCommands.js";
 import updateState from "./renderer/updateState.js"; // Shared with renderer
@@ -58,11 +59,14 @@ export default class Project {
     });
   }
 
-  broadcastState() {
-    // We want a copy and can only send structured-clonable data anyway, so we
-    // use structuredClone to copy the state.
+  /**
+   * Send state to page
+   */
+  async broadcastState() {
+    // We can only send structured-clonable data, so we use structuredClone to
+    // copy the state.
     const snapshot = structuredClone(this.state);
-    return this.window.webContents.send("state:changed", snapshot);
+    return this.window.webContents.send("invoke-page", "setState", snapshot);
   }
 
   get command() {
@@ -84,8 +88,17 @@ export default class Project {
     return this.window.webContents.executeJavaScript(js);
   }
 
-  focusCommand() {
-    return this.executeJavaScript(`command.focus();`);
+  // The page calls this on the project; forward to menu
+  async fileOpen() {
+    await menu.fileOpen(null, this.window);
+  }
+
+  async focusCommand() {
+    return this.invokePageMethod("focusCommand");
+  }
+
+  async invokePageMethod(...args) {
+    await this.window.webContents.send("invoke-page", ...args);
   }
 
   // Read file
@@ -201,11 +214,11 @@ export default class Project {
     this.run();
   }
 
+  /**
+   * Tell page to reload the result
+   */
   async reload() {
-    // Force iframe to reload. Because the frame's origin will be different than
-    // the file: origin for the main window, the simplest way to reload it is to
-    // reset its src attribute.
-    await this.executeJavaScript(`reloadResult();`);
+    await this.invokePageMethod("reloadResult");
   }
 
   get root() {
@@ -302,7 +315,7 @@ export default class Project {
     }
 
     updateWindow(this);
-    this.broadcastState();
+    await this.broadcastState();
   }
 
   // Return the project settings that should be persisted

@@ -50,7 +50,7 @@ function render(state, changed) {
       button.textContent = getFileName(filePath);
       button.title = filePath;
       button.addEventListener("click", () => {
-        window.api.openFile(filePath);
+        window.api.invokeProjectMethod("loadFile", filePath);
       });
       recentButtons.appendChild(button);
     });
@@ -61,77 +61,92 @@ function render(state, changed) {
   }
 }
 
-function setState(changes) {
-  const { newState, changed } = updateState(state, changes);
-  state = newState;
-  render(state, changed);
-}
+/**
+ * Add methods to window so main process can call them
+ */
+Object.assign(window, {
+  focusCommand() {
+    command.focus();
+  },
 
-window.reloadResult = () => {
-  // Save scroll position
-  const lastScroll = {
-    x: result.contentWindow.scrollX,
-    y: result.contentWindow.scrollY,
-  };
-  setState({ lastScroll });
+  reloadResult() {
+    // Save scroll position
+    const lastScroll = {
+      x: result.contentWindow.scrollX,
+      y: result.contentWindow.scrollY,
+    };
+    setState({ lastScroll });
 
-  // Force iframe to reload
-  result.src = "origami://app/_result";
-};
+    // Force iframe to reload
+    result.src = "origami://app/_result";
+  },
+
+  setState(changes) {
+    const { newState, changed } = updateState(state, changes);
+    state = newState;
+    render(state, changed);
+  },
+});
 
 window.addEventListener("DOMContentLoaded", () => {
   editor.addEventListener("input", () => {
     // Notify main process that the content has changed
-    window.api.updateState({
+    window.api.invokeProjectMethod("setState", {
       dirty: true,
       text: editor.value,
       textSource: "editor",
     });
-    result.classList.add("pending");
   });
 
   command.addEventListener("input", () => {
     // Notify main process that the command has changed
-    window.api.updateState({ command: command.value });
+    window.api.invokeProjectMethod("setState", { command: command.value });
   });
+
   command.addEventListener("keydown", (event) => {
     if (
       event.key === "Enter" &&
       !(event.shiftKey || event.ctrlKey || event.altKey)
     ) {
       event.preventDefault();
-      window.api.runCommand();
+      window.api.invokeProjectMethod("run");
     } else if (event.key === "ArrowDown") {
       event.preventDefault();
-      window.api.nextCommand();
+      window.api.invokeProjectMethod("nextCommand");
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
-      window.api.previousCommand();
+      window.api.invokeProjectMethod("previousCommand");
     }
   });
 
   fileOpen.addEventListener("click", () => {
-    window.api.openFileDialog();
+    window.api.invokeProjectMethod("fileOpen");
   });
 
   result.addEventListener("load", () => {
-    result.classList.remove("pending");
-
-    // Give frame a tick to finishing layout, then restore scroll position
-    // requestAnimationFrame(() =>
-    //   requestAnimationFrame(() => {
+    // Restore scroll position
     result.contentWindow.scrollTo(state.lastScroll.x, state.lastScroll.y);
-    //   })
-    // );
   });
 
   editor.focus();
 });
 
 // Subscribe to state changes from main process
-const unsubscribe = window.api.onStateChanged(setState);
+const invokePageMethodUnsubscribe = window.api.onInvokePageMethod(
+  async (...args) => {
+    const fnName = args.shift();
+    const fn = window[fnName];
+    if (fn instanceof Function) {
+      await fn(...args);
+    } else {
+      console.error(
+        `Main process tried to invoke non-existent page method: ${fnName}`
+      );
+    }
+  }
+);
 
+// Unsubscribe from events when the window is unloaded to free memory
 window.addEventListener("beforeunload", () => {
-  // Unsubscribe from state changes when the window is unloaded
-  unsubscribe();
+  invokePageMethodUnsubscribe();
 });
