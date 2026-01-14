@@ -8,6 +8,14 @@ window.state = {
   },
 };
 
+function getFileName(filePath) {
+  if (!filePath) return "Untitled";
+
+  // Approximate the logic in path.basename
+  const parts = filePath.split(/[\\/]/);
+  return parts[parts.length - 1];
+}
+
 function render(state, changed) {
   if (changed.command) {
     console.log("Updating command:", state.command);
@@ -17,17 +25,35 @@ function render(state, changed) {
   }
 
   if (changed.dirty || changed.fileName) {
-    let name = state.fileName;
-    if (state.dirty) {
-      name += " ⚫︎";
-    }
-    fileName.textContent = name;
+    // let name = state.fileName;
+    // if (state.dirty) {
+    //   name += " ⚫︎";
+    // }
+    // fileName.textContent = name;
   }
 
   if (changed.error) {
     command.classList.toggle("error", state.error !== null);
     error.textContent = state.error || "";
     error.style.display = state.error ? "block" : "none";
+  }
+
+  if (changed.recentFiles) {
+    // Update recent files buttons
+    const recentButtons = document.getElementById("recentButtons");
+    recentButtons.innerHTML = ""; // Clear existing buttons
+
+    // Create buttons in reverse order (most recent first)
+    const recentFilesReversed = [...state.recentFiles].reverse();
+    recentFilesReversed.forEach((filePath) => {
+      const button = document.createElement("button");
+      button.textContent = getFileName(filePath);
+      button.title = filePath;
+      button.addEventListener("click", () => {
+        window.api.openFile(filePath);
+      });
+      recentButtons.appendChild(button);
+    });
   }
 
   if (changed.text && state.textSource === "file") {

@@ -3,6 +3,10 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 // Expose safe IPC API to renderer process
 contextBridge.exposeInMainWorld("api", {
+  openFile(filePath) {
+    ipcRenderer.invoke("file-open", filePath);
+  },
+
   openFileDialog() {
     ipcRenderer.invoke("file-open-dialog");
   },

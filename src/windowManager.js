@@ -139,13 +139,26 @@ export async function openProject(rootPath) {
   }
 }
 
+// Open/activate a project and restore its last opened file
+export async function openProjectAndRestoreFile(rootPath) {
+  const project = await openProject(rootPath);
+  const projectSettings = project.settings;
+  const mostRecentFile = projectSettings?.recentFiles?.at(-1);
+  if (mostRecentFile) {
+    await project.loadFile(mostRecentFile);
+  }
+  // TODO: Move to settings
+  // Rebuild menu to reflect recent files
+  await createMenu();
+}
+
 // As startup, restore project windows from settings
 export async function restoreProjectWindows() {
   const appSettings = await settings.loadSettings();
   const openProjects = appSettings.openProjects || [];
   for (const rootPath of openProjects) {
     try {
-      await openProject(rootPath);
+      await openProjectAndRestoreFile(rootPath);
     } catch (error) {
       console.error(`Failed to restore project: ${rootPath}`, error);
     }

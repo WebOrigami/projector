@@ -7,6 +7,12 @@ const settingsPath = join(app.getPath("userData"), "settings.json");
 
 let state = null;
 
+export async function loadProjectSettings(projectPath) {
+  await loadSettings();
+  const settings = state?.projects?.[projectPath];
+  return settings ?? {};
+}
+
 export async function loadSettings() {
   if (state) {
     return state;
@@ -32,7 +38,7 @@ export async function saveProjectSettings(project) {
     return;
   }
 
-  const { newProjects, changed } = updateState(state.projects, {
+  const { newState: newProjects, changed } = updateState(state.projects ?? {}, {
     [root.path]: settings,
   });
   if (Object.keys(changed).length === 0) {

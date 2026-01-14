@@ -4,6 +4,11 @@ import * as windowManager from "./windowManager.js";
 
 // Main application startup, shutdown, and interprocess communication
 
+ipcMain.handle("file-open", async (event, filePath) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  await window.project.loadFile(filePath);
+});
+
 ipcMain.handle("file-open-dialog", async (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
   await fileOpen(null, window);

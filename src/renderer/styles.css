@@ -9,7 +9,7 @@ html {
 body {
   --code-font-family: Consolas, Monaco, monospace;
   --code-font-size: 13px;
-  --text-color: #f8f8f8;
+  --text-color: oklch(98% 0 0);
   display: grid;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 16px;
@@ -30,25 +30,34 @@ input, textarea {
   padding: 0.25rem;
 }
 
-#tabBar {
-  display: flex;
+#recentBar {
+  display: grid;
+  grid-template-columns: auto 1fr;
 
-  #fileOpen {
+  button {
     align-items: center;
     background: none;
     border: none;
+    color: inherit;
     display: grid;
-    padding: 0 0.25rem;
-
-    &:hover {
-      background: #444;
-    }
   }
 
-  .tab {
-    background: none;
-    border: none;    
-    color: inherit;
+  #recentButtons {
+    display: flex;
+    overflow: hidden;
+
+    button {
+      padding: 0 0.5rem;
+      text-wrap: nowrap;
+
+      &:not(:first-child) {
+        color: color-mix(in oklch, var(--text-color) 60%, black);
+      }
+      
+      &:hover {
+        background: #444;
+      }
+    }
   }
 }
 

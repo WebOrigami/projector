@@ -258,7 +258,7 @@ async function folderOpen(_menuItem, window) {
 
   // Open the selected folder
   const folderPath = result.filePaths[0];
-  await windowManager.openProject(folderPath);
+  await windowManager.openProjectAndRestoreFile(folderPath);
 }
 
 export async function promptSaveChanges(window) {

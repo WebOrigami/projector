@@ -10,10 +10,15 @@ import {
 import { initializeBuiltins } from "@weborigami/origami";
 import fs from "node:fs/promises";
 import * as path from "node:path";
+import recent from "./recent.js";
 import * as recentCommands from "./recentCommands.js";
 import updateState from "./renderer/updateState.js"; // Shared with renderer
+import * as settings from "./settings.js";
 
 const REFRESH_DELAY_MS = 250;
+
+const MAX_RECENT_FILES = 100;
+const recentFiles = recent(MAX_RECENT_FILES);
 
 /**
  * Project state
@@ -47,6 +52,7 @@ export default class Project {
       error: null,
       fileName: getFileName(this._filePath),
       projectName: "New project",
+      recentFiles: [],
       text: "",
       textSource: "file",
     });
@@ -106,9 +112,12 @@ export default class Project {
     this.setState({
       dirty: false,
       fileName: getFileName(filePath),
-      text,
+      recentFiles: recentFiles.add(this.state.recentFiles, filePath),
+      text: text,
       textSource: "file",
     });
+
+    settings.saveProjectSettings(this);
   }
 
   /**
@@ -135,8 +144,12 @@ export default class Project {
     this._packageData = await getPackageData(this._root);
     this._site = await getSite(this._globals, this._root, this._packageData);
 
+    const projectSettings = await settings.loadProjectSettings(this._root.path);
+    const recentFiles = projectSettings.recentFiles || [];
+
     this.setState({
       projectName: getProjectName(folderPath, this._root, this._packageData),
+      recentFiles,
     });
 
     updateWindow(this);
@@ -286,6 +299,13 @@ export default class Project {
 
     updateWindow(this);
     this.broadcastState();
+  }
+
+  // Return the project settings that should be persisted
+  get settings() {
+    return {
+      recentFiles: this.state.recentFiles,
+    };
   }
 
   get site() {
