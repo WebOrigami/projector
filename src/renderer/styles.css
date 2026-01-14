@@ -7,7 +7,8 @@ html {
 }
 
 body {
-  --font-code: Consolas, Monaco, monospace;
+  --code-font-family: Consolas, Monaco, monospace;
+  --code-font-size: 13px;
   --text-color: #f8f8f8;
   display: grid;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -57,7 +58,8 @@ input, textarea {
 
   #command {
     border: 1px solid #555;
-    font-family: var(--font-code);
+    font-family: var(--code-font-family);
+    font-size: var(--code-font-size);
 
     &.error {
       background: pink;
@@ -68,21 +70,43 @@ input, textarea {
 #editor {
   background: #333;
   border: none;
-  font-family: var(--font-code);
   color: var(--text-color);
+  font-family: var(--code-font-family);
+  font-size: var(--code-font-size);
   resize: none;
   outline: none;
   padding: 0.5rem;
 }
 
-#result {
-  border: none;
-  display: block;
+#resultPane {
   height: 100%;
-  /* transition: opacity 0.3s; */
+  position: relative;
   width: 100%;
 
-  &.pending {
-    /* opacity: 0.5; */
+  #result {
+    border: none;
+    display: block;
+    height: 100%;
+    /* transition: opacity 0.3s; */
+    width: 100%;
+    
+    &.pending {
+      /* opacity: 0.5; */
+    }
+  }
+
+  #error {
+    background: pink;
+    color: black;
+    display: none;
+    font-family: var(--code-font-family);
+    font-size: var(--code-font-size);
+    left: 0;
+    margin: 0;
+    padding: 0.5rem;
+    position: absolute;
+    right: 0;
+    top: 0;
+    white-space: pre-wrap;
   }
 }

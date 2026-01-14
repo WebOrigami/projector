@@ -2,6 +2,7 @@ import { Tree, isUnpackable } from "@weborigami/async-tree";
 import {
   compile,
   coreGlobals,
+  formatError,
   moduleCache,
   projectConfig,
   projectRootFromPath,
@@ -43,7 +44,7 @@ export default class Project {
     this.setState({
       command: "",
       dirty: false,
-      error: false,
+      error: null,
       fileName: getFileName(this._filePath),
       projectName: "New project",
       text: "",
@@ -126,6 +127,10 @@ export default class Project {
 
     // Look for root *after* getting globals
     this._root = await projectRootFromPath(folderPath);
+
+    // Arrange for root to use this project's file extension handlers instead of
+    // global handlers that might have previously been loaded.
+    this._root.handlers = this._globals;
 
     this._packageData = await getPackageData(this._root);
     this._site = await getSite(this._globals, this._root, this._packageData);
@@ -217,7 +222,7 @@ export default class Project {
       return;
     }
 
-    let errorFlag;
+    let error;
     try {
       this._result = await evaluate(command, {
         enableCaching: false,
@@ -225,14 +230,18 @@ export default class Project {
         mode: "shell",
         parent: this._fileParent,
       });
-      errorFlag = false;
-    } catch (error) {
+      error = null;
+    } catch (e) {
       this._result = null;
-      errorFlag = true;
+      error = formatError(e);
+      // Remove ANSI escape codes from the message.
+      error = error.replace(/\x1b\[[0-9;]*m/g, "");
+      // Prevent HTML in the error message from being interpreted as HTML.
+      error = error.replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
-    this.setState({ error: errorFlag });
-    if (!errorFlag) {
+    this.setState({ error });
+    if (!error) {
       this.reload();
     }
   }
@@ -302,7 +311,7 @@ async function evaluate(source, options = {}) {
   return value;
 }
 
-async function getGlobals(filePath) {
+async function getGlobals(folderPath) {
   // Need to add Origami builtins to the globals before getting them
   initializeBuiltins();
 
@@ -311,8 +320,7 @@ async function getGlobals(filePath) {
   // Now get config. The config.ori file may require access to globals,
   // which will obtain the core globals set above. Once we've got the
   // config, we add it to the globals.
-  const dirname = path.dirname(filePath);
-  const config = await projectConfig(dirname);
+  const config = await projectConfig(folderPath);
 
   const merged = Object.assign({}, globals, config);
   return merged;

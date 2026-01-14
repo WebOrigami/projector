@@ -25,7 +25,9 @@ function render(state, changed) {
   }
 
   if (changed.error) {
-    command.classList.toggle("error", state.error);
+    command.classList.toggle("error", state.error !== null);
+    error.textContent = state.error || "";
+    error.style.display = state.error ? "block" : "none";
   }
 
   if (changed.text && state.textSource === "file") {
