@@ -1,6 +1,6 @@
-import { FileMap, ObjectMap, Tree } from "@weborigami/async-tree";
+import { AsyncMap, FileMap, ObjectMap, Tree } from "@weborigami/async-tree";
 import { formatError } from "@weborigami/language";
-import { constructResponse, keysFromUrl } from "@weborigami/origami";
+import { constructResponse, keysFromUrl, Origami } from "@weborigami/origami";
 import { protocol } from "electron";
 
 const treeForSession = new WeakMap();
@@ -64,9 +64,11 @@ async function handleRequest(request, session) {
 
   if (resource == null) {
     return new Response(null, { status: 404 });
-  }
-  if (resource instanceof Error) {
+  } else if (resource instanceof Error) {
     return respondWithError(resource);
+  } else if (resource instanceof Map || resource instanceof AsyncMap) {
+    // Return index page
+    resource = await Origami.indexPage(resource);
   }
 
   let requestForResponse = request;
