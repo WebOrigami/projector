@@ -57,7 +57,6 @@ function render(state, changed) {
   }
 
   if (changed.text && state.textSource === "file") {
-    console.log("server text changed");
     editor.value = state.text;
   }
 }

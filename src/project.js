@@ -235,7 +235,7 @@ export default class Project {
       return;
     }
 
-    let error;
+    let error = null;
     try {
       this._result = await evaluate(command, {
         enableCaching: false,
@@ -243,7 +243,11 @@ export default class Project {
         mode: "shell",
         parent: this._fileParent,
       });
-      error = null;
+
+      if (this._result instanceof Function) {
+        // Invoke the function to get the final desired result
+        this._result = await this._result();
+      }
     } catch (e) {
       this._result = null;
       error = formatError(e);

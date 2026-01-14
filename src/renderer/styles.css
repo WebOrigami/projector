@@ -7,6 +7,7 @@ html {
 }
 
 body {
+  --background-color: oklch(10% 0 0);
   --code-font-family: Consolas, Monaco, monospace;
   --code-font-size: 13px;
   --text-color: oklch(98% 0 0);
@@ -25,14 +26,14 @@ input, textarea {
 }
 
 .toolbar {
-  background: #222;
+  background: var(--background-color);
   color: var(--text-color);
-  padding: 0.25rem;
 }
 
 #recentBar {
   display: grid;
   grid-template-columns: auto 1fr;
+  padding-right: 0.5rem; /* Gap before command */
 
   button {
     align-items: center;
@@ -40,6 +41,20 @@ input, textarea {
     border: none;
     color: inherit;
     display: grid;
+    padding: 0.25rem 0.5rem;
+
+    &:hover {
+      background: #444;
+    }
+  }
+
+  #fileOpen {
+    /* HACK: Since white color is baked into SVG, reduce opacity instead */
+    opacity: 0.6;
+
+    &:hover {
+      opacity: 1;
+    }
   }
 
   #recentButtons {
@@ -47,15 +62,14 @@ input, textarea {
     overflow: hidden;
 
     button {
-      padding: 0 0.5rem;
-      text-wrap: nowrap;
+      white-space: nowrap;
 
       &:not(:first-child) {
         color: color-mix(in oklch, var(--text-color) 60%, black);
       }
-      
+
       &:hover {
-        background: #444;
+        color: white;
       }
     }
   }
@@ -63,6 +77,7 @@ input, textarea {
 
 #commandBar {
   display: grid;
+  padding: 0.25rem;
   padding-left: 0; /* to align left edge with result pane */
 
   #command {
@@ -77,7 +92,7 @@ input, textarea {
 }
 
 #editor {
-  background: #333;
+  background: color-mix(in oklch, var(--background-color) 80%, white);
   border: none;
   color: var(--text-color);
   font-family: var(--code-font-family);
