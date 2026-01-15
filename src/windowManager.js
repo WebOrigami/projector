@@ -1,8 +1,9 @@
 import { projectRootFromPath } from "@weborigami/language";
 import { app, BrowserWindow, session } from "electron";
+import fs from "node:fs/promises";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createMenu } from "./menu.js";
+import { createMenu, promptSaveChanges } from "./menu.js";
 import Project from "./project.js";
 import { registerOrigamiProtocol } from "./protocol.js";
 import recent from "./recent.js";
@@ -86,13 +87,6 @@ async function createProjectWindow(rootPath) {
     const [x, y] = window.getPosition();
     window.setPosition(x + offset, y + offset);
   }
-
-  // Disable caching via Chrome DevTools Protocol
-  // window.webContents.debugger.attach("1.3");
-  // window.webContents.debugger.sendCommand("Network.enable");
-  // window.webContents.debugger.sendCommand("Network.setCacheDisabled", {
-  //   cacheDisabled: true,
-  // });
 
   // Create the Project instance for this window
   const project = new Project(window);
@@ -189,12 +183,27 @@ export async function openProject(rootPath) {
 // Open/activate a project and restore its state
 export async function openProjectAndRestoreFile(rootPath) {
   const project = await openProject(rootPath);
-  const projectSettings = project.settings;
 
-  // Restore most recently open file
-  const mostRecentFile = projectSettings?.recentFiles?.at(-1);
-  if (mostRecentFile) {
-    await project.loadFile(mostRecentFile);
+  // Restore most recently open file that still exists
+  const recentFiles = project.recentFiles || [];
+  let updateRecentFiles = false;
+  while (recentFiles.length > 0) {
+    const mostRecentFile = recentFiles.at(-1);
+    try {
+      await fs.access(mostRecentFile);
+      // File exists, load it
+      await project.loadFile(mostRecentFile);
+      break;
+    } catch (error) {
+      // File doesn't exist, remove from recent files
+      recentFiles.pop();
+      updateRecentFiles = true;
+    }
+  }
+
+  if (updateRecentFiles) {
+    project.recentFiles = recentFiles;
+    await settings.saveProjectSettings(project);
   }
 
   // TODO: Move to settings
@@ -227,23 +236,6 @@ export async function restoreProjectWindows() {
 
   loading = false;
 }
-
-// At shutdown, save project windows to settings
-// export async function saveProjectWindows() {
-//   const windows = BrowserWindow.getAllWindows();
-//   const openProjects = [];
-
-//   for (const window of windows) {
-//     const project = window.project;
-//     if (project?.root?.path) {
-//       openProjects.push(project.root.path);
-//     }
-//   }
-
-//   await settings.saveSettings({
-//     openProjects,
-//   });
-// }
 
 app.on("before-quit", () => {
   quitting = true;

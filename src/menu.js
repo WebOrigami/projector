@@ -149,8 +149,7 @@ async function fileNew(_menuItem, window) {
   }
 
   // Set to new document state
-  project.filePath = null;
-  project.text = "";
+  await project.loadFile(null);
 }
 
 export async function fileOpen(_menuItem, window) {
@@ -189,8 +188,7 @@ export async function fileRun(_menuItem, window) {
 async function fileSave(_menuItem, window) {
   // If no file path, show Save As dialog instead
   if (window.project.filePath === null) {
-    await fileSaveAs(_menuItem, window);
-    return;
+    return fileSaveAs(_menuItem, window);
   }
   return window.project.save();
 }
@@ -241,8 +239,7 @@ export async function promptSaveChanges(window) {
   let shouldContinue;
   if (result.response === 0) {
     // Save
-    await window.project.save();
-    shouldContinue = true;
+    shouldContinue = await fileSave(null, window);
   } else if (result.response === 1) {
     // Don't Save
     shouldContinue = true;

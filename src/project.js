@@ -108,30 +108,61 @@ export default class Project {
 
   // Read file
   async loadFile(filePath) {
-    if (this._root === null) {
-      // Load project first
-      const folderPath = path.dirname(filePath);
-      await this.loadFolder(folderPath);
-    } else {
-      // Assert that filePath is contained within project root
-      const relative = path.relative(this._root.path, filePath);
-      if (relative.startsWith("..")) {
-        throw new Error(
-          `File "${filePath}" is outside of project root "${this._root.path}"`
-        );
+    if (this.state.dirty) {
+      const shouldContinue = await menu.promptSaveChanges(this.window);
+      if (!shouldContinue) {
+        return;
       }
     }
 
     this._filePath = filePath;
-    this._fileParent = await getParent(this._root, filePath);
 
-    const text = await fs.readFile(filePath, "utf8");
+    // Update recent files list
+    let recentFiles = this.state.recentFiles;
+    if (recentFiles.at(-1) === null) {
+      // Remove unsaved file entry
+      recentFiles.pop();
+    }
+    // Add new path (possibly null)
+    recentFiles = recentFilesUpdater.add(recentFiles, filePath);
+
+    let text;
+    if (filePath === null) {
+      // New file. The user shouldn't be able to reach this point without having
+      // loaded a project folder first.
+      this._fileParent = this._root;
+      text = "";
+    } else {
+      // Load existing file
+
+      if (this._root === null) {
+        // Load project first
+        const folderPath = path.dirname(filePath);
+        await this.loadFolder(folderPath);
+      } else {
+        // Assert that filePath is contained within project root
+        const relative = path.relative(this._root.path, filePath);
+        if (relative.startsWith("..")) {
+          throw new Error(
+            `File "${filePath}" is outside of project root "${this._root.path}"`
+          );
+        }
+      }
+
+      this._fileParent = await getParent(this._root, filePath);
+
+      try {
+        text = await fs.readFile(filePath, "utf8");
+      } catch (error) {
+        text = "";
+      }
+    }
 
     this.setState({
       dirty: false,
       fileName: getFileName(filePath),
-      recentFiles: recentFilesUpdater.add(this.state.recentFiles, filePath),
-      text: text,
+      recentFiles,
+      text,
       textSource: "file",
     });
 
@@ -217,6 +248,13 @@ export default class Project {
       return;
     }
     this.setState({ command: previousCommand });
+  }
+
+  get recentFiles() {
+    return this.state.recentFiles;
+  }
+  set recentFiles(recentFiles) {
+    this.setState({ recentFiles });
   }
 
   // Save and run
@@ -359,7 +397,7 @@ export default class Project {
     this._filePath = filePath;
     const saved = await this.save();
     // Then reload the project from the new file path
-    await this.load(filePath);
+    await this.loadFile(filePath);
     return saved;
   }
 
@@ -379,10 +417,15 @@ export default class Project {
 
   // Return the project settings that should be persisted
   get settings() {
+    // Remove null (unsaved) files from recent files
+    const recentFiles = this.state.recentFiles.filter(
+      (filePath) => filePath !== null
+    );
+
     return {
       lastRunHadError: this.state.error !== null,
       recentCommands: this.state.recentCommands,
-      recentFiles: this.state.recentFiles,
+      recentFiles,
     };
   }
 
