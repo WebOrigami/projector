@@ -112,17 +112,6 @@ async function handleRequest(request, session) {
   }
 
   const response = await constructResponse(requestForResponse, resource);
-  if (response) {
-    // Disable caching
-    Object.assign(response.headers, {
-      "Cache-Control": "no-cache, no-store, must-revalidate",
-      "Cross-Origin-Embedder-Policy": "require-corp",
-      "Cross-Origin-Opener-Policy": "same-origin",
-      Expires: "0",
-      Pragma: "no-cache",
-    });
-  }
-
   return response;
 }
 

@@ -1,4 +1,4 @@
-import { Tree, isUnpackable } from "@weborigami/async-tree";
+import { Tree } from "@weborigami/async-tree";
 import {
   compile,
   coreGlobals,
@@ -48,6 +48,7 @@ export default class Project {
     this._result = null;
     this._root = null;
     this._site = null;
+    this._sitePath = null;
 
     this.setState({
       command: "",
@@ -71,6 +72,10 @@ export default class Project {
     // copy the state.
     const snapshot = structuredClone(this.state);
     return this.window.webContents.send("invoke-page", "setState", snapshot);
+  }
+
+  get command() {
+    return this.state.command;
   }
 
   get dirty() {
@@ -158,7 +163,9 @@ export default class Project {
     this._fileParent = this._root;
 
     this._packageData = await getPackageData(this._root);
-    this._site = await getSite(this._globals, this._root, this._packageData);
+    this._sitePath = await getSitePath(this._packageData, this._root);
+    this._site = null;
+    await this.reloadSite();
 
     const projectSettings = await settings.loadProjectSettings(this._root.path);
     const recentCommands = projectSettings.recentCommands || [];
@@ -230,11 +237,13 @@ export default class Project {
     this.run();
   }
 
-  /**
-   * Tell page to reload the result
-   */
-  async reload() {
-    await this.invokePageMethod("reloadResult");
+  async reloadSite() {
+    if (this._sitePath) {
+      // Load site
+      this._site = await loadSite(this._root, this._sitePath);
+    } else {
+      this._site = null;
+    }
   }
 
   get root() {
@@ -325,9 +334,20 @@ export default class Project {
       moduleCache.resetTimestamp();
     }
 
-    // If the user is editing a CSS file, clear the Chromium cache.
+    // If the user is editing a .ori file, reload the site
+    const oriExtensions = [".ori"];
+    if (oriExtensions.includes(extname)) {
+      await this.reloadSite();
+    }
+
+    // If the user is editing a CSS file or any of the above, clear the Chromium cache.
     const cssExtensions = [".css", ".scss", ".sass", ".less"];
-    if (cssExtensions.includes(extname)) {
+    const reloadExtension = [
+      ...jsExtensions,
+      ...oriExtensions,
+      ...cssExtensions,
+    ];
+    if (reloadExtension.includes(extname)) {
       await clearBrowserCache(this.window);
     }
 
@@ -447,15 +467,15 @@ async function getPackageData(root) {
   return packageJson?.unpack();
 }
 
-async function getSite(globals, root, packageData) {
+async function getSitePath(packageData, root) {
   // Check for `$` global first
-  if (globals?.$) {
-    let site = globals.$;
-    if (isUnpackable(site)) {
-      site = await site.unpack();
-    }
-    return site;
-  }
+  // if (globals?.$) {
+  //   let site = globals.$;
+  //   if (isUnpackable(site)) {
+  //     site = await site.unpack();
+  //   }
+  //   return site;
+  // }
 
   // Check if we have package.json data
   if (!packageData) {
@@ -475,9 +495,15 @@ async function getSite(globals, root, packageData) {
     return null;
   }
 
-  // Get the site file
-  const sitePath = match[0];
-  const siteFile = await Tree.traversePath(root, sitePath);
+  const relativePath = match[0];
+  const absolutePath = path.resolve(root.path, relativePath);
+  return absolutePath;
+}
+
+async function loadSite(root, sitePath) {
+  // Get relative path from root to sitePath
+  const relative = path.relative(root.path, sitePath);
+  const siteFile = await Tree.traversePath(root, relative);
   if (!siteFile) {
     return null;
   }
