@@ -10,7 +10,7 @@ import * as windowManager from "./windowManager.js";
  */
 ipcMain.handle("invoke-project", async (event, ...args) => {
   const window = BrowserWindow.fromWebContents(event.sender);
-  const project = window.project;
+  const project = /** @type {any} */ (window).project;
   const fnName = args.shift();
   const fn = project[fnName];
   if (fn instanceof Function) {

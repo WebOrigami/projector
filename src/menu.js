@@ -133,6 +133,7 @@ export async function createMenu() {
     },
   ];
 
+  // @ts-ignore
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 }
@@ -153,24 +154,27 @@ async function fileNew(_menuItem, window) {
 }
 
 export async function fileOpen(_menuItem, window) {
-  const dialogOptions = {
-    properties: ["openFile"],
-  };
+  let dialogOptions = {};
 
   if (window) {
+    const project = /** @type {any} */ (window).project;
     // Check if there are unsaved changes
-    if (window.project.dirty) {
+    if (project.dirty) {
       const shouldContinue = await promptSaveChanges(window);
       if (!shouldContinue) {
         return;
       }
     }
-    if (window.project.filePath) {
-      dialogOptions.defaultPath = path.dirname(window.project.filePath);
+    if (project.filePath) {
+      const defaultPath = project.filePath || project.rootPath;
+      dialogOptions.defaultPath = path.dirname(defaultPath);
     }
   }
 
-  const result = await dialog.showOpenDialog(window, dialogOptions);
+  const result = await dialog.showOpenDialog(window, {
+    properties: ["openFile"],
+    ...dialogOptions,
+  });
   if (result.canceled) {
     // User canceled
     return;
@@ -217,9 +221,8 @@ function focusCommand(_menuItem, window) {
 
 async function folderOpen(_menuItem, window) {
   const result = await dialog.showOpenDialog(window, {
-    createDirectory: true,
     message: "Select a project folder",
-    properties: ["openDirectory"],
+    properties: ["createDirectory", "openDirectory"],
   });
 
   if (result.canceled) {

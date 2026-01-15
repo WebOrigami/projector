@@ -8,6 +8,7 @@ import {
   projectRootFromPath,
 } from "@weborigami/language";
 import { initializeBuiltins } from "@weborigami/origami";
+import { dialog } from "electron";
 import fs from "node:fs/promises";
 import * as path from "node:path";
 import * as menu from "./menu.js";
@@ -322,7 +323,7 @@ export default class Project {
         // Invoke the function to get the final desired result
         this._result = await this._result();
       }
-    } catch (e) {
+    } catch (/** @type {any} */ e) {
       this._result = null;
       error = formatError(e);
       // Remove ANSI escape codes from the message.
@@ -354,7 +355,7 @@ export default class Project {
   async save() {
     try {
       await fs.writeFile(this.filePath, this.text, "utf8");
-    } catch (error) {
+    } catch (/** @type {any} */ error) {
       dialog.showMessageBox(this.window, {
         type: "error",
         message: "Save Failed",
@@ -568,8 +569,7 @@ async function loadSite(root, sitePath) {
 
 // Reflect project state in the window
 function updateWindow(project) {
-  const { window, filePath, state } = project;
-
+  const { window, state } = project;
   window.setTitle(state.projectName);
   window.setDocumentEdited(state.dirty);
 }

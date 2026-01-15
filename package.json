@@ -7,19 +7,22 @@
   "type": "module",
   "main": "src/main.js",
   "devDependencies": {
+    "@types/node": "25.0.9",
     "electron": "39.2.7",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "26.4.0",
+    "typescript": "5.9.3"
   },
   "dependencies": {
-    "@emnapi/runtime": "^1.7.1",
-    "@weborigami/origami": "0.6.5",
-    "sharp": "^0.34.5"
+    "@emnapi/runtime": "1.8.1",
+    "@weborigami/origami": "0.6.6",
+    "sharp": "0.34.5"
   },
   "scripts": {
     "build": "electron-builder --mac",
     "postinstall": "electron-builder install-app-deps",
     "start": "electron .",
-    "test": "node --test --test-reporter=spec"
+    "test": "node --test --test-reporter=spec",
+    "typecheck": "tsc"
   },
   "build": {
     "appId": "org.weborigami.studio",

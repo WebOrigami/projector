@@ -92,18 +92,18 @@ async function createProjectWindow(rootPath) {
   const project = new Project(window);
   await project.loadFolder(rootPath);
 
-  window.project = project;
-  windowSession.project = project;
+  /** @type {any} */ (window).project = project;
+  /** @type {any} */ (windowSession).project = project;
 
   // Broadcast state after page loads
   window.webContents.on("did-finish-load", async () => {
     // Broadcast initial state
-    await window.project.broadcastState();
+    await project.broadcastState();
   });
 
   // If the user closes the window while the open file is dirty, prompt to save.
   window.on("close", async (event) => {
-    if (window.project.dirty) {
+    if (/** @type {any} */ (window).project.dirty) {
       // Show save prompt
       const shouldContinue = await promptSaveChanges(window);
       if (!shouldContinue) {
@@ -116,7 +116,7 @@ async function createProjectWindow(rootPath) {
   // Track when window becomes active
   window.on("focus", async () => {
     if (!loading) {
-      addToOpenProjects(window.project);
+      addToOpenProjects(/** @type {any} */ (window).project);
     }
   });
 
@@ -125,7 +125,7 @@ async function createProjectWindow(rootPath) {
     if (!quitting) {
       // The user is closing the window, not quitting the app. We update the
       // settings to remove this window from the open projects.
-      await removeFromOpenProjects(window.project);
+      await removeFromOpenProjects(/** @type {any} */ (window).project);
     }
     await createMenu();
   });
@@ -140,7 +140,7 @@ async function createProjectWindow(rootPath) {
 function getWindowForProject(rootPath) {
   const windows = BrowserWindow.getAllWindows();
   for (const window of windows) {
-    const project = window.project;
+    const project = /** @type {any} */ (window).project;
     if (project?.root?.path === rootPath) {
       return window;
     }
@@ -174,10 +174,10 @@ export async function openProject(rootPath) {
     window = await createProjectWindow(rootPath);
   }
 
-  await addToRecentProjects(window.project);
+  await addToRecentProjects(/** @type {any} */ (window).project);
   await createMenu();
 
-  return window.project;
+  return /** @type {any} */ (window).project;
 }
 
 // Open/activate a project and restore its state
