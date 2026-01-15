@@ -56,6 +56,10 @@ function render(state, changed) {
     });
   }
 
+  if (changed.resultVersion && state.resultVersion > 0) {
+    reloadResult();
+  }
+
   if (changed.text && state.textSource === "file") {
     editor.value = state.text;
   }

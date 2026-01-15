@@ -70,6 +70,8 @@ It is also possible to open a new Untitled file. Such a file will open in a proj
 
 When the application starts, it opens a window for the most recently opened project where the project folder still exists. If no such recent project exists, no window is opened.
 
+When reopening a project window, the most recently opened file in the project is opened, and the most recently run command is shown in the command bar. If the last command run (before closing the project) had completed without errors, then that last command is repeated.
+
 ### Settings
 
 The application persists the following settings:

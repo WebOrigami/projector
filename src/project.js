@@ -57,6 +57,7 @@ export default class Project {
       projectName: "New project",
       recentCommands: [],
       recentFiles: [],
+      resultVersion: 0,
       text: "",
       textSource: "file",
     });
@@ -153,6 +154,9 @@ export default class Project {
     // global handlers that might have previously been loaded.
     this._root.handlers = this._globals;
 
+    // Until a file is loaded, use the root as the file parent
+    this._fileParent = this._root;
+
     this._packageData = await getPackageData(this._root);
     this._site = await getSite(this._globals, this._root, this._packageData);
 
@@ -169,6 +173,11 @@ export default class Project {
     });
 
     updateWindow(this);
+
+    // If the last run didn't result in an error, auto-run the last command
+    if (!projectSettings.lastRunHadError && command) {
+      this.run();
+    }
   }
 
   async nextCommand() {
@@ -267,8 +276,10 @@ export default class Project {
       error = error.replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
+    let resultVersion = this.state.resultVersion;
     if (!error) {
-      this.reload();
+      // Bump result version to let renderer know to reload result
+      resultVersion++;
     }
 
     const commands = recentCommands.add(
@@ -278,6 +289,7 @@ export default class Project {
     this.setState({
       error,
       recentCommands: commands,
+      resultVersion,
     });
 
     settings.saveProjectSettings(this);
@@ -328,6 +340,7 @@ export default class Project {
   // Return the project settings that should be persisted
   get settings() {
     return {
+      lastRunHadError: this.state.error !== null,
       recentCommands: this.state.recentCommands,
       recentFiles: this.state.recentFiles,
     };
