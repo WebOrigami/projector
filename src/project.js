@@ -305,6 +305,10 @@ export default class Project {
   async run() {
     let command = this.state.command;
 
+    if (!command) {
+      return;
+    }
+
     let error = null;
     try {
       this._result = await evaluate(command, {
