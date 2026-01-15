@@ -1,5 +1,4 @@
 import {
-  AsyncMap,
   FileMap,
   getRealmObjectPrototype,
   ObjectMap,
@@ -85,17 +84,25 @@ async function handleRequest(request, session) {
     return new Response(null, { status: 404 });
   } else if (resource instanceof Error) {
     return respondWithError(resource);
-  } else if (resource instanceof Map || resource instanceof AsyncMap) {
-    // Return index page
-    resource = await Origami.indexPage(resource);
   } else if (
     !(resource instanceof Array) &&
     (typeof resource !== "object" ||
       resource.toString !== getRealmObjectPrototype(resource)?.toString)
   ) {
     resource = resource.toString();
-  } else if (typeof resource === "object") {
-    resource = await toYaml(resource);
+  } else if (Tree.isMaplike(resource)) {
+    let map = await Tree.from(resource);
+    const indexHtml = await map.get("index.html");
+    if (indexHtml) {
+      // Return index.html page
+      resource = indexHtml;
+    } else if (await hasFileNameKeys(map)) {
+      // Return index page
+      resource = await Origami.indexPage(map);
+    } else {
+      // Treat as object, serialized to YAML
+      resource = await toYaml(map);
+    }
   }
 
   let requestForResponse = request;
@@ -113,6 +120,18 @@ async function handleRequest(request, session) {
 
   const response = await constructResponse(requestForResponse, resource);
   return response;
+}
+
+// Return true if any keys contain a period
+async function hasFileNameKeys(map) {
+  for await (const key of map.keys()) {
+    if (typeof key === "string") {
+      if (key.includes(".")) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 export function registerOrigamiProtocol(ses) {
