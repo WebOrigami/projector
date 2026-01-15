@@ -315,6 +315,16 @@ export default class Project {
     // Mark as clean
     this.dirty = false;
 
+    // If the user is editing a JavaScript file, reset the module cache so that
+    // top-level modules are reloaded on each request. Only top-level modules
+    // will be reloaded; to reload modules those depend on will require a more
+    // complex solution.
+    const extname = path.extname(this.filePath).toLowerCase();
+    const jsExtensions = [".cjs", ".js", ".mjs", ".ts"];
+    if (jsExtensions.includes(extname)) {
+      moduleCache.resetTimestamp();
+    }
+
     return true;
   }
 
@@ -361,9 +371,6 @@ export default class Project {
 
 async function evaluate(source, options = {}) {
   const fn = compile.expression(source, options);
-
-  // Reset the module cache so that modules are reloaded on each request
-  moduleCache.resetTimestamp();
 
   let value = await fn();
   if (value instanceof Function) {
