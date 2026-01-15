@@ -325,6 +325,12 @@ export default class Project {
       moduleCache.resetTimestamp();
     }
 
+    // If the user is editing a CSS file, clear the Chromium cache.
+    const cssExtensions = [".css", ".scss", ".sass", ".less"];
+    if (cssExtensions.includes(extname)) {
+      await clearBrowserCache(this.window);
+    }
+
     return true;
   }
 
@@ -367,6 +373,20 @@ export default class Project {
   get text() {
     return this.state.text;
   }
+}
+
+// Chromium aggressively caches CSS files, and no amount of cache-disabling in
+// Electron or via HTTP headers seems to prevent this. As a workaround, we use
+// the Chromium DevTools Protocol to clear the browser cache programmatically,
+async function clearBrowserCache(window) {
+  const dbg = window.webContents.debugger;
+  // Attach if not already attached.
+  if (!dbg.isAttached()) {
+    // Pick a protocol version Electron accepts; 1.3 is commonly used.
+    dbg.attach("1.3");
+  }
+  await dbg.sendCommand("Network.enable");
+  await dbg.sendCommand("Network.clearBrowserCache");
 }
 
 async function evaluate(source, options = {}) {
