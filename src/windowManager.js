@@ -5,15 +5,51 @@ import { fileURLToPath } from "node:url";
 import { createMenu } from "./menu.js";
 import Project from "./project.js";
 import { registerOrigamiProtocol } from "./protocol.js";
-import * as recentFiles from "./recentFiles.js";
+import recent from "./recent.js";
 import * as settings from "./settings.js";
 
 let windowCount = 0;
+let loading = true;
 let quitting = false; // Distinguish app quit vs window close
+
+const MAX_RECENT_PROJECTS = 10;
+const recentProjectsUpdater = recent(MAX_RECENT_PROJECTS);
+
+// Behaves like a recent list with no maximum size
+const openProjectsUpdater = recent(Infinity);
 
 /**
  * Main application state and window management
  */
+
+async function addToOpenProjects(project) {
+  const appSettings = await settings.loadSettings();
+  let openProjects = appSettings.openProjects || [];
+  openProjects = openProjectsUpdater.add(openProjects, project.root.path);
+  await settings.saveSettings({
+    openProjects,
+  });
+}
+
+async function addToRecentProjects(project) {
+  const appSettings = await settings.loadSettings();
+  let projects = appSettings.recentProjects || [];
+  // Remove if already present
+  const index = projects.findIndex(
+    (record) => record.path === project.root.path
+  );
+  if (index !== -1) {
+    projects.splice(index, 1);
+  }
+  // Add to list
+  projects = recentProjectsUpdater.add(projects, {
+    name: project.name,
+    path: project.root.path,
+  });
+  await settings.saveSettings({
+    recentProjects: projects,
+  });
+}
 
 async function createProjectWindow(rootPath) {
   // Load the preload.js script, which will expose the safe IPC API to the
@@ -83,12 +119,19 @@ async function createProjectWindow(rootPath) {
     }
   });
 
+  // Track when window becomes active
+  window.on("focus", async () => {
+    if (!loading) {
+      addToOpenProjects(window.project);
+    }
+  });
+
   // Clean up after the window is closed
   window.on("closed", async () => {
     if (!quitting) {
       // The user is closing the window, not quitting the app. We update the
       // settings to remove this window from the open projects.
-      await saveProjectWindows();
+      await removeFromOpenProjects(window.project);
     }
     await createMenu();
   });
@@ -121,9 +164,6 @@ export async function openFile(filePath) {
   // Load the selected file
   await project.loadFile(filePath);
 
-  // Add to recent files
-  await recentFiles.addFile(project.filePath);
-
   // Rebuild menu to reflect recent files
   await createMenu();
 }
@@ -138,8 +178,11 @@ export async function openProject(rootPath) {
   } else {
     // Create a new window for the project
     window = await createProjectWindow(rootPath);
-    await saveProjectWindows();
   }
+
+  await addToRecentProjects(window.project);
+  await createMenu();
+
   return window.project;
 }
 
@@ -159,6 +202,15 @@ export async function openProjectAndRestoreFile(rootPath) {
   await createMenu();
 }
 
+async function removeFromOpenProjects(project) {
+  const appSettings = await settings.loadSettings();
+  let openProjects = appSettings.openProjects || [];
+  openProjects = openProjectsUpdater.remove(openProjects, project.root.path);
+  await settings.saveSettings({
+    openProjects,
+  });
+}
+
 // As startup, restore project windows from settings
 export async function restoreProjectWindows() {
   const appSettings = await settings.loadSettings();
@@ -172,24 +224,26 @@ export async function restoreProjectWindows() {
   }
 
   await createMenu();
+
+  loading = false;
 }
 
 // At shutdown, save project windows to settings
-export async function saveProjectWindows() {
-  const windows = BrowserWindow.getAllWindows();
-  const openProjects = [];
+// export async function saveProjectWindows() {
+//   const windows = BrowserWindow.getAllWindows();
+//   const openProjects = [];
 
-  for (const window of windows) {
-    const project = window.project;
-    if (project?.root?.path) {
-      openProjects.push(project.root.path);
-    }
-  }
+//   for (const window of windows) {
+//     const project = window.project;
+//     if (project?.root?.path) {
+//       openProjects.push(project.root.path);
+//     }
+//   }
 
-  await settings.saveSettings({
-    openProjects,
-  });
-}
+//   await settings.saveSettings({
+//     openProjects,
+//   });
+// }
 
 app.on("before-quit", () => {
   quitting = true;

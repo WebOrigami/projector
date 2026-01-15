@@ -1,35 +1,38 @@
 import { app, BrowserWindow, dialog, Menu } from "electron";
-import { access } from "node:fs/promises";
 import * as path from "node:path";
-import * as recentFiles from "./recentFiles.js";
+import * as settings from "./settings.js";
 import * as windowManager from "./windowManager.js";
 
 export async function createMenu() {
   // Build Open Recent submenu
-  let paths = await recentFiles.getFiles();
+  const appSettings = await settings.loadSettings();
+  let recentProjects = appSettings.recentProjects || [];
 
   // Reverse order to show most recent at top
-  paths = paths.slice().reverse();
+  recentProjects = recentProjects.slice().reverse();
 
-  const recentFilesSubmenu = [];
-  if (paths.length > 0) {
-    paths.forEach((filePath) => {
-      recentFilesSubmenu.push({
-        label: path.basename(filePath),
-        click: (_menuItem, window) => fileOpenRecent(filePath, window),
+  const recentProjectsSubmenu = [];
+  if (recentProjects.length > 0) {
+    recentProjects.forEach((project) => {
+      recentProjectsSubmenu.push({
+        label: path.basename(project.name),
+        click: (_menuItem, window) =>
+          windowManager.openProjectAndRestoreFile(project.path),
       });
     });
-    recentFilesSubmenu.push({ type: "separator" });
-    recentFilesSubmenu.push({
+    recentProjectsSubmenu.push({ type: "separator" });
+    recentProjectsSubmenu.push({
       label: "Clear Menu",
       click: async () => {
-        await recentFiles.clearFiles();
-        createMenu(callbacks);
+        await settings.saveSettings({
+          recentProjects: [],
+        });
+        createMenu();
       },
     });
   } else {
-    recentFilesSubmenu.push({
-      label: "No Recent Files",
+    recentProjectsSubmenu.push({
+      label: "No Recent Projects",
       enabled: false,
     });
   }
@@ -71,7 +74,7 @@ export async function createMenu() {
         },
         {
           label: "Open Recent",
-          submenu: recentFilesSubmenu,
+          submenu: recentProjectsSubmenu,
         },
         { type: "separator" },
         {
@@ -179,35 +182,6 @@ export async function fileOpen(_menuItem, window) {
   await windowManager.openFile(filePath);
 }
 
-async function fileOpenRecent(filePath, window) {
-  if (window) {
-    // Check if there are unsaved changes
-    if (window.project.dirty) {
-      const shouldContinue = await promptSaveChanges(window);
-      if (!shouldContinue) {
-        return;
-      }
-    }
-  }
-
-  // Check if file still exists
-  try {
-    await access(filePath);
-  } catch (error) {
-    dialog.showMessageBox(window, {
-      type: "error",
-      message: "File not found",
-      detail: `The file "${filePath}" could not be found.`,
-    });
-    // Remove from recent files
-    // Menu will be rebuilt on file open
-    await recentFiles.removeFile(filePath);
-    return;
-  }
-
-  await windowManager.openFile(filePath);
-}
-
 export async function fileRun(_menuItem, window) {
   window.project.run();
 }
@@ -231,12 +205,6 @@ async function fileSaveAs(_menuItem, window) {
 
   // Update the document's path and save
   const saved = await window.project.saveAs(result.filePath);
-  if (saved) {
-    // Add to recent files
-    await recentFiles.addFile(result.filePath);
-    createMenu();
-  }
-
   return saved;
 }
 

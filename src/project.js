@@ -18,10 +18,10 @@ import * as settings from "./settings.js";
 const REFRESH_DELAY_MS = 250;
 
 const MAX_RECENT_COMMANDS = 50;
-const recentCommands = recent(MAX_RECENT_COMMANDS);
+const recentCommandsUpdater = recent(MAX_RECENT_COMMANDS);
 
 const MAX_RECENT_FILES = 10;
-const recentFiles = recent(MAX_RECENT_FILES);
+const recentFilesUpdater = recent(MAX_RECENT_FILES);
 
 /**
  * Project state
@@ -125,7 +125,7 @@ export default class Project {
     this.setState({
       dirty: false,
       fileName: getFileName(filePath),
-      recentFiles: recentFiles.add(this.state.recentFiles, filePath),
+      recentFiles: recentFilesUpdater.add(this.state.recentFiles, filePath),
       text: text,
       textSource: "file",
     });
@@ -178,6 +178,10 @@ export default class Project {
     if (!projectSettings.lastRunHadError && command) {
       this.run();
     }
+  }
+
+  get name() {
+    return this.state.projectName;
   }
 
   async nextCommand() {
@@ -282,7 +286,7 @@ export default class Project {
       resultVersion++;
     }
 
-    const commands = recentCommands.add(
+    const commands = recentCommandsUpdater.add(
       this.state.recentCommands || [],
       command
     );
