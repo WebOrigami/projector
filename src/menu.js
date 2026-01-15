@@ -194,7 +194,12 @@ async function fileSave(_menuItem, window) {
 }
 
 async function fileSaveAs(_menuItem, window) {
-  const result = await dialog.showSaveDialog(window, {});
+  const project = window.project;
+  const filePath = project.filePath || project.rootPath;
+
+  const result = await dialog.showSaveDialog(window, {
+    defaultPath: filePath,
+  });
 
   if (result.canceled) {
     // User canceled
@@ -202,7 +207,7 @@ async function fileSaveAs(_menuItem, window) {
   }
 
   // Update the document's path and save
-  const saved = await window.project.saveAs(result.filePath);
+  const saved = await project.saveAs(result.filePath);
   return saved;
 }
 
