@@ -199,7 +199,7 @@ async function fileSave(_menuItem, window) {
 
 async function fileSaveAs(_menuItem, window) {
   const project = window.project;
-  const filePath = project.filePath || project.rootPath;
+  const filePath = project.filePath || project.root.path;
 
   const result = await dialog.showSaveDialog(window, {
     defaultPath: filePath,
