@@ -1,7 +1,20 @@
-import { AsyncMap, FileMap, ObjectMap, Tree } from "@weborigami/async-tree";
+import {
+  AsyncMap,
+  FileMap,
+  getRealmObjectPrototype,
+  ObjectMap,
+  Tree,
+} from "@weborigami/async-tree";
 import { formatError } from "@weborigami/language";
-import { constructResponse, keysFromUrl, Origami } from "@weborigami/origami";
+import {
+  constructResponse,
+  keysFromUrl,
+  Origami,
+  toYaml,
+} from "@weborigami/origami";
 import { protocol } from "electron";
+
+const TypedArray = Object.getPrototypeOf(Uint8Array);
 
 const treeForSession = new WeakMap();
 
@@ -62,13 +75,27 @@ async function handleRequest(request, session) {
     resource = error;
   }
 
-  if (resource == null) {
+  if (
+    typeof resource === "string" ||
+    resource instanceof ArrayBuffer ||
+    resource instanceof TypedArray
+  ) {
+    // Return as is
+  } else if (resource == null) {
     return new Response(null, { status: 404 });
   } else if (resource instanceof Error) {
     return respondWithError(resource);
   } else if (resource instanceof Map || resource instanceof AsyncMap) {
     // Return index page
     resource = await Origami.indexPage(resource);
+  } else if (
+    !(resource instanceof Array) &&
+    (typeof resource !== "object" ||
+      resource.toString !== getRealmObjectPrototype(resource)?.toString)
+  ) {
+    resource = resource.toString();
+  } else if (typeof resource === "object") {
+    resource = await toYaml(resource);
   }
 
   let requestForResponse = request;

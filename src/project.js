@@ -12,13 +12,15 @@ import fs from "node:fs/promises";
 import * as path from "node:path";
 import * as menu from "./menu.js";
 import recent from "./recent.js";
-import * as recentCommands from "./recentCommands.js";
 import updateState from "./renderer/updateState.js"; // Shared with renderer
 import * as settings from "./settings.js";
 
 const REFRESH_DELAY_MS = 250;
 
-const MAX_RECENT_FILES = 100;
+const MAX_RECENT_COMMANDS = 50;
+const recentCommands = recent(MAX_RECENT_COMMANDS);
+
+const MAX_RECENT_FILES = 10;
 const recentFiles = recent(MAX_RECENT_FILES);
 
 /**
@@ -53,6 +55,7 @@ export default class Project {
       error: null,
       fileName: getFileName(this._filePath),
       projectName: "New project",
+      recentCommands: [],
       recentFiles: [],
       text: "",
       textSource: "file",
@@ -67,10 +70,6 @@ export default class Project {
     // copy the state.
     const snapshot = structuredClone(this.state);
     return this.window.webContents.send("invoke-page", "setState", snapshot);
-  }
-
-  get command() {
-    return this.state.command;
   }
 
   get dirty() {
@@ -158,10 +157,14 @@ export default class Project {
     this._site = await getSite(this._globals, this._root, this._packageData);
 
     const projectSettings = await settings.loadProjectSettings(this._root.path);
+    const recentCommands = projectSettings.recentCommands || [];
     const recentFiles = projectSettings.recentFiles || [];
+    const command = recentCommands.at(-1) || "";
 
     this.setState({
+      command,
       projectName: getProjectName(folderPath, this._root, this._packageData),
+      recentCommands,
       recentFiles,
     });
 
@@ -169,8 +172,8 @@ export default class Project {
   }
 
   async nextCommand() {
-    const command = this.command;
-    const commands = await recentCommands.getCommands();
+    const command = this.state.command;
+    const commands = this.state.recentCommands || [];
     const index = commands.indexOf(command);
     let nextCommand;
     if (index >= 0 && index < commands.length - 1) {
@@ -182,8 +185,8 @@ export default class Project {
   }
 
   async previousCommand() {
-    const command = this.command;
-    const commands = await recentCommands.getCommands();
+    const command = this.state.command;
+    const commands = this.state.recentCommands || [];
     const index = commands.indexOf(command);
     let previousCommand;
     if (index > 0) {
@@ -240,13 +243,7 @@ export default class Project {
   }
 
   async run() {
-    let command = this.command;
-    if (command) {
-      recentCommands.addCommand(command);
-    } else {
-      // command = `<${this.filePath}>`;
-      return;
-    }
+    let command = this.state.command;
 
     let error = null;
     try {
@@ -270,10 +267,20 @@ export default class Project {
       error = error.replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
-    this.setState({ error });
     if (!error) {
       this.reload();
     }
+
+    const commands = recentCommands.add(
+      this.state.recentCommands || [],
+      command
+    );
+    this.setState({
+      error,
+      recentCommands: commands,
+    });
+
+    settings.saveProjectSettings(this);
   }
 
   // Write text to file
@@ -321,6 +328,7 @@ export default class Project {
   // Return the project settings that should be persisted
   get settings() {
     return {
+      recentCommands: this.state.recentCommands,
       recentFiles: this.state.recentFiles,
     };
   }

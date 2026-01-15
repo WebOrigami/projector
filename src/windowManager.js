@@ -131,26 +131,29 @@ export async function openFile(filePath) {
 // Open/activate a project, return the project
 export async function openProject(rootPath) {
   // See if the project is already open
-  const existingWindow = getWindowForProject(rootPath);
-  if (existingWindow) {
-    existingWindow.focus();
-    return existingWindow.project;
+  let window = getWindowForProject(rootPath);
+  if (window) {
+    // Switch to open window
+    window.focus();
   } else {
-    // Create a new window for a new Project
-    const window = await createProjectWindow(rootPath);
+    // Create a new window for the project
+    window = await createProjectWindow(rootPath);
     await saveProjectWindows();
-    return window.project;
   }
+  return window.project;
 }
 
-// Open/activate a project and restore its last opened file
+// Open/activate a project and restore its state
 export async function openProjectAndRestoreFile(rootPath) {
   const project = await openProject(rootPath);
   const projectSettings = project.settings;
+
+  // Restore most recently open file
   const mostRecentFile = projectSettings?.recentFiles?.at(-1);
   if (mostRecentFile) {
     await project.loadFile(mostRecentFile);
   }
+
   // TODO: Move to settings
   // Rebuild menu to reflect recent files
   await createMenu();
