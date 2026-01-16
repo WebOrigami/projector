@@ -1,3 +1,5 @@
+import { isPlainObject, Tree } from "@weborigami/async-tree";
+
 // Return the path of the site relative to the project root
 export async function getSitePath(packageData) {
   // Check for `$` global first
@@ -29,4 +31,32 @@ export async function getSitePath(packageData) {
 
   const relativePath = match[0];
   return relativePath;
+}
+
+/**
+ * A simple object is defined as an object that does not have any keys
+ * containing a period (.) and does not have any getters.
+ *
+ * @param {any} object
+ */
+export async function isSimpleObject(object) {
+  const keys = await Tree.keys(object);
+  const isPlain = isPlainObject(object);
+
+  for (const key of keys) {
+    if (isPlain) {
+      const descriptor = Object.getOwnPropertyDescriptor(object, key);
+      if (descriptor && typeof descriptor.get === "function") {
+        return false;
+      }
+    }
+
+    if (typeof key === "string") {
+      if (key.includes(".")) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }

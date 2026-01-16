@@ -7,6 +7,7 @@ import {
 import { formatError } from "@weborigami/language";
 import { constructResponse, keysFromUrl, Origami } from "@weborigami/origami";
 import { protocol } from "electron";
+import { isSimpleObject } from "./utilities.js";
 
 const TypedArray = Object.getPrototypeOf(Uint8Array);
 
@@ -91,12 +92,12 @@ async function handleRequest(request, session) {
     if (indexHtml) {
       // Return index.html page
       resource = indexHtml;
-    } else if (await hasFileNameKeys(map)) {
+    } else if (await isSimpleObject(resource)) {
+      // Serialize to YAML
+      resource = await Origami.yaml(map);
+    } else {
       // Return index page
       resource = await Origami.indexPage(map);
-    } else {
-      // Treat as object, serialized to YAML
-      resource = await Origami.yaml(map);
     }
   }
 
@@ -115,18 +116,6 @@ async function handleRequest(request, session) {
 
   const response = await constructResponse(requestForResponse, resource);
   return response;
-}
-
-// Return true if any keys contain a period
-async function hasFileNameKeys(map) {
-  for await (const key of map.keys()) {
-    if (typeof key === "string") {
-      if (key.includes(".")) {
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 export function registerOrigamiProtocol(ses) {
