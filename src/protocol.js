@@ -5,12 +5,7 @@ import {
   Tree,
 } from "@weborigami/async-tree";
 import { formatError } from "@weborigami/language";
-import {
-  constructResponse,
-  keysFromUrl,
-  Origami,
-  toYaml,
-} from "@weborigami/origami";
+import { constructResponse, keysFromUrl, Origami } from "@weborigami/origami";
 import { protocol } from "electron";
 
 const TypedArray = Object.getPrototypeOf(Uint8Array);
@@ -101,7 +96,7 @@ async function handleRequest(request, session) {
       resource = await Origami.indexPage(map);
     } else {
       // Treat as object, serialized to YAML
-      resource = await toYaml(map);
+      resource = await Origami.yaml(map);
     }
   }
 
