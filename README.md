@@ -12,7 +12,7 @@ Projector is designed to coexist with other design and development tools such as
 
 ## Current status
 
-Projector is an experimental application. The initial feature set is small and designed to be reasonably self-consistent.
+Projector is an experimental application. The initial feature set is small and designed to be reasonably self-consistent, but even an extremely basic file-editing application carries high user expectations. If you find a bug, please report it.
 
 The focus at this early stage is confirming the idea’s viability and working out the proper shape of the tool. The current app experience is all but certain to have bugs or rough edges, but hopefully it’s good enough to envision what you’d really like the application to do and be motivated to provide feedback. Experience suggests that feedback will direct the app’s evolution in directions that are hard to imagine at this point; don’t get too attached to anything yet.
 
@@ -68,7 +68,7 @@ It is also possible to open a new Untitled file. Such a file will open in a proj
 
 ## Basic application behavior
 
-When the application starts, it opens a window for the most recently opened project where the project folder still exists. If no such recent project exists, no window is opened.
+When the application starts, it opens a window for the most recently opened project where the project folder still exists. If no such recent project exists, the Open Folder dialog is shown.
 
 When reopening a project window, the most recently opened file in the project is opened, and the most recently run command is shown in the command bar. If the last command run (before closing the project) had completed without errors, then that last command is repeated.
 

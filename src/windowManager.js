@@ -3,7 +3,7 @@ import { app, BrowserWindow, session } from "electron";
 import fs from "node:fs/promises";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createMenu, promptSaveChanges } from "./menu.js";
+import { createMenu, folderOpen, promptSaveChanges } from "./menu.js";
 import Project from "./project.js";
 import { registerOrigamiProtocol } from "./protocol.js";
 import recent from "./recent.js";
@@ -235,6 +235,11 @@ export async function restoreProjectWindows() {
   await createMenu();
 
   loading = false;
+
+  if (openProjects.length === 0) {
+    // No projects to restore, show Open Folder dialog
+    await folderOpen();
+  }
 }
 
 app.on("before-quit", () => {

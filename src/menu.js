@@ -219,7 +219,7 @@ function focusCommand(_menuItem, window) {
   window.project.focusCommand();
 }
 
-async function folderOpen(_menuItem, window) {
+export async function folderOpen(_menuItem, window) {
   const result = await dialog.showOpenDialog(window, {
     message: "Select a project folder",
     properties: ["createDirectory", "openDirectory"],
