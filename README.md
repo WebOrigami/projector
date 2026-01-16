@@ -39,14 +39,11 @@ Out of scope for now:
 - Deploy a site
 - Help
 
-# User model
+# Projects
 
-Projector’s user model is organized around:
+Projector’s user model is organized around _projects_: a folder tree of related files, generally identified by its root; see below.
 
-- Projects. A project is a folder tree of related files. Projector identifies projects in several ways; see below.
-- Files. Projector can edit text files: plain text, markdown, CSS, JSON, YAML, JavaScript, Origami, etc.
-
-Files are always viewed in the context of a project.
+Within a project, Projector can edit text files: plain text, markdown, CSS, JSON, YAML, JavaScript, Origami, etc.Files are always viewed in the context of a project.
 
 ## Project root and type
 
@@ -56,13 +53,24 @@ For any given file (or folder, in the case of the Open Folder menu item), Projec
 2. From the location, Projector walks up the folder hierarchy looking for an npm `package.json` file. If found, the folder containing that file is the project root. The project type will be `npm`.
 3. Otherwise, the file’s containing folder is the project root; or, if the given object was a folder, the folder itself is the project root. The project type will be `folder`.
 
-It is also possible to open a new Untitled file. Such a file will open in a project window of type `unsaved` with a null project root.
+## Project name
 
-## Project friendly name
+A project’s name is used as a way to identify the project in window title bars and the Open Recent Project submenu.
 
-- For an `origami` or `npm` project with a package.json at its root, the friendly name is the `name` field from that file.
-- For a new project (no unsaved files), the friendly name is “New project”.
-- Otherwise the friendly name is the name of the project’s root folder. E.g., for `/Users/Jan/hello`, the friendly name is “hello”.
+- For an `origami` or `npm` project with a package.json at its root, the project name is the `name` field from that file.
+- Otherwise the friendly name is the name of the project’s root folder. E.g., for `/Users/Alice/hello`, the project name is “hello”.
+
+## Project site
+
+Each project can be associated with an optional _site_: a tree of resources used to handle local HTTP requests.
+
+When you are editing a file that eventually renders as HTML, the framed page needs to know where to obtain any referenced stylesheets, scripts, or other resources.
+
+Projector uses a heuristic to find the site for a project.
+
+If the project contains a package.json file with a `start` script, Projector searches that script command for the first path that includes a `.ori` file. If the script follows the [standard incantation to start a server](https://weborigami.org/cli/incantations#starting-an-origami-server-with-debugging), then the Projector project’s site will be the same as the one you normally start with `npm run start`.
+
+If such a site path can’t be found, the project’s site will be the project’s root folder. That is, HTTP requests will be resolved with the root folder as the root of the site.
 
 # User interface
 

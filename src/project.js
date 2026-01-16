@@ -209,7 +209,7 @@ export default class Project {
 
     this.setState({
       command,
-      projectName: getProjectName(folderPath, this._root, this._packageData),
+      projectName: getProjectName(this._root, this._packageData),
       recentCommands,
       recentFiles,
     });
@@ -491,15 +491,9 @@ function getFileName(filePath) {
   return filePath ? path.basename(filePath) : "Untitled";
 }
 
-function getProjectName(filePath, root, packageData) {
-  if (!filePath) {
-    return "New project";
-  }
+function getProjectName(root, packageData) {
   if (packageData?.name) {
     return packageData.name;
-  }
-  if (!root) {
-    return "";
   }
 
   // Name is the name of the root folder
