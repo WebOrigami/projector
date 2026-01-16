@@ -31,8 +31,9 @@
     "appId": "org.weborigami.studio",
     "productName": "Origami Projector",
     "mac": {
-      "target": "dmg",
-      "category": "public.app-category.developer-tools"
+      "target": "zip",
+      "category": "public.app-category.developer-tools",
+      "identity": "Jan Miksovsky (P4XND4W8NJ)"
     },
     "asar": true,
     "asarUnpack": [
