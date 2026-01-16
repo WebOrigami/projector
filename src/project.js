@@ -1,4 +1,4 @@
-import { Tree } from "@weborigami/async-tree";
+import { isUnpackable, Tree } from "@weborigami/async-tree";
 import {
   compile,
   coreGlobals,
@@ -197,9 +197,7 @@ export default class Project {
 
     this._packageData = await getPackageData(this._root);
 
-    const relativeSitePath = await getSitePath(this._packageData);
-    const absoluteSitePath = path.resolve(this._root.path, relativeSitePath);
-    this._sitePath = absoluteSitePath;
+    this._sitePath = await getSitePath(this._packageData);
 
     this._site = null;
     await this.reloadSite();
@@ -522,17 +520,13 @@ async function getPackageData(root) {
 }
 
 async function loadSite(root, sitePath) {
-  // Get relative path from root to sitePath
-  const relative = path.relative(root.path, sitePath);
-  const siteFile = await Tree.traversePath(root, relative);
-  if (!siteFile) {
-    return null;
-  }
-
   // Evaluate the site file to get the site object
   let site;
   try {
-    site = await siteFile.unpack();
+    site = await Tree.traversePath(root, sitePath);
+    if (isUnpackable(site)) {
+      site = await site.unpack();
+    }
   } catch (error) {
     return null;
   }
