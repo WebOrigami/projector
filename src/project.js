@@ -281,7 +281,8 @@ export default class Project {
       // Load site
       this._site = await loadSite(this._root, this._sitePath);
     } else {
-      this._site = null;
+      // Use root as site
+      this._site = this._root;
     }
   }
 
