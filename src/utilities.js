@@ -1,16 +1,23 @@
 import { isPlainObject, Tree } from "@weborigami/async-tree";
+import * as path from "node:path";
+
+// For a path like `path/to/site.ori/public`, return `path/to/site.ori`
+export function getSiteFilePath(root, sitePath) {
+  if (!sitePath) {
+    return null;
+  }
+  const parts = sitePath.split(/\/|\\/);
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i];
+    if (part.endsWith(".ori")) {
+      return path.join(root.path, parts.slice(0, i + 1).join(path.sep));
+    }
+  }
+  return null;
+}
 
 // Return the path of the site relative to the project root
-export async function getSitePath(packageData) {
-  // Check for `$` global first
-  // if (globals?.$) {
-  //   let site = globals.$;
-  //   if (isUnpackable(site)) {
-  //     site = await site.unpack();
-  //   }
-  //   return site;
-  // }
-
+export function getSitePath(packageData) {
   // Check if we have package.json data
   if (!packageData) {
     return null;

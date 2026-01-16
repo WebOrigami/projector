@@ -8,6 +8,7 @@ import Project from "./project.js";
 import { registerOrigamiProtocol } from "./protocol.js";
 import recent from "./recent.js";
 import * as settings from "./settings.js";
+import { getSiteFilePath } from "./utilities.js";
 
 let windowCount = 0;
 let loading = true;
@@ -204,6 +205,19 @@ export async function openProjectAndRestoreFile(rootPath) {
   if (updateRecentFiles) {
     project.recentFiles = recentFiles;
     await settings.saveProjectSettings(project);
+  }
+
+  if (recentFiles.length === 0 && project.sitePath) {
+    // Open site file
+    const siteFilePath = getSiteFilePath(project.root, project.sitePath);
+    if (siteFilePath) {
+      try {
+        await fs.access(siteFilePath);
+        await project.loadFile(siteFilePath);
+      } catch (error) {
+        // File doesn't exist, do nothing
+      }
+    }
   }
 
   // TODO: Move to settings

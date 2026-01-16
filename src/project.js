@@ -197,7 +197,7 @@ export default class Project {
 
     this._packageData = await getPackageData(this._root);
 
-    this._sitePath = await getSitePath(this._packageData);
+    this._sitePath = getSitePath(this._packageData);
 
     this._site = null;
     await this.reloadSite();
@@ -440,6 +440,10 @@ export default class Project {
 
   get site() {
     return this._site;
+  }
+
+  get sitePath() {
+    return this._sitePath;
   }
 
   get text() {
