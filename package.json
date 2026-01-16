@@ -1,5 +1,5 @@
 {
-  "name": "origami-studio",
+  "name": "origami-projector",
   "productName": "Origami Projector",
   "version": "1.0.0",
   "description": "Origami project editor",
@@ -28,7 +28,7 @@
     "typecheck": "tsc"
   },
   "build": {
-    "appId": "org.weborigami.studio",
+    "appId": "org.weborigami.projector",
     "productName": "Origami Projector",
     "mac": {
       "target": "zip",
