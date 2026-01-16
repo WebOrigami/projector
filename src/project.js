@@ -15,6 +15,7 @@ import * as menu from "./menu.js";
 import recent from "./recent.js";
 import updateState from "./renderer/updateState.js"; // Shared with renderer
 import * as settings from "./settings.js";
+import { getSitePath } from "./utilities.js";
 
 const REFRESH_DELAY_MS = 250;
 
@@ -195,7 +196,11 @@ export default class Project {
     this._fileParent = this._root;
 
     this._packageData = await getPackageData(this._root);
-    this._sitePath = await getSitePath(this._packageData, this._root);
+
+    const relativeSitePath = await getSitePath(this._packageData);
+    const absoluteSitePath = path.resolve(this._root.path, relativeSitePath);
+    this._sitePath = absoluteSitePath;
+
     this._site = null;
     await this.reloadSite();
 
@@ -514,39 +519,6 @@ async function getParent(root, filePath) {
 async function getPackageData(root) {
   const packageJson = await root?.get("package.json");
   return packageJson?.unpack();
-}
-
-async function getSitePath(packageData, root) {
-  // Check for `$` global first
-  // if (globals?.$) {
-  //   let site = globals.$;
-  //   if (isUnpackable(site)) {
-  //     site = await site.unpack();
-  //   }
-  //   return site;
-  // }
-
-  // Check if we have package.json data
-  if (!packageData) {
-    return null;
-  }
-
-  // Get the `start` script
-  const startScript = packageData.scripts?.start;
-  if (!startScript) {
-    return null;
-  }
-
-  // Look for the first path to a .ori file in the start script
-  const sitePathRegex = /[A-Za-z0-9\/\.\-]*\.ori/;
-  const match = startScript.match(sitePathRegex);
-  if (!match) {
-    return null;
-  }
-
-  const relativePath = match[0];
-  const absolutePath = path.resolve(root.path, relativePath);
-  return absolutePath;
 }
 
 async function loadSite(root, sitePath) {
