@@ -51,7 +51,6 @@ export default class Project {
     this._result = null;
     this._root = null;
     this._site = null;
-    this._sitePath = null;
 
     this.setState({
       command: "",
@@ -63,6 +62,7 @@ export default class Project {
       recentFiles: [],
       resultVersion: 0,
       resultHref: defaultResultHref,
+      sitePath: null,
       text: "",
       textSource: "file",
     });
@@ -206,7 +206,7 @@ export default class Project {
 
     this._packageData = await getPackageData(this._root);
 
-    this._sitePath = getSitePath(this._packageData);
+    const sitePath = getSitePath(this._packageData);
     this._site = null;
 
     const projectSettings = await settings.loadProjectSettings(this._root.path);
@@ -219,6 +219,7 @@ export default class Project {
       projectName: getProjectName(this._root, this._packageData),
       recentCommands,
       recentFiles,
+      sitePath,
     });
 
     updateWindow(this);
@@ -451,9 +452,9 @@ export default class Project {
   // Return a promise for the loaded site
   get site() {
     if (!this._site) {
-      if (this._sitePath) {
+      if (this.state.sitePath) {
         // Load site from path
-        this._site = loadSite(this._root, this._sitePath);
+        this._site = loadSite(this._root, this.state.sitePath);
       } else {
         // Use root as site
         this._site = this._root;
@@ -464,7 +465,7 @@ export default class Project {
   }
 
   get sitePath() {
-    return this._sitePath;
+    return this.state.sitePath;
   }
 
   get text() {

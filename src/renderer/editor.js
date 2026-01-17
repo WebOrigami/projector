@@ -1,4 +1,4 @@
-import { defaultResultHref } from "./shared.js";
+import { appAreaHref, defaultResultHref, resultAreaHref } from "./shared.js";
 import updateState from "./updateState.js";
 
 // Page state
@@ -83,8 +83,40 @@ function updateRecentBar(state) {
   });
 }
 
+// Trim down the result href to a path and display it
 function updateResultPath(resultHref) {
-  resultPath.textContent = resultHref;
+  let displayPath = resultHref;
+  if (displayPath === defaultResultHref) {
+    // Viewing default, hide result path
+    displayPath = "";
+  } else if (displayPath.startsWith(resultAreaHref)) {
+    // Within result of command, show relative path
+    displayPath = displayPath.slice(resultAreaHref.length);
+    if (state.command && !state.command.endsWith("/")) {
+      displayPath = "/" + displayPath;
+    }
+  } else if (displayPath.startsWith(appAreaHref)) {
+    // Within default site
+    displayPath = displayPath.slice(appAreaHref.length);
+
+    // Is the current command for the default site?
+    let normalizedCommand = state.command || "";
+    if (normalizedCommand && normalizedCommand.endsWith("/")) {
+      normalizedCommand = normalizedCommand.slice(0, -1);
+    }
+    let normalizedSitePath = state.sitePath || "";
+    if (normalizedSitePath && normalizedSitePath.endsWith("/")) {
+      normalizedSitePath = normalizedSitePath.slice(0, -1);
+    }
+    const isCommandForDefaultSite = normalizedCommand === normalizedSitePath;
+    if (!isCommandForDefaultSite) {
+      // Outside command
+      displayPath = "[default]/" + displayPath;
+    }
+  }
+
+  resultPath.textContent = displayPath;
+  resultPath.display = displayPath ? "block" : "none";
 }
 
 /**
