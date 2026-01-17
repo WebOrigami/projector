@@ -43,10 +43,7 @@ function render(state, changed) {
     updateRecentBar(state);
   }
 
-  if (
-    changed.resultHref ||
-    (changed.resultVersion && state.resultVersion > 0)
-  ) {
+  if (changed.resultVersion && state.resultVersion > 0) {
     reloadResult();
   }
 
