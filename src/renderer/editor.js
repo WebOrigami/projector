@@ -199,6 +199,22 @@ window.addEventListener("DOMContentLoaded", () => {
     window.api.invokeProjectMethod("setState", {
       resultHref,
     });
+
+    // Intercept external link clicks to open in default browser
+    result.contentDocument.addEventListener("click", (event) => {
+      const link = event.target.closest("a");
+      if (link) {
+        const href = link.getAttribute("href");
+        const isValidUrl = URL.canParse(href, appAreaHref);
+        if (!isValidUrl) return; // Ignore invalid URLs
+        const url = new URL(href, resultHref);
+        const isExternal = !url.href.startsWith(appAreaHref);
+        if (isExternal) {
+          event.preventDefault();
+          window.api.invokeProjectMethod("openExternalLink", href);
+        }
+      }
+    });
   });
 
   editor.focus();

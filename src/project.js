@@ -8,7 +8,7 @@ import {
   projectRootFromPath,
 } from "@weborigami/language";
 import { initializeBuiltins } from "@weborigami/origami";
-import { dialog } from "electron";
+import { dialog, shell } from "electron";
 import fs from "node:fs/promises";
 import * as path from "node:path";
 import * as menu from "./menu.js";
@@ -245,6 +245,10 @@ export default class Project {
       nextCommand = "";
     }
     this.setState({ command: nextCommand });
+  }
+
+  async openExternalLink(href) {
+    await shell.openExternal(href);
   }
 
   async previousCommand() {
