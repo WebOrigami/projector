@@ -13,8 +13,8 @@ contextBridge.exposeInMainWorld("api", {
   /**
    * Let the renderer invoke methods on the project associated with the window.
    */
-  invokeProjectMethod(...args) {
-    ipcRenderer.invoke("invoke-project", ...args);
+  async invokeProjectMethod(...args) {
+    return ipcRenderer.invoke("invoke-project", ...args);
   },
 
   /**

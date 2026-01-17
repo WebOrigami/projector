@@ -18,7 +18,6 @@ function getFileName(filePath) {
 
 function render(state, changed) {
   if (changed.command) {
-    console.log("Updating command:", state.command);
     if (command.value !== state.command) {
       command.value = state.command;
     }
@@ -43,7 +42,10 @@ function render(state, changed) {
     updateRecentBar(state);
   }
 
-  if (changed.resultVersion && state.resultVersion > 0) {
+  if (
+    changed.resultHref ||
+    (changed.resultVersion && state.resultVersion > 0)
+  ) {
     reloadResult();
   }
 
@@ -70,8 +72,8 @@ function updateRecentBar(state) {
     const button = document.createElement("button");
     button.textContent = getFileName(filePath);
     button.title = filePath;
-    button.addEventListener("click", () => {
-      window.api.invokeProjectMethod("loadFile", filePath);
+    button.addEventListener("click", async () => {
+      await window.api.invokeProjectMethod("loadFile", filePath);
     });
     recentButtons.appendChild(button);
   });
@@ -94,7 +96,7 @@ Object.assign(window, {
     setState({ lastScroll });
 
     // Force iframe to reload
-    result.src = "origami://app/_result";
+    result.src = state.resultHref;
   },
 
   setState(changes) {
@@ -105,43 +107,49 @@ Object.assign(window, {
 });
 
 window.addEventListener("DOMContentLoaded", () => {
-  editor.addEventListener("input", () => {
+  editor.addEventListener("input", async () => {
     // Notify main process that the content has changed
-    window.api.invokeProjectMethod("setState", {
+    await window.api.invokeProjectMethod("setState", {
       dirty: true,
       text: editor.value,
       textSource: "editor",
     });
   });
 
-  command.addEventListener("input", () => {
+  command.addEventListener("input", async () => {
     // Notify main process that the command has changed
-    window.api.invokeProjectMethod("setState", { command: command.value });
+    await window.api.invokeProjectMethod("setState", {
+      command: command.value,
+    });
   });
 
-  command.addEventListener("keydown", (event) => {
+  command.addEventListener("keydown", async (event) => {
     if (
       event.key === "Enter" &&
       !(event.shiftKey || event.ctrlKey || event.altKey)
     ) {
       event.preventDefault();
-      window.api.invokeProjectMethod("run");
+      await window.api.invokeProjectMethod("run");
     } else if (event.key === "ArrowDown") {
       event.preventDefault();
-      window.api.invokeProjectMethod("nextCommand");
+      await window.api.invokeProjectMethod("nextCommand");
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
-      window.api.invokeProjectMethod("previousCommand");
+      await window.api.invokeProjectMethod("previousCommand");
     }
   });
 
-  fileOpen.addEventListener("click", () => {
-    window.api.invokeProjectMethod("fileOpen");
+  fileOpen.addEventListener("click", async () => {
+    await window.api.invokeProjectMethod("fileOpen");
   });
 
   result.addEventListener("load", () => {
     // Restore scroll position
     result.contentWindow.scrollTo(state.lastScroll.x, state.lastScroll.y);
+    const resultHref = result.contentWindow.location.href;
+    window.api.invokeProjectMethod("setState", {
+      resultHref,
+    });
   });
 
   editor.focus();

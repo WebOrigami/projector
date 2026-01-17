@@ -25,6 +25,8 @@ const recentCommandsUpdater = recent(MAX_RECENT_COMMANDS);
 const MAX_RECENT_FILES = 10;
 const recentFilesUpdater = recent(MAX_RECENT_FILES);
 
+const defaultResultHref = "origami://app/_result";
+
 /**
  * Project state
  */
@@ -61,6 +63,7 @@ export default class Project {
       recentCommands: [],
       recentFiles: [],
       resultVersion: 0,
+      resultHref: defaultResultHref,
       text: "",
       textSource: "file",
     });
@@ -205,9 +208,7 @@ export default class Project {
     this._packageData = await getPackageData(this._root);
 
     this._sitePath = getSitePath(this._packageData);
-
     this._site = null;
-    await this.reloadSite();
 
     const projectSettings = await settings.loadProjectSettings(this._root.path);
     const recentCommands = projectSettings.recentCommands || [];
@@ -225,7 +226,7 @@ export default class Project {
 
     // If the last run didn't result in an error, auto-run the last command
     if (!projectSettings.lastRunHadError && command) {
-      this.run();
+      await this.run();
     }
   }
 
@@ -268,7 +269,7 @@ export default class Project {
     this.setState({ recentFiles });
   }
 
-  // Save and run
+  // Save and tell renderer to reload result pane
   async refresh() {
     if (!this.filePath) {
       // Refresh disabled until file has been saved
@@ -283,35 +284,31 @@ export default class Project {
       }
     }
 
-    this.run();
-  }
+    // Clear cached site so it will be reloaded
+    this._site = null;
 
-  async reloadSite() {
-    if (this._sitePath) {
-      // Load site
-      this._site = await loadSite(this._root, this._sitePath);
-    } else {
-      // Use root as site
-      this._site = this._root;
-    }
-  }
-
-  get root() {
-    return this._root;
+    // Bump result version
+    await this.setState({
+      resultVersion: this.state.resultVersion + 1,
+    });
   }
 
   restartRefreshTimeout() {
     if (this._refreshTimeout) {
       clearTimeout(this._refreshTimeout);
     }
-    this._refreshTimeout = setTimeout(() => {
+    this._refreshTimeout = setTimeout(async () => {
       this._refreshTimeout = null;
-      this.refresh();
+      await this.refresh();
     }, REFRESH_DELAY_MS);
   }
 
   get result() {
     return this._result;
+  }
+
+  get root() {
+    return this._root;
   }
 
   async run() {
@@ -356,6 +353,7 @@ export default class Project {
     this.setState({
       error,
       recentCommands: commands,
+      resultHref: defaultResultHref,
       resultVersion,
     });
 
@@ -390,9 +388,9 @@ export default class Project {
 
     // If the user is editing a .ori file, reload the site
     const oriExtensions = [".ori"];
-    if (oriExtensions.includes(extname)) {
-      await this.reloadSite();
-    }
+    // if (oriExtensions.includes(extname)) {
+    //   this._site = null;
+    // }
 
     // If the user is editing a CSS file or any of the above, clear the Chromium cache.
     const cssExtensions = [".css", ".scss", ".sass", ".less"];
@@ -445,7 +443,18 @@ export default class Project {
     };
   }
 
+  // Return a promise for the loaded site
   get site() {
+    if (!this._site) {
+      if (this._sitePath) {
+        // Load site from path
+        this._site = loadSite(this._root, this._sitePath);
+      } else {
+        // Use root as site
+        this._site = this._root;
+      }
+    }
+
     return this._site;
   }
 

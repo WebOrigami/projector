@@ -52,7 +52,7 @@ async function handleRequest(request, session) {
   let tree = await getSessionTree(session);
 
   // If the project has a site, merge that in
-  const site = session.project.site;
+  const site = await session.project.site;
   if (site) {
     tree = await Tree.merge(tree, site);
   }
