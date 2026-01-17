@@ -79,6 +79,13 @@ export default class Project {
   get command() {
     return this.state.command;
   }
+  set command(command) {
+    this.setState({ command });
+  }
+
+  get recentCommands() {
+    return this.state.recentCommands;
+  }
 
   get dirty() {
     return this.state.dirty;

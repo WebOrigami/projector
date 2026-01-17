@@ -217,6 +217,16 @@ export async function openProjectAndRestoreFile(rootPath) {
       } catch (error) {
         // File doesn't exist, do nothing
       }
+
+      if (project.command === "" && project.recentCommands.length === 0) {
+        // No command set, run the site
+        let command = project.sitePath;
+        if (!command.endsWith("/")) {
+          command += "/";
+        }
+        project.command = command;
+        await project.run();
+      }
     }
   }
 
