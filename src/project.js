@@ -13,6 +13,7 @@ import fs from "node:fs/promises";
 import * as path from "node:path";
 import * as menu from "./menu.js";
 import recent from "./recent.js";
+import { defaultResultHref, resultAreaHref } from "./renderer/shared.js";
 import updateState from "./renderer/updateState.js"; // Shared with renderer
 import * as settings from "./settings.js";
 import { getSitePath } from "./utilities.js";
@@ -24,8 +25,6 @@ const recentCommandsUpdater = recent(MAX_RECENT_COMMANDS);
 
 const MAX_RECENT_FILES = 10;
 const recentFilesUpdater = recent(MAX_RECENT_FILES);
-
-const defaultResultHref = "origami://app/_result";
 
 /**
  * Project state
@@ -287,10 +286,17 @@ export default class Project {
     // Clear cached site so it will be reloaded
     this._site = null;
 
-    // Bump result version
-    await this.setState({
-      resultVersion: this.state.resultVersion + 1,
-    });
+    // Is the current result href inside the result area?
+    const relativePath = path.relative(resultAreaHref, this.state.resultHref);
+    if (relativePath.startsWith("..")) {
+      // Outside default, bump result version to force reload
+      await this.setState({
+        resultVersion: this.state.resultVersion + 1,
+      });
+    } else {
+      // Inside default, rerun
+      await this.run();
+    }
   }
 
   restartRefreshTimeout() {
@@ -353,7 +359,6 @@ export default class Project {
     this.setState({
       error,
       recentCommands: commands,
-      resultHref: defaultResultHref,
       resultVersion,
     });
 

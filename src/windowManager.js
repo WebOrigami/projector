@@ -132,7 +132,7 @@ async function createProjectWindow(rootPath) {
   });
 
   // Load the renderer HTML file via our custom protocol
-  await window.loadURL("origami://app/renderer/index.html");
+  await window.loadURL("origami://app/_renderer/index.html");
 
   return window;
 }

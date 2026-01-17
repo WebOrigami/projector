@@ -36,10 +36,15 @@ async function getSessionTree(session) {
   if (!tree) {
     // The basic tree is the result and the renderer files
     tree = new ObjectMap({
+      _renderer: renderer,
+
       get _result() {
-        return session.project.result;
+        const result = session.project.result;
+        const base = new ObjectMap({
+          _default: result,
+        });
+        return Tree.isMaplike(result) ? Tree.merge(result, base) : base;
       },
-      renderer,
     });
 
     treeForSession.set(session, tree);

@@ -1,3 +1,4 @@
+import { defaultResultHref } from "./shared.js";
 import updateState from "./updateState.js";
 
 // Page state
@@ -129,6 +130,9 @@ window.addEventListener("DOMContentLoaded", () => {
       !(event.shiftKey || event.ctrlKey || event.altKey)
     ) {
       event.preventDefault();
+      await window.api.invokeProjectMethod("setState", {
+        resultHref: defaultResultHref,
+      });
       await window.api.invokeProjectMethod("run");
     } else if (event.key === "ArrowDown") {
       event.preventDefault();

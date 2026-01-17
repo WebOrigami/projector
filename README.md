@@ -60,17 +60,17 @@ A project’s name is used as a way to identify the project in window title bars
 - For an `origami` or `npm` project with a package.json at its root, the project name is the `name` field from that file.
 - Otherwise the friendly name is the name of the project’s root folder. E.g., for `/Users/Alice/hello`, the project name is “hello”.
 
-## Project site
+## Default site
 
-Each project can be associated with an optional _site_: a tree of resources used to handle local HTTP requests.
+Each project can be associated with an optional _default site_: a tree of resources used to handle absolute local URLs.
 
-When you are editing a file that eventually renders as HTML, the framed page needs to know where to obtain any referenced stylesheets, scripts, or other resources.
+When you are editing a file that eventually renders as HTML, the framed page needs to know where to obtain any stylesheets, scripts, or other resources referenced with absolute paths like `/assets/styles.css`.
 
-Projector uses a heuristic to find the site for a project.
+Projector uses a heuristic to find the default site for a project.
 
-If the project contains a package.json file with a `start` script, Projector searches that script command for the first path that includes a `.ori` file. If the script follows the [standard incantation to start a server](https://weborigami.org/cli/incantations#starting-an-origami-server-with-debugging), then the Projector project’s site will be the same as the one you normally start with `npm run start`.
+If the project contains a package.json file with a `start` script, Projector searches that script command for the first path that includes a `.ori` file. If the script follows the [standard incantation to start a server](https://weborigami.org/cli/incantations#starting-an-origami-server-with-debugging), then the project’s default site will be the same as the one you normally start with `npm run start`.
 
-If such a site path can’t be found, the project’s site will be the project’s root folder. That is, HTTP requests will be resolved with the root folder as the root of the site.
+If such a site path can’t be found, the project’s default site will be the project’s root folder. That is, absolute local URLs paths will be resolved with the root folder as the root of the site.
 
 # User interface
 
