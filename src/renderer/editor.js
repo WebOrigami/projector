@@ -90,10 +90,16 @@ Object.assign(window, {
 
   reloadResult() {
     // Save scroll position
-    const lastScroll = {
-      x: result.contentWindow.scrollX,
-      y: result.contentWindow.scrollY,
-    };
+    let lastScroll;
+    try {
+      lastScroll = {
+        x: result.contentWindow.scrollX,
+        y: result.contentWindow.scrollY,
+      };
+    } catch (e) {
+      // Ignore errors (e.g., if iframe is cross-origin)
+      lastScroll = { x: 0, y: 0 };
+    }
     setState({ lastScroll });
 
     // Force iframe to reload
