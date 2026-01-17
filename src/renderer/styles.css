@@ -32,8 +32,10 @@ input, textarea {
 
 #recentBar {
   display: grid;
+  font-size: 0.8rem;
   grid-template-columns: auto 1fr;
   padding-right: 0.5rem; /* Gap before command */
+  user-select: none;
 
   button {
     align-items: center;
@@ -41,7 +43,8 @@ input, textarea {
     border: none;
     color: inherit;
     display: grid;
-    padding: 0.25rem 0.5rem;
+    font-family: inherit;
+    font-size: inherit;
 
     &:hover {
       background: #444;
@@ -58,19 +61,31 @@ input, textarea {
   }
 
   #recentButtons {
+    align-items: center;
+    color: color-mix(in oklch, var(--text-color) 60%, black);
     display: flex;
     overflow: hidden;
+
+    > * {
+      height: 100%;
+      padding: 0 0.5rem;
+    }
 
     button {
       white-space: nowrap;
 
-      &:not(:first-child) {
-        color: color-mix(in oklch, var(--text-color) 60%, black);
+      &:first-child {
+        color: var(--text-color);
       }
 
       &:hover {
         color: white;
       }
+    }
+
+    span {
+      align-items: center;
+      display: grid;
     }
   }
 }
