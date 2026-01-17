@@ -196,9 +196,11 @@ window.addEventListener("DOMContentLoaded", () => {
     // Restore scroll position
     result.contentWindow.scrollTo(state.lastScroll.x, state.lastScroll.y);
     const resultHref = result.contentWindow.location.href;
-    window.api.invokeProjectMethod("setState", {
-      resultHref,
-    });
+    if (state.resultHref !== resultHref) {
+      window.api.invokeProjectMethod("setState", {
+        resultHref,
+      });
+    }
 
     // Intercept external link clicks to open in default browser
     result.contentDocument.addEventListener("click", (event) => {

@@ -212,6 +212,7 @@ export default class Project {
     const projectSettings = await settings.loadProjectSettings(this._root.path);
     const recentCommands = projectSettings.recentCommands || [];
     const recentFiles = projectSettings.recentFiles || [];
+    const resultHref = projectSettings.resultHref || defaultResultHref;
     const command = recentCommands.at(-1) || "";
 
     this.setState({
@@ -219,6 +220,7 @@ export default class Project {
       projectName: getProjectName(this._root, this._packageData),
       recentCommands,
       recentFiles,
+      resultHref,
       sitePath,
     });
 
@@ -430,6 +432,10 @@ export default class Project {
       }
     }
 
+    if (changed.resultHref) {
+      settings.saveProjectSettings(this);
+    }
+
     updateWindow(this);
     await this.broadcastState();
   }
@@ -445,6 +451,7 @@ export default class Project {
       lastRunHadError: this.state.error !== null,
       recentCommands: this.state.recentCommands,
       recentFiles,
+      resultHref: this.state.resultHref,
     };
   }
 
