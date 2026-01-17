@@ -180,7 +180,11 @@ While the command bar has focus, the user can press the Up or Down arrow keys to
 
 The result pane shows the result of the most recently-issued command: an HTML page, text file, etc.
 
-## Architecture
+# Error reports
+
+If the main application suffers a top-level unexpected error, it saves an error report in `~/Library/Application Support/Origami Projector/error.log`.
+
+# Architecture
 
 Projector is an Electron application, so it includes both the Node runtime and the Chromium browser engine.
 
@@ -193,6 +197,6 @@ Some important pieces:
 - Renderer. Each project window has an associated renderer process that can communicate with the main application or, through it, with the associated project or session.
 - Client page. The content of each project window is defined with an HTML page that loads client-side JavaScript.
 
-## Developer notes
+## Dependency notes
 
 - The @weborigami/origami package has a dependency on "sharp", which has an optional dependency on "@emnapi/runtime". There are known issues using sharp in Electron; it appears that npm doesn't always install the @emnapi/runtime package, which causes electron-builder to fail. The package.json contains several workarounds for this, including explicitly installing @emnapi/runtime and sharp; setting `asar` options to unpack these packages; and using the `npmRebuild` and `buildDependenciesFromSource` options. It would be nice to find a cleaner solution in the future.
