@@ -33,7 +33,7 @@ input, textarea {
 #recentBar {
   display: grid;
   font-size: 0.8rem;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 1fr minmax(max-content, 50%);
   padding-right: 0.5rem; /* Gap before command */
   user-select: none;
 
@@ -91,18 +91,30 @@ input, textarea {
 }
 
 #commandBar {
+  align-items: center;
   display: grid;
+  gap: 0.25rem;
+  grid-template-columns: 1fr fit-content(50%);
   padding: 0.25rem;
   padding-left: 0; /* to align left edge with result pane */
 
-  #command {
+  input {
+    --input-background: white;
     border: 1px solid #555;
     font-family: var(--code-font-family);
     font-size: var(--code-font-size);
+  }
 
+  #command {
+    background: var(--input-background);
+  
     &.error {
       background: pink;
     }
+  }
+
+  #resultPath {
+    color: color-mix(in oklch, var(--text-color) 60%, black);
   }
 }
 

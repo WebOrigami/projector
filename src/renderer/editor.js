@@ -43,6 +43,12 @@ function render(state, changed) {
     updateRecentBar(state);
   }
 
+  if (changed.resultHref) {
+    if (resultPath.value !== state.resultHref) {
+      updateResultPath(state.resultHref);
+    }
+  }
+
   if (changed.resultVersion && state.resultVersion > 0) {
     reloadResult();
   }
@@ -75,6 +81,10 @@ function updateRecentBar(state) {
     });
     recentButtons.appendChild(button);
   });
+}
+
+function updateResultPath(resultHref) {
+  resultPath.textContent = resultHref;
 }
 
 /**
