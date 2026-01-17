@@ -117,6 +117,8 @@ input, textarea {
 
   #resultPath {
     color: var(--text-color-faded);
+    overflow: scroll;
+    white-space: nowrap;
 
     &:not(:empty) {
       margin-left: 0.25rem;
