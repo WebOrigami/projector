@@ -75,6 +75,11 @@ async function handleRequest(request, session) {
     resource = error;
   }
 
+  if (resource instanceof Function) {
+    // Invoke the function to get the final desired result
+    resource = await resource();
+  }
+
   if (
     typeof resource === "string" ||
     resource instanceof ArrayBuffer ||
@@ -93,7 +98,10 @@ async function handleRequest(request, session) {
     resource = resource.toString();
   } else if (Tree.isMaplike(resource)) {
     let map = await Tree.from(resource);
-    const indexHtml = await map.get("index.html");
+    let indexHtml = await map.get("index.html");
+    if (indexHtml instanceof Function) {
+      indexHtml = await indexHtml(); // Get the actual index page
+    }
     if (indexHtml) {
       // Return index.html page
       resource = indexHtml;

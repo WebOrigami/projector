@@ -337,11 +337,6 @@ export default class Project {
         mode: "shell",
         parent: this._fileParent,
       });
-
-      if (this._result instanceof Function) {
-        // Invoke the function to get the final desired result
-        this._result = await this._result();
-      }
     } catch (/** @type {any} */ e) {
       this._result = null;
       error = formatError(e);
