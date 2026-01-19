@@ -1,7 +1,7 @@
 {
   "name": "origami-projector",
   "productName": "Origami Projector",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "description": "Origami project editor",
   "license": "MIT",
   "type": "module",
@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@emnapi/runtime": "1.8.1",
-    "@weborigami/origami": "0.6.6",
+    "@weborigami/origami": "0.6.7",
     "sharp": "0.34.5"
   },
   "optionalDependencies": {
@@ -31,7 +31,7 @@
     "appId": "org.weborigami.projector",
     "productName": "Origami Projector",
     "mac": {
-      "target": "zip",
+      "target": "dmg",
       "category": "public.app-category.developer-tools",
       "identity": "Jan Miksovsky (P4XND4W8NJ)"
     },
