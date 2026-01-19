@@ -3,6 +3,7 @@
   "productName": "Origami Projector",
   "version": "0.6.7",
   "description": "Origami project editor",
+  "author": "weborigami.org",
   "license": "MIT",
   "type": "module",
   "main": "src/main.js",
