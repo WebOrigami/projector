@@ -1,31 +1,32 @@
 # Origami Projector
 
-Origami Projector (hereafter, “Projector”) is an experimental editor and evaluation system for quickly iterating on code, data, and content.
+Origami Projector (hereafter, Projector) is an editor and expression evaluation system for quickly iterating on code, data, and content.
 
 Projector shortens the conventional cycle in which you edit a text file (e.g., a markdown file), run some code to generate an affected artifact (a HTML file incorporating that content), view the artifact, then edit again.
 
-Edit → Run → View → repeat
+Edit → Run → View → (repeat)
 
-Projector is aimed at traditional developers, designers, as well as other people that may have a degree of technical proficiency but do not think of themselves as coders. To that end, Projector is envisioned as a standalone application for performing tasks which are normally done with a terminal.
+Projector is aimed at traditional developers, designers, as well as people with a degree of technical proficiency but who do not think of themselves as coders. To that end, Projector is envisioned as a standalone application for performing tasks which are normally done with a terminal.
 
-Projector is designed to coexist with other design and development tools such as IDEs (e.g., Microsoft VS Code, NeoVim), text editing applications (Obsidian, iA Writer), and command-line tools (Origami, node).
+Projector is designed to coexist with other design and development tools such as code editors (e.g., Microsoft VS Code, NeoVim), text editing applications (Obsidian, iA Writer), and command-line shells (bash).
 
 ## Current status
 
 Projector is an experimental application. The initial feature set is small and designed to be reasonably self-consistent, but even an extremely basic file-editing application carries high user expectations. If you find a bug, please report it.
 
-The focus at this early stage is confirming the idea’s viability and working out the proper shape of the tool. The current app experience is all but certain to have bugs or rough edges, but hopefully it’s good enough to envision what you’d really like the application to do and be motivated to provide feedback. Experience suggests that feedback will direct the app’s evolution in directions that are hard to imagine at this point; don’t get too attached to anything yet.
+The focus at this early stage is confirming the idea’s viability and working out the proper shape of the tool. The current app experience is all but certain to have bugs and rough edges; hopefully it’s good enough to envision what you’d really like the application to do and be motivated to provide feedback. Experience suggests that feedback will direct the app’s evolution in directions that are hard to imagine at this point, so don’t get too attached to anything yet.
 
 The application should be sufficient to perform basic editing of Origami projects. You should be able to:
 
-- Install the application on macOS.
-- Open and save text files.
+- Install the application on macOS with Apple silicon.
 - Issue Origami commands and see the results immediately appear in the result pane.
-- Edit a text file and automatically reload the result.
+- Edit a text file (.md, .js, .ori, etc.) and see the result pane automatically reload.
 - If the displayed HTML contains links, browse within the local site.
 
 Out of scope for now:
 
+- Adjusting or disabling auto-save or auto-reload
+- Manually setting the default site for a project
 - Window or Linux versions
 - Dark mode
 - Window pane management (showing, hiding, resizing)
@@ -35,19 +36,18 @@ Out of scope for now:
 - Real code editor
 - LSP integration
 - JavaScript file cache resets
-- Build or serve
-- Deploy a site
+- Build, serve, or deploy a site
 - Help
 
 # Projects
 
 Projector’s user model is organized around _projects_: a folder tree of related files, generally identified by its root; see below.
 
-Within a project, Projector can edit text files: plain text, markdown, CSS, JSON, YAML, JavaScript, Origami, etc.Files are always viewed in the context of a project.
+Within a project, Projector can edit text files: plain text, markdown, CSS, JSON, YAML, JavaScript, Origami, etc. Files are always viewed in the context of a project.
 
 ## Project root and type
 
-For any given file (or folder, in the case of the Open Folder menu item), Projector establishes its associated root folder and type based on the file/folder’s location:
+When you open a file or folder, Projector establishes its associated root folder and type based on the file/folder’s location:
 
 1. From the location, Projector walks up the folder hierarchy looking for an Origami configuration file called `config.ori`. If found, the folder containing that file is the project root. The project type will be `origami`. Note: an `origami` project may also have a `package.json` at the root level.
 2. From the location, Projector walks up the folder hierarchy looking for an npm `package.json` file. If found, the folder containing that file is the project root. The project type will be `npm`.
@@ -66,7 +66,7 @@ Each project can be associated with an optional _default site_: a tree of resour
 
 When you are editing a file that eventually renders as HTML, the framed page needs to know where to obtain any stylesheets, scripts, or other resources referenced with absolute paths like `/assets/styles.css`.
 
-Projector uses a heuristic to find the default site for a project.
+Projector currently uses a heuristic to find the default site for a project.
 
 If the project contains a package.json file with a `start` script, Projector searches that script command for the first path that includes a `.ori` file. If the script follows the [standard incantation to start a server](https://weborigami.org/cli/incantations#starting-an-origami-server-with-debugging), then the project’s default site will be the same as the one you normally start with `npm run start`.
 
@@ -76,19 +76,20 @@ If such a site path can’t be found, the project’s default site will be the p
 
 ## Basic application behavior
 
-When the application starts, it opens a window for the most recently opened project where the project folder still exists. If no such recent project exists, the Open Folder dialog is shown.
+When you start Projector, it opens a window for the most recently opened project(s) for those project(s) that still exist. If no such recent project exists, it shows the Open Folder dialog.
 
-When reopening a project window, the most recently opened file in the project is opened, and the most recently run command is shown in the command bar. If the last command run (before closing the project) had completed without errors, then that last command is repeated.
+When reopening a project window, Projector attempts to restore the state of the window when you closed it. It reopens the most recently opened file, and shows the most recently run command in the command bar. If, in the last session, that command had completed without errors, then it re-runs that command.
 
 ### Settings
 
-The application persists the following settings:
+Projector persists the following settings:
 
 - paths of recent projects
-- paths of recent files within each project
+- paths of projects which were open when the application was closed
+- paths of the recent files opened within each project
 - recent commands used within each project
 
-These settings are saved whenever the values change so that they can survive application crashes.
+These settings are saved whenever their values change.
 
 ## Menu bar
 
