@@ -2,11 +2,14 @@ import { appAreaHref, defaultResultHref, resultAreaHref } from "./shared.js";
 import updateState from "./updateState.js";
 
 // Page state
+const defaultScroll = {
+  command: "",
+  href: "",
+  x: 0,
+  y: 0,
+};
 window.state = {
-  lastScroll: {
-    x: 0,
-    y: 0,
-  },
+  lastScroll: defaultScroll,
 };
 
 function getFileName(filePath) {
@@ -56,6 +59,25 @@ function render(state, changed) {
   if (changed.text && state.textSource === "file") {
     editor.value = state.text;
   }
+}
+
+function restoreScrollPositionIfSamePage() {
+  const { lastScroll } = state;
+  const { command, href, x, y } = lastScroll;
+
+  const window = result.contentWindow;
+
+  if (command !== state.command) {
+    // Different command, do not restore scroll
+    return;
+  }
+
+  if (href !== window.location.href) {
+    // Different page, do not restore scroll
+    return;
+  }
+
+  window.scrollTo(x, y);
 }
 
 function updateRecentBar(state) {
@@ -130,14 +152,17 @@ Object.assign(window, {
   reloadResult() {
     // Save scroll position
     let lastScroll;
+    const window = result.contentWindow;
     try {
       lastScroll = {
-        x: result.contentWindow.scrollX,
-        y: result.contentWindow.scrollY,
+        command: state.command,
+        href: window.location.href,
+        x: window.scrollX,
+        y: window.scrollY,
       };
     } catch (e) {
       // Ignore errors (e.g., if iframe is cross-origin)
-      lastScroll = { x: 0, y: 0 };
+      lastScroll = defaultScroll;
     }
     setState({ lastScroll });
 
@@ -194,7 +219,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   result.addEventListener("load", () => {
     // Restore scroll position
-    result.contentWindow.scrollTo(state.lastScroll.x, state.lastScroll.y);
+    restoreScrollPositionIfSamePage();
     const resultHref = result.contentWindow.location.href;
     if (state.resultHref !== resultHref) {
       window.api.invokeProjectMethod("setState", {
