@@ -183,7 +183,7 @@ The result pane shows the result of the most recently-issued command: an HTML pa
 
 # Error reports
 
-If the main application suffers a top-level unexpected error, it saves an error report in `~/Library/Application Support/Origami Projector/error.log`.
+If the main application suffers a top-level unexpected error, it displays an error dialog. It also saves an error report in `~/Library/Application Support/Origami Projector/error.log`.
 
 # Architecture
 

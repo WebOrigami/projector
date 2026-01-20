@@ -1,9 +1,4 @@
-import {
-  FileMap,
-  getRealmObjectPrototype,
-  ObjectMap,
-  Tree,
-} from "@weborigami/async-tree";
+import { FileMap, ObjectMap, Tree } from "@weborigami/async-tree";
 import { formatError } from "@weborigami/language";
 import { constructResponse, keysFromUrl, Origami } from "@weborigami/origami";
 import { protocol } from "electron";
@@ -80,22 +75,10 @@ async function handleRequest(request, session) {
     resource = await resource();
   }
 
-  if (
-    typeof resource === "string" ||
-    resource instanceof ArrayBuffer ||
-    resource instanceof TypedArray
-  ) {
-    // Return as is
-  } else if (resource == null) {
+  if (resource == null) {
     return new Response(null, { status: 404 });
   } else if (resource instanceof Error) {
     return respondWithError(resource);
-  } else if (
-    !(resource instanceof Array) &&
-    (typeof resource !== "object" ||
-      resource.toString !== getRealmObjectPrototype(resource)?.toString)
-  ) {
-    resource = resource.toString();
   } else if (Tree.isMaplike(resource)) {
     let map = await Tree.from(resource);
     let indexHtml = await map.get("index.html");

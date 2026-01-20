@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import { appendFile } from "node:fs/promises";
 import { join } from "node:path";
 import * as windowManager from "./windowManager.js";
@@ -19,7 +19,7 @@ ipcMain.handle("invoke-project", async (event, ...args) => {
     await fn.apply(project, args);
   } else {
     throw new Error(
-      `Renderer tried to invoke non-existent project method: ${fnName}`
+      `Renderer tried to invoke non-existent project method: ${fnName}`,
     );
   }
 });
@@ -43,16 +43,37 @@ async function logError(error) {
   }
 }
 
+/**
+ * Show error in a native dialog
+ */
+async function showErrorDialog(error) {
+  const windows = BrowserWindow.getAllWindows();
+  const focusedWindow = windows.find((w) => w.isFocused()) || windows[0];
+
+  if (focusedWindow) {
+    await dialog.showMessageBox(focusedWindow, {
+      type: "error",
+      title: "Error",
+      message: error.message || String(error),
+      detail: error.stack,
+      buttons: ["OK"],
+    });
+  }
+}
+
 // Handle uncaught exceptions in the main process
 process.on("uncaughtException", (error) => {
   console.error("Uncaught exception:", error);
   logError(error);
+  showErrorDialog(error);
 });
 
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled rejection at:", promise, "reason:", reason);
-  logError(reason instanceof Error ? reason : new Error(String(reason)));
+  const error = reason instanceof Error ? reason : new Error(String(reason));
+  logError(error);
+  showErrorDialog(error);
 });
 
 app.on("window-all-closed", () => {
