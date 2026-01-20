@@ -155,7 +155,7 @@ export default class Project {
         const relative = path.relative(this._root.path, filePath);
         if (relative.startsWith("..")) {
           throw new Error(
-            `File "${filePath}" is outside of project root "${this._root.path}"`
+            `File "${filePath}" is outside of project root "${this._root.path}"`,
           );
         }
       }
@@ -337,7 +337,7 @@ export default class Project {
         enableCaching: false,
         globals: this._globals,
         mode: "shell",
-        parent: this._fileParent,
+        parent: this._root,
       });
     } catch (/** @type {any} */ e) {
       this._result = null;
@@ -356,7 +356,7 @@ export default class Project {
 
     const commands = recentCommandsUpdater.add(
       this.state.recentCommands || [],
-      command
+      command,
     );
     this.setState({
       error,
@@ -444,7 +444,7 @@ export default class Project {
   get settings() {
     // Remove null (unsaved) files from recent files
     const recentFiles = this.state.recentFiles.filter(
-      (filePath) => filePath !== null
+      (filePath) => filePath !== null,
     );
 
     return {
