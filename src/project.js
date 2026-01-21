@@ -1,4 +1,4 @@
-import { isUnpackable, Tree } from "@weborigami/async-tree";
+import { isUnpackable, keysFromPath, Tree } from "@weborigami/async-tree";
 import {
   compile,
   coreGlobals,
@@ -75,6 +75,35 @@ export default class Project {
     // copy the state.
     const snapshot = structuredClone(this.state);
     return this.window.webContents.send("invoke-page", "setState", snapshot);
+  }
+
+  async clearCacheForFileChange(filePath) {
+    // If a JavaScript file changed, reset the module cache so that top-level
+    // modules are reloaded on each request. Only top-level modules will be
+    // reloaded; to reload modules those depend on will require a more complex
+    // solution.
+    const extname = path.extname(filePath).toLowerCase();
+    const jsExtensions = [".cjs", ".js", ".mjs", ".ts"];
+    if (jsExtensions.includes(extname)) {
+      moduleCache.resetTimestamp();
+    }
+
+    // If a .ori file changed, reload the site
+    const oriExtensions = [".ori"];
+    // if (oriExtensions.includes(extname)) {
+    //   this._site = null;
+    // }
+
+    // If a CSS file or any of the above changed, clear the Chromium cache.
+    const cssExtensions = [".css", ".scss", ".sass", ".less"];
+    const reloadExtension = [
+      ...jsExtensions,
+      ...oriExtensions,
+      ...cssExtensions,
+    ];
+    if (reloadExtension.includes(extname)) {
+      await clearBrowserCache(this.window);
+    }
   }
 
   get command() {
@@ -229,6 +258,14 @@ export default class Project {
     if (!projectSettings.lastRunHadError && command) {
       await this.run();
     }
+
+    // Watch for file changes in the project file tree
+    this._root.addEventListener("change", async (/** @type {any} */ event) => {
+      const { filePath } = event.options;
+      this.onChange(filePath);
+    });
+    // @ts-ignore watch() does exist but isn't declared yet
+    this._root.watch();
   }
 
   get name() {
@@ -246,6 +283,52 @@ export default class Project {
       nextCommand = "";
     }
     this.setState({ command: nextCommand });
+  }
+
+  async onChange(filePath) {
+    const relativePath = path.relative(this._root.path, filePath);
+
+    const keys = keysFromPath(relativePath);
+    if (keys.length > 0 && keys[0].startsWith(".") && keys[0].endsWith("/")) {
+      // Ignore changes in root-level dot folders like `.git`
+      return;
+    }
+
+    console.log(`changed: ${relativePath}`);
+
+    if (filePath !== this._filePath) {
+      // Editing some file that's not the active file
+      await this.clearCacheForFileChange(filePath);
+      if (!this._refreshTimeout) {
+        // If we haven't already queued a refresh, do so now
+        this.restartRefreshTimeout();
+      }
+      return;
+    }
+
+    if (this.dirty) {
+      // User has edited file, ignore external changes
+      return;
+    }
+
+    // Reload file text
+    let text;
+    try {
+      text = await fs.readFile(filePath, "utf8");
+    } catch (error) {
+      text = "";
+    }
+
+    await this.setState({
+      text,
+      textSource: "file",
+    });
+
+    await this.clearCacheForFileChange(filePath);
+    if (!this._refreshTimeout) {
+      // Refresh immediately
+      this.refresh();
+    }
   }
 
   async openExternalLink(href) {
@@ -378,32 +461,8 @@ export default class Project {
     // Mark as clean
     this.dirty = false;
 
-    // If the user is editing a JavaScript file, reset the module cache so that
-    // top-level modules are reloaded on each request. Only top-level modules
-    // will be reloaded; to reload modules those depend on will require a more
-    // complex solution.
-    const extname = path.extname(this.filePath).toLowerCase();
-    const jsExtensions = [".cjs", ".js", ".mjs", ".ts"];
-    if (jsExtensions.includes(extname)) {
-      moduleCache.resetTimestamp();
-    }
-
-    // If the user is editing a .ori file, reload the site
-    const oriExtensions = [".ori"];
-    // if (oriExtensions.includes(extname)) {
-    //   this._site = null;
-    // }
-
-    // If the user is editing a CSS file or any of the above, clear the Chromium cache.
-    const cssExtensions = [".css", ".scss", ".sass", ".less"];
-    const reloadExtension = [
-      ...jsExtensions,
-      ...oriExtensions,
-      ...cssExtensions,
-    ];
-    if (reloadExtension.includes(extname)) {
-      await clearBrowserCache(this.window);
-    }
+    // Clear caches as appropriate
+    await this.clearCacheForFileChange(this.filePath);
 
     return true;
   }
