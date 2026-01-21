@@ -7,6 +7,20 @@ window.state = {
   lastScroll: scrollState.defaultState,
 };
 
+const imageExtensions = [
+  ".avif",
+  ".bmp",
+  ".gif",
+  ".ico",
+  ".jpeg",
+  ".jpg",
+  ".png",
+  ".svg",
+  ".tif",
+  ".tiff",
+  ".webp",
+];
+
 function getFileName(filePath) {
   if (!filePath) return "Untitled";
 
@@ -196,6 +210,25 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   result.addEventListener("load", () => {
+    const href = result.contentWindow.location.href;
+
+    // If the href is for an image, limit the width of the image to fit
+    // within the iframe
+    if (imageExtensions.some((ext) => href.endsWith(ext))) {
+      const img = result.contentDocument.querySelector("img");
+      if (img) {
+        Object.assign(result.contentDocument.body.style, {
+          backgroundColor: "black",
+          display: "grid",
+          height: "100%",
+        });
+        Object.assign(img.style, {
+          margin: "auto",
+          maxWidth: "100%",
+        });
+      }
+    }
+
     // Restore scroll position
     restoreScrollPositionIfSamePage();
     const resultHref = result.contentWindow.location.href;
