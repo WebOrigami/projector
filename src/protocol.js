@@ -4,8 +4,6 @@ import { constructResponse, keysFromUrl, Origami } from "@weborigami/origami";
 import { protocol } from "electron";
 import { isSimpleObject } from "./utilities.js";
 
-const TypedArray = Object.getPrototypeOf(Uint8Array);
-
 const treeForSession = new WeakMap();
 
 // Client-side files used by the renderer are also served via origami: protocol
@@ -49,13 +47,13 @@ async function getSessionTree(session) {
 }
 
 async function handleRequest(request, session) {
-  let tree = await getSessionTree(session);
+  // let tree = await getSessionTree(session);
 
   // If the project has a site, merge that in
-  const site = await session.project.site;
-  if (site) {
-    tree = await Tree.merge(tree, site);
-  }
+  // const site = await session.project.site;
+  // if (site) {
+  //   tree = await Tree.merge(tree, site);
+  // }
 
   // The request `url` is a string
   const url = new URL(request.url, "origami://");
@@ -64,10 +62,17 @@ async function handleRequest(request, session) {
   const keys = keysFromUrl(url);
 
   let resource;
-  try {
-    resource = await Tree.traverseOrThrow(tree, ...keys);
-  } catch (error) {
-    resource = error;
+  if (keys[0] === "_renderer") {
+    // Serve from the renderer files
+    keys.shift();
+    try {
+      resource = await Tree.traverseOrThrow(renderer, ...keys);
+    } catch (error) {
+      resource = error;
+    }
+  } else {
+    // Have project handle the request
+    resource = await session.project.traverse(...keys);
   }
 
   if (resource instanceof Function) {
