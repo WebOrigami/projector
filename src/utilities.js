@@ -1,5 +1,15 @@
 import { isPlainObject, Tree } from "@weborigami/async-tree";
+import { formatError as cliFormatError } from "@weborigami/language";
 import * as path from "node:path";
+
+export function formatError(error) {
+  let message = cliFormatError(error);
+  // Remove ANSI escape codes from the message.
+  message = message.replace(/\x1b\[[0-9;]*m/g, "");
+  // Prevent HTML in the error message from being interpreted as HTML.
+  message = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return message;
+}
 
 // For a path like `path/to/site.ori/public`, return `path/to/site.ori`
 export function getSiteFilePath(root, sitePath) {

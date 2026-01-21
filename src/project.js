@@ -1,6 +1,5 @@
 import { isUnpackable, Tree } from "@weborigami/async-tree";
 import {
-  formatError as cliFormatError,
   compile,
   coreGlobals,
   moduleCache,
@@ -16,7 +15,7 @@ import recent from "./recent.js";
 import { defaultResultHref, resultAreaHref } from "./renderer/shared.js";
 import updateState from "./renderer/updateState.js"; // Shared with renderer
 import * as settings from "./settings.js";
-import { getSitePath } from "./utilities.js";
+import { formatError, getSitePath } from "./utilities.js";
 
 const REFRESH_DELAY_MS = 250;
 
@@ -418,6 +417,14 @@ export default class Project {
     return saved;
   }
 
+  // Used by protocol to signal error to renderer
+  async setError(error) {
+    // Don't overwrite an error already present in state
+    if (!this.state.error) {
+      await this.setState({ error });
+    }
+  }
+
   async setState(changes) {
     const { newState, changed } = updateState(this.state, changes);
     this.state = newState;
@@ -473,42 +480,6 @@ export default class Project {
   get text() {
     return this.state.text;
   }
-
-  // Traverse the given keys in a combination of the project site and the
-  // current result.
-  async traverse(keys) {
-    let tree;
-    if (keys[0] === "_result") {
-      // Traverse the result
-      keys = keys.slice(1);
-      if (keys[0] === "_default") {
-        keys = keys.slice(1);
-      }
-      tree = this.result;
-    } else {
-      // Traverse the site
-      tree = await this.site;
-    }
-
-    let resource;
-    let error;
-    try {
-      resource = await Tree.traverseOrThrow(tree, ...keys);
-    } catch (e) {
-      error = formatError(e);
-      resource = null;
-    }
-
-    if (error) {
-      // Don't overwrite an error already present in state
-      if (!this.state.error) {
-        await this.setState({ error });
-      }
-      return error;
-    }
-
-    return resource;
-  }
 }
 
 // Chromium aggressively caches CSS files, and no amount of cache-disabling in
@@ -534,15 +505,6 @@ async function evaluate(source, options = {}) {
   }
 
   return value;
-}
-
-function formatError(error) {
-  let message = cliFormatError(error);
-  // Remove ANSI escape codes from the message.
-  message = message.replace(/\x1b\[[0-9;]*m/g, "");
-  // Prevent HTML in the error message from being interpreted as HTML.
-  message = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  return message;
 }
 
 async function getGlobals(folderPath) {

@@ -1,10 +1,7 @@
-import { FileMap, ObjectMap, Tree } from "@weborigami/async-tree";
-import { formatError } from "@weborigami/language";
+import { FileMap, trailingSlash, Tree } from "@weborigami/async-tree";
 import { constructResponse, keysFromUrl, Origami } from "@weborigami/origami";
 import { protocol } from "electron";
-import { isSimpleObject } from "./utilities.js";
-
-const treeForSession = new WeakMap();
+import { formatError, isSimpleObject } from "./utilities.js";
 
 // Client-side files used by the renderer are also served via origami: protocol
 const rendererUrl = new URL("renderer", import.meta.url);
@@ -24,82 +21,52 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
-async function getSessionTree(session) {
-  let tree = treeForSession.get(session);
-  if (!tree) {
-    // The basic tree is the result and the renderer files
-    tree = new ObjectMap({
-      _renderer: renderer,
-
-      get _result() {
-        const result = session.project.result;
-        const base = new ObjectMap({
-          _default: result,
-        });
-        return Tree.isMaplike(result) ? Tree.merge(result, base) : base;
-      },
-    });
-
-    treeForSession.set(session, tree);
-  }
-
-  return tree;
-}
-
+/**
+ * Handle a request from the renderer via the origami: protocol
+ */
 async function handleRequest(request, session) {
-  // let tree = await getSessionTree(session);
-
-  // If the project has a site, merge that in
-  // const site = await session.project.site;
-  // if (site) {
-  //   tree = await Tree.merge(tree, site);
-  // }
-
   // The request `url` is a string
   const url = new URL(request.url, "origami://");
   console.log(request.url);
 
   const keys = keysFromUrl(url);
-
-  let resource;
-  if (keys[0] === "_renderer") {
-    // Serve from the renderer files
-    keys.shift();
-    try {
-      resource = await Tree.traverseOrThrow(renderer, ...keys);
-    } catch (error) {
-      resource = error;
-    }
-  } else {
-    // Have project handle the request
-    resource = await session.project.traverse(...keys);
-  }
+  let resource = await traverse(session.project, ...keys);
 
   if (resource instanceof Function) {
     // Invoke the function to get the final desired result
     resource = await resource();
   }
 
+  if (Tree.isMaplike(resource)) {
+    // The following operations can invoke project code, so wrap in try/catch
+    try {
+      let map = await Tree.from(resource);
+      let indexHtml = await map.get("index.html");
+      if (indexHtml instanceof Function) {
+        indexHtml = await indexHtml(); // Get the actual index page
+      }
+      if (indexHtml) {
+        // Return index.html page
+        resource = indexHtml;
+      } else if (await isSimpleObject(resource)) {
+        // Serialize to YAML
+        resource = await Origami.yaml(map);
+      } else {
+        // Return index page
+        resource = await Origami.indexPage(map);
+      }
+    } catch (error) {
+      resource = error;
+    }
+  }
+
   if (resource == null) {
+    // Not found
     return new Response(null, { status: 404 });
   } else if (resource instanceof Error) {
+    // Let project communicate errors to the renderer
+    await session.project.setError(resource);
     return respondWithError(resource);
-  } else if (Tree.isMaplike(resource)) {
-    let map = await Tree.from(resource);
-    let indexHtml = await map.get("index.html");
-    if (indexHtml instanceof Function) {
-      indexHtml = await indexHtml(); // Get the actual index page
-    }
-    if (indexHtml) {
-      // Return index.html page
-      resource = indexHtml;
-    } else if (await isSimpleObject(resource)) {
-      // Serialize to YAML
-      resource = await Origami.yaml(map);
-    } else {
-      // Return index page
-      resource = await Origami.indexPage(map);
-    }
   }
 
   let requestForResponse = request;
@@ -126,12 +93,7 @@ export function registerOrigamiProtocol(ses) {
 // Copied from Origami server -- should be shared but that implementation
 // assumes a Node.js response object.
 function respondWithError(error) {
-  // Remove ANSI escape codes from the message.
-  let message = formatError(error);
-  message = message.replace(/\x1b\[[0-9;]*m/g, "");
-  // Prevent HTML in the error message from being interpreted as HTML.
-  message = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
+  const message = formatError(error);
   console.error(message);
 
   const html = `<!DOCTYPE html>
@@ -153,4 +115,38 @@ ${message}
     headers: { "Content-Type": "text/html" },
   });
   return response;
+}
+
+/**
+ * Traverse the given keys in a combination of the renderer, the project site,
+ * and the project's current result.
+ */
+async function traverse(project, ...keys) {
+  let tree;
+
+  if (keys.length > 0 && trailingSlash.remove(keys[0]) === "_renderer") {
+    // Serve from the renderer files
+    keys.shift();
+    tree = renderer;
+  } else if (keys.length > 0 && trailingSlash.remove(keys[0]) === "_result") {
+    // Traverse the result
+    keys = keys.slice(1);
+    if (keys.length > 0 && trailingSlash.remove(keys[0]) === "_default") {
+      // Another way of traversing the result
+      keys = keys.slice(1);
+    }
+    tree = project.result;
+  } else {
+    // Traverse the site
+    tree = await project.site;
+  }
+
+  let resource;
+  try {
+    resource = await Tree.traverseOrThrow(tree, ...keys);
+  } catch (/** @type {any} */ error) {
+    return error;
+  }
+
+  return resource;
 }
