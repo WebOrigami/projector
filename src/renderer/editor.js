@@ -1,15 +1,10 @@
+import * as scrollState from "./scrollState.js";
 import { appAreaHref, defaultResultHref, resultAreaHref } from "./shared.js";
 import updateState from "./updateState.js";
 
 // Page state
-const defaultScroll = {
-  command: "",
-  href: "",
-  x: 0,
-  y: 0,
-};
 window.state = {
-  lastScroll: defaultScroll,
+  lastScroll: scrollState.defaultState,
 };
 
 function getFileName(filePath) {
@@ -63,21 +58,16 @@ function render(state, changed) {
 
 function restoreScrollPositionIfSamePage() {
   const { lastScroll } = state;
-  const { command, href, x, y } = lastScroll;
-
-  const window = result.contentWindow;
-
+  const { command, href } = lastScroll;
   if (command !== state.command) {
     // Different command, do not restore scroll
     return;
   }
-
-  if (href !== window.location.href) {
+  if (href !== result.contentWindow.location.href) {
     // Different page, do not restore scroll
     return;
   }
-
-  window.scrollTo(x, y);
+  scrollState.restoreState(result.contentWindow, lastScroll);
 }
 
 function updateRecentBar(state) {
@@ -151,19 +141,7 @@ Object.assign(window, {
 
   reloadResult() {
     // Save scroll position
-    let lastScroll;
-    const window = result.contentWindow;
-    try {
-      lastScroll = {
-        command: state.command,
-        href: window.location.href,
-        x: window.scrollX,
-        y: window.scrollY,
-      };
-    } catch (e) {
-      // Ignore errors (e.g., if iframe is cross-origin)
-      lastScroll = defaultScroll;
-    }
+    const lastScroll = scrollState.getState(result.contentWindow);
     setState({ lastScroll });
 
     // Force iframe to reload
@@ -256,10 +234,10 @@ const invokePageMethodUnsubscribe = window.api.onInvokePageMethod(
       await fn(...args);
     } else {
       console.error(
-        `Main process tried to invoke non-existent page method: ${fnName}`
+        `Main process tried to invoke non-existent page method: ${fnName}`,
       );
     }
-  }
+  },
 );
 
 // Unsubscribe from events when the window is unloaded to free memory

@@ -177,9 +177,21 @@ Each project records the 10 most recent commands for that project. Issuing a com
 
 While the command bar has focus, the user can press the Up or Down arrow keys to navigate to, respectively, the previous or next command in the recent command list.
 
+If the user has navigated within the result pane (see below), the right side of the command bar shows the current path within the result.
+
 ## Result pane
 
 The result pane shows the result of the most recently-issued command: an HTML page, text file, etc.
+
+### Reload
+
+When the active file is saved, after a short delay the result pane will reload to show any effects of the edits.
+
+Before reloading, Projector saves the scroll position of scrollable elements on the page. After the result pane reloads, if the command and result path have stayed the same (i.e., if the user is not navigating), then Projector attempts to restore the scroll position of those elements. The goal is to let the user continue viewing the same area of the page in the case the user had to scroll to view that area.
+
+### Navigation
+
+If the result is an HTML page and the user clicks on a link to navigate, this creates a _result path_: a path inside the result or, possibly, within the default site. This path will be shown on the right of the command bar.
 
 # Error reports
 
