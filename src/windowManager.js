@@ -90,8 +90,8 @@ async function createProjectWindow(rootPath) {
   }
 
   // Create the Project instance for this window
-  const project = new Project(window);
-  await project.loadFolder(rootPath);
+  const project = new Project(window, rootPath);
+  await project.loadProject();
 
   /** @type {any} */ (window).project = project;
   /** @type {any} */ (windowSession).project = project;
@@ -158,9 +158,6 @@ export async function openFile(filePath) {
 
   // Load the selected file
   await project.loadFile(filePath);
-
-  // Rebuild menu to reflect recent files
-  await createMenu();
 }
 
 // Open/activate a project, return the project
@@ -231,10 +228,6 @@ export async function openProjectAndRestoreFile(rootPath) {
       }
     }
   }
-
-  // TODO: Move to settings
-  // Rebuild menu to reflect recent files
-  await createMenu();
 }
 
 async function removeFromOpenProjects(project) {

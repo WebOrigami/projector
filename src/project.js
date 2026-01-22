@@ -28,19 +28,20 @@ const recentFilesUpdater = recent(MAX_RECENT_FILES);
  */
 export default class Project {
   /**
-   * Create a Project instance.
+   * Create a Project instance for the given window and project root path.
    *
-   * To be used, the project must be loaded via loadFile() or loadFolder();
-   * those methods are async so they can't be called from the constructor.
+   * To be used, the project must be loaded via loadProject(), which is async so
+   * can't be called from the constructor.
    *
    * @param {import("electron").BrowserWindow} window
+   * @param {string} rootPath
    */
-  constructor(window) {
-    this.window = window;
+  constructor(window, rootPath) {
+    this._window = window;
+    this._rootPath = rootPath;
 
     // State shared with the renderer
     this.state = {};
-    this._fileParent = null;
     this._filePath = null;
     this._packageData = null;
     this._refreshTimeout = null;
@@ -71,7 +72,7 @@ export default class Project {
     // We can only send structured-clonable data, so we use structuredClone to
     // copy the state.
     const snapshot = structuredClone(this.state);
-    return this.window.webContents.send("invoke-page", "setState", snapshot);
+    return this._window.webContents.send("invoke-page", "setState", snapshot);
   }
 
   async clearCacheForFileChange(filePath) {
@@ -99,7 +100,7 @@ export default class Project {
       ...cssExtensions,
     ];
     if (reloadExtension.includes(extname)) {
-      await clearBrowserCache(this.window);
+      await clearBrowserCache(this._window);
     }
   }
 
@@ -125,13 +126,9 @@ export default class Project {
     return this._filePath;
   }
 
-  executeJavaScript(js) {
-    return this.window.webContents.executeJavaScript(js);
-  }
-
   // The page calls this on the project; forward to menu
   async fileOpen() {
-    await menu.fileOpen(null, this.window);
+    await menu.fileOpen(null, this._window);
   }
 
   async focusCommand() {
@@ -139,13 +136,24 @@ export default class Project {
   }
 
   async invokePageMethod(...args) {
-    await this.window.webContents.send("invoke-page", ...args);
+    await this._window.webContents.send("invoke-page", ...args);
   }
 
   // Read file
   async loadFile(filePath) {
+    // Assert that we have a project root that contains filePath
+    if (!this._root) {
+      throw new Error("Tried to load file before loading project");
+    }
+    const relative = path.relative(this._root.path, filePath);
+    if (relative.startsWith("..")) {
+      throw new Error(
+        `File "${filePath}" is outside of project root "${this._root.path}"`,
+      );
+    }
+
     if (this.state.dirty) {
-      const shouldContinue = await menu.promptSaveChanges(this.window);
+      const shouldContinue = await menu.promptSaveChanges(this._window);
       if (!shouldContinue) {
         return;
       }
@@ -166,27 +174,9 @@ export default class Project {
     if (filePath === null) {
       // New file. The user shouldn't be able to reach this point without having
       // loaded a project folder first.
-      this._fileParent = this._root;
       text = "";
     } else {
       // Load existing file
-
-      if (this._root === null) {
-        // Load project first
-        const folderPath = path.dirname(filePath);
-        await this.loadFolder(folderPath);
-      } else {
-        // Assert that filePath is contained within project root
-        const relative = path.relative(this._root.path, filePath);
-        if (relative.startsWith("..")) {
-          throw new Error(
-            `File "${filePath}" is outside of project root "${this._root.path}"`,
-          );
-        }
-      }
-
-      this._fileParent = await getParent(this._root, filePath);
-
       try {
         text = await fs.readFile(filePath, "utf8");
       } catch (error) {
@@ -206,16 +196,10 @@ export default class Project {
   }
 
   /**
-   * The project root will be determined from the given folder path. This will
-   * typically be the expected root folder, but if a subfolder is provided, the
-   * actual root will be determined by looking up the folder hierarchy for the
-   * closest config.ori or package.json file.
+   * (Re)load the project from the folder with the given root path.
    */
-  async loadFolder(folderPath) {
-    this._root = await projectRootFromPath(folderPath);
-
-    // Until a file is loaded, use the root as the file parent
-    this._fileParent = this._root;
+  async loadProject() {
+    this._root = await projectRootFromPath(this._rootPath);
 
     this._packageData = await getPackageData(this._root);
 
@@ -434,7 +418,7 @@ export default class Project {
     try {
       await fs.writeFile(this.filePath, this.text, "utf8");
     } catch (/** @type {any} */ error) {
-      dialog.showMessageBox(this.window, {
+      dialog.showMessageBox(this._window, {
         type: "error",
         message: "Save Failed",
         detail: `Failed to save file "${this.filePath}": ${error.message}`,
@@ -566,13 +550,6 @@ function getProjectName(root, packageData) {
   return path.basename(rootPath);
 }
 
-async function getParent(root, filePath) {
-  // Traverse from the project root to the current directory.
-  const dirname = path.dirname(filePath);
-  const relative = path.relative(root.path, dirname);
-  return await Tree.traversePath(root, relative);
-}
-
 async function getPackageData(root) {
   const packageJson = await root?.get("package.json");
   return packageJson?.unpack();
@@ -595,7 +572,7 @@ async function loadSite(root, sitePath) {
 
 // Reflect project state in the window
 function updateWindow(project) {
-  const { window, state } = project;
+  const { _window: window, state } = project;
   window.setTitle(state.projectName);
   window.setDocumentEdited(state.dirty);
 }

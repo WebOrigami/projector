@@ -66,6 +66,7 @@ export async function createMenu() {
           label: "Open File…",
           accelerator: "CmdOrCtrl+O",
           click: fileOpen,
+          enabled: isProjectOpen,
         },
         {
           label: "Open Folder…",
@@ -156,19 +157,17 @@ async function fileNew(_menuItem, window) {
 export async function fileOpen(_menuItem, window) {
   let dialogOptions = {};
 
-  if (window) {
-    const project = /** @type {any} */ (window).project;
-    // Check if there are unsaved changes
-    if (project.dirty) {
-      const shouldContinue = await promptSaveChanges(window);
-      if (!shouldContinue) {
-        return;
-      }
+  const project = /** @type {any} */ (window).project;
+  // Check if there are unsaved changes
+  if (project.dirty) {
+    const shouldContinue = await promptSaveChanges(window);
+    if (!shouldContinue) {
+      return;
     }
-    if (project.filePath) {
-      const defaultPath = project.filePath || project.rootPath;
-      dialogOptions.defaultPath = path.dirname(defaultPath);
-    }
+  }
+  if (project.filePath) {
+    const defaultPath = project.filePath || project.rootPath;
+    dialogOptions.defaultPath = path.dirname(defaultPath);
   }
 
   const result = await dialog.showOpenDialog(window, {
@@ -221,8 +220,8 @@ function focusCommand(_menuItem, window) {
 }
 
 export async function folderOpen(_menuItem, window) {
-  // We don't pass `window` here because we're opening a new project, which
-  // conceptually isn't related to the current window.
+  // We don't pass `window` here because we're opening a new project window
+  // unrelated to any current window.
   const result = await dialog.showOpenDialog({
     buttonLabel: "Open Folder",
     message: "Select a project folder:",
@@ -263,9 +262,6 @@ export async function openRecentProject(rootPath) {
     await settings.saveSettings({
       recentProjects: updatedProjects,
     });
-
-    // Rebuild menu to reflect the change
-    await createMenu();
   }
 }
 
