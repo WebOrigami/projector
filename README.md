@@ -107,7 +107,7 @@ The application menu bar offers the standard commands for a text editor.
 
 Opening a file via the Open menu implies opening the associated project. If that project is already open in a window, the file is opened in that project window. Otherwise a file opens in a new window for that project.
 
-The Open Recent Project submenu tracks the 10 most recently opened project. Selecting a project from this submenu opens it in a new window (or, if the project is already open, it activates that window). The submenu also includes a "Clear Menu" command to clear the recent projects list.
+The Open Recent Project submenu tracks the 10 most recently opened project. The submenu also includes a "Clear Menu" command to clear the recent projects list. Selecting a project from this submenu opens it in a new window (or, if the project is already open, it activates that window). If the project path no longer exists, an error message indicates this, and the item is removed from the recent projects menu.
 
 Using Save As to save a file outside of the project’s folder tree will save that text to the indicated location and close the file in that project window. A project window for the file’s new location will open (or, if that new location’s project is already open, that window will activate).
 

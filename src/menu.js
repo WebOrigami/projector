@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, Menu } from "electron";
+import fs from "node:fs/promises";
 import * as path from "node:path";
 import * as settings from "./settings.js";
 import * as windowManager from "./windowManager.js";
@@ -16,8 +17,7 @@ export async function createMenu() {
     recentProjects.forEach((project) => {
       recentProjectsSubmenu.push({
         label: path.basename(project.name),
-        click: (_menuItem, window) =>
-          windowManager.openProjectAndRestoreFile(project.path),
+        click: (_menuItem, window) => openRecentProject(project.path),
       });
     });
     recentProjectsSubmenu.push({ type: "separator" });
@@ -237,6 +237,36 @@ export async function folderOpen(_menuItem, window) {
   // Open the selected folder
   const folderPath = result.filePaths[0];
   await windowManager.openProjectAndRestoreFile(folderPath);
+}
+
+export async function openRecentProject(rootPath) {
+  try {
+    // Check if the project path still exists
+    await fs.access(rootPath);
+    await windowManager.openProjectAndRestoreFile(rootPath);
+  } catch (error) {
+    // Project path no longer exists
+    await dialog.showMessageBox({
+      type: "error",
+      title: "Project Not Found",
+      message: "The project could not be opened.",
+      detail: rootPath,
+      buttons: ["OK"],
+    });
+
+    // Remove the project from recent projects
+    const appSettings = await settings.loadSettings();
+    const recentProjects = appSettings.recentProjects || [];
+    const updatedProjects = recentProjects.filter(
+      (project) => project.path !== rootPath,
+    );
+    await settings.saveSettings({
+      recentProjects: updatedProjects,
+    });
+
+    // Rebuild menu to reflect the change
+    await createMenu();
+  }
 }
 
 export async function promptSaveChanges(window) {
