@@ -203,6 +203,7 @@ async function fileSaveAs(_menuItem, window) {
 
   const result = await dialog.showSaveDialog(window, {
     defaultPath: filePath,
+    properties: ["createDirectory", "showOverwriteConfirmation"],
   });
 
   if (result.canceled) {
@@ -223,7 +224,8 @@ export async function folderOpen(_menuItem, window) {
   // We don't pass `window` here because we're opening a new project, which
   // conceptually isn't related to the current window.
   const result = await dialog.showOpenDialog({
-    message: "Select a project folder",
+    buttonLabel: "Open Folder",
+    message: "Select a project folder:",
     properties: ["createDirectory", "openDirectory"],
   });
 
