@@ -1,12 +1,10 @@
 import { isUnpackable, keysFromPath, Tree } from "@weborigami/async-tree";
 import {
   compile,
-  coreGlobals,
   moduleCache,
-  projectConfig,
+  projectGlobals,
   projectRootFromPath,
 } from "@weborigami/language";
-import { initializeBuiltins } from "@weborigami/origami";
 import { dialog, shell } from "electron";
 import fs from "node:fs/promises";
 import * as path from "node:path";
@@ -44,7 +42,6 @@ export default class Project {
     this.state = {};
     this._fileParent = null;
     this._filePath = null;
-    this._globals = null;
     this._packageData = null;
     this._refreshTimeout = null;
     this._result = null;
@@ -215,19 +212,7 @@ export default class Project {
    * closest config.ori or package.json file.
    */
   async loadFolder(folderPath) {
-    // As of 2026-01-08, a timing issue requires that we get globals first so
-    // that we can then make calls like getParent or getPackageData that
-    // require that things like extension handlers are registered. This is
-    // because the language package caches the set of globals when it
-    // shouldn't.
-    this._globals = await getGlobals(folderPath);
-
-    // Look for root *after* getting globals
     this._root = await projectRootFromPath(folderPath);
-
-    // Arrange for root to use this project's file extension handlers instead of
-    // global handlers that might have previously been loaded.
-    this._root.handlers = this._globals;
 
     // Until a file is loaded, use the root as the file parent
     this._fileParent = this._root;
@@ -417,7 +402,6 @@ export default class Project {
     try {
       this._result = await evaluate(command, {
         enableCaching: false,
-        globals: this._globals,
         mode: "shell",
         parent: this._root,
       });
@@ -556,7 +540,9 @@ async function clearBrowserCache(window) {
 }
 
 async function evaluate(source, options = {}) {
-  const fn = compile.expression(source, options);
+  const { parent } = options;
+  const globals = await projectGlobals(parent);
+  const fn = compile.expression(source, { ...options, globals });
 
   let value = await fn();
   if (value instanceof Function) {
@@ -564,21 +550,6 @@ async function evaluate(source, options = {}) {
   }
 
   return value;
-}
-
-async function getGlobals(folderPath) {
-  // Need to add Origami builtins to the globals before getting them
-  initializeBuiltins();
-
-  const globals = await coreGlobals();
-
-  // Now get config. The config.ori file may require access to globals,
-  // which will obtain the core globals set above. Once we've got the
-  // config, we add it to the globals.
-  const config = await projectConfig(folderPath);
-
-  const merged = Object.assign({}, globals, config);
-  return merged;
 }
 
 function getFileName(filePath) {

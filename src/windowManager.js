@@ -38,7 +38,7 @@ async function addToRecentProjects(project) {
   let projects = appSettings.recentProjects || [];
   // Remove if already present
   const index = projects.findIndex(
-    (record) => record.path === project.root.path
+    (record) => record.path === project.root.path,
   );
   if (index !== -1) {
     projects.splice(index, 1);
@@ -181,7 +181,9 @@ export async function openProject(rootPath) {
   return /** @type {any} */ (window).project;
 }
 
-// Open/activate a project and restore its state
+/**
+ * Open/activate a project and restore its state
+ */
 export async function openProjectAndRestoreFile(rootPath) {
   const project = await openProject(rootPath);
 
