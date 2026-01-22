@@ -1,6 +1,5 @@
 import { projectRootFromPath } from "@weborigami/language";
 import { app, BrowserWindow, session } from "electron";
-import fs from "node:fs/promises";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createMenu, folderOpen, promptSaveChanges } from "./menu.js";
@@ -8,7 +7,6 @@ import Project from "./project.js";
 import { registerOrigamiProtocol } from "./protocol.js";
 import recent from "./recent.js";
 import * as settings from "./settings.js";
-import { getSiteFilePath } from "./utilities.js";
 
 let windowCount = 0;
 let loading = true;
@@ -178,58 +176,6 @@ export async function openProject(rootPath) {
   return /** @type {any} */ (window).project;
 }
 
-/**
- * Open/activate a project and restore its state
- */
-export async function openProjectAndRestoreFile(rootPath) {
-  const project = await openProject(rootPath);
-
-  // Restore most recently open file that still exists
-  const recentFiles = project.recentFiles || [];
-  let updateRecentFiles = false;
-  while (recentFiles.length > 0) {
-    const mostRecentFile = recentFiles.at(-1);
-    try {
-      await fs.access(mostRecentFile);
-      // File exists, load it
-      await project.loadFile(mostRecentFile);
-      break;
-    } catch (error) {
-      // File doesn't exist, remove from recent files
-      recentFiles.pop();
-      updateRecentFiles = true;
-    }
-  }
-
-  if (updateRecentFiles) {
-    project.recentFiles = recentFiles;
-    await settings.saveProjectSettings(project);
-  }
-
-  if (recentFiles.length === 0 && project.sitePath) {
-    // Open site file
-    const siteFilePath = getSiteFilePath(project.root, project.sitePath);
-    if (siteFilePath) {
-      try {
-        await fs.access(siteFilePath);
-        await project.loadFile(siteFilePath);
-      } catch (error) {
-        // File doesn't exist, do nothing
-      }
-
-      if (project.command === "" && project.recentCommands.length === 0) {
-        // No command set, run the site
-        let command = project.sitePath;
-        if (!command.endsWith("/")) {
-          command += "/";
-        }
-        project.command = command;
-        await project.run();
-      }
-    }
-  }
-}
-
 async function removeFromOpenProjects(project) {
   const appSettings = await settings.loadSettings();
   let openProjects = appSettings.openProjects || [];
@@ -245,7 +191,7 @@ export async function restoreProjectWindows() {
   const openProjects = appSettings.openProjects || [];
   for (const rootPath of openProjects) {
     try {
-      await openProjectAndRestoreFile(rootPath);
+      await openProject(rootPath);
     } catch (error) {
       console.error(`Failed to restore project: ${rootPath}`, error);
     }

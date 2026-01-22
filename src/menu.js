@@ -235,14 +235,14 @@ export async function folderOpen(_menuItem, window) {
 
   // Open the selected folder
   const folderPath = result.filePaths[0];
-  await windowManager.openProjectAndRestoreFile(folderPath);
+  await windowManager.openProject(folderPath);
 }
 
 export async function openRecentProject(rootPath) {
   try {
     // Check if the project path still exists
     await fs.access(rootPath);
-    await windowManager.openProjectAndRestoreFile(rootPath);
+    await windowManager.openProject(rootPath);
   } catch (error) {
     // Project path no longer exists
     await dialog.showMessageBox({

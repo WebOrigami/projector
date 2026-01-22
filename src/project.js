@@ -13,7 +13,7 @@ import recent from "./recent.js";
 import { defaultResultHref, resultAreaHref } from "./renderer/shared.js";
 import updateState from "./renderer/updateState.js"; // Shared with renderer
 import * as settings from "./settings.js";
-import { formatError, getSitePath } from "./utilities.js";
+import { formatError, getSiteFilePath, getSitePath } from "./utilities.js";
 
 const REFRESH_DELAY_MS = 250;
 
@@ -210,7 +210,16 @@ export default class Project {
     const recentCommands = projectSettings.recentCommands || [];
     const recentFiles = projectSettings.recentFiles || [];
     const resultHref = projectSettings.resultHref || defaultResultHref;
-    const command = recentCommands.at(-1) || "";
+
+    let command;
+    // Use last command if it exists, otherwise run site if that exists
+    if (recentCommands.length > 0) {
+      command = recentCommands.at(-1);
+    } else if (sitePath) {
+      command = `${sitePath}/`;
+    } else {
+      command = "";
+    }
 
     this.setState({
       command,
@@ -235,6 +244,54 @@ export default class Project {
     });
     // @ts-ignore watch() does exist but isn't declared yet
     this._root.watch();
+
+    await this.loadRecentFile();
+
+    if (this.state.command !== "") {
+      // Run the command to restore result pane
+      await this.run();
+    }
+  }
+
+  /***
+   * Load the most recent file that still exists, falling back to the site file
+   * if that's defined.
+   */
+  async loadRecentFile() {
+    // Restore most recently open file that still exists
+    const recentFiles = this.state.recentFiles;
+    let updateRecentFiles = false;
+    while (recentFiles.length > 0) {
+      const mostRecentFile = recentFiles.at(-1);
+      try {
+        await fs.access(mostRecentFile);
+        // File exists, load it
+        await this.loadFile(mostRecentFile);
+        break;
+      } catch (error) {
+        // File doesn't exist, remove from recent files
+        recentFiles.pop();
+        updateRecentFiles = true;
+      }
+    }
+
+    if (updateRecentFiles) {
+      await this.setState({ recentFiles });
+      await settings.saveProjectSettings(this);
+    }
+
+    if (recentFiles.length === 0 && this.state.sitePath) {
+      // Open site file
+      const siteFilePath = getSiteFilePath(this._root, this.state.sitePath);
+      if (siteFilePath) {
+        try {
+          await fs.access(siteFilePath);
+          await this.loadFile(siteFilePath);
+        } catch (error) {
+          // File doesn't exist, do nothing
+        }
+      }
+    }
   }
 
   get name() {
@@ -255,6 +312,11 @@ export default class Project {
   }
 
   async onChange(filePath) {
+    if (!this._root) {
+      // Project not loaded yet
+      return;
+    }
+
     const relativePath = path.relative(this._root.path, filePath);
 
     const keys = keysFromPath(relativePath);
