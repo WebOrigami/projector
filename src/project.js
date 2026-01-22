@@ -1,4 +1,9 @@
-import { isUnpackable, keysFromPath, Tree } from "@weborigami/async-tree";
+import {
+  isUnpackable,
+  keysFromPath,
+  toString,
+  Tree,
+} from "@weborigami/async-tree";
 import {
   compile,
   moduleCache,
@@ -13,7 +18,7 @@ import recent from "./recent.js";
 import { defaultResultHref, resultAreaHref } from "./renderer/shared.js";
 import updateState from "./renderer/updateState.js"; // Shared with renderer
 import * as settings from "./settings.js";
-import { formatError, getSiteFilePath, getSitePath } from "./utilities.js";
+import { formatError, getSitePath } from "./utilities.js";
 
 const REFRESH_DELAY_MS = 250;
 
@@ -159,9 +164,7 @@ export default class Project {
       }
     }
 
-    this._filePath = filePath;
-
-    // Update recent files list
+    // Add file to recent files list
     let recentFiles = this.state.recentFiles;
     if (recentFiles.at(-1) === null) {
       // Remove unsaved file entry
@@ -169,30 +172,45 @@ export default class Project {
     }
     // Add new path (possibly null)
     recentFiles = recentFilesUpdater.add(recentFiles, filePath);
+    await this.setState({ recentFiles });
 
+    // Reload most recent file to load the new file. This handles edge cases
+    // like a file that doesn't exist.
+    await this.loadMostRecentFile();
+  }
+
+  /***
+   * Load the most recent existing text file
+   */
+  async loadMostRecentFile() {
+    let filePath = null;
     let text;
-    if (filePath === null) {
-      // New file. The user shouldn't be able to reach this point without having
-      // loaded a project folder first.
-      text = "";
-    } else {
-      // Load existing file
-      try {
-        text = await fs.readFile(filePath, "utf8");
-      } catch (error) {
-        text = "";
+    const recentFiles = this.state.recentFiles;
+    while (recentFiles.length > 0) {
+      filePath = recentFiles.at(-1);
+      const loaded = await loadFileText(filePath);
+      if (loaded === null) {
+        // File couldn't be loaded (doesn't exist or isn't text), remove from recent files
+        recentFiles.pop();
+        filePath = null;
+      } else {
+        // Loaded file successfully
+        text = loaded;
+        break;
       }
     }
+
+    this._filePath = filePath;
 
     this.setState({
       dirty: false,
       fileName: getFileName(filePath),
       recentFiles,
-      text,
+      text: text ?? "",
       textSource: "file",
     });
 
-    settings.saveProjectSettings(this);
+    await settings.saveProjectSettings(this);
   }
 
   /**
@@ -202,6 +220,7 @@ export default class Project {
     this._root = await projectRootFromPath(this._rootPath);
 
     this._packageData = await getPackageData(this._root);
+    const projectName = getProjectName(this._root, this._packageData);
 
     const sitePath = getSitePath(this._packageData);
     this._site = null;
@@ -223,7 +242,7 @@ export default class Project {
 
     this.setState({
       command,
-      projectName: getProjectName(this._root, this._packageData),
+      projectName,
       recentCommands,
       recentFiles,
       resultHref,
@@ -245,52 +264,16 @@ export default class Project {
     // @ts-ignore watch() does exist but isn't declared yet
     this._root.watch();
 
-    await this.loadRecentFile();
+    if (recentFiles.length > 0) {
+      await this.loadMostRecentFile();
+    } else if (sitePath) {
+      // No recent files, load the site file
+      await this.loadFile(sitePath);
+    }
 
     if (this.state.command !== "") {
       // Run the command to restore result pane
       await this.run();
-    }
-  }
-
-  /***
-   * Load the most recent file that still exists, falling back to the site file
-   * if that's defined.
-   */
-  async loadRecentFile() {
-    // Restore most recently open file that still exists
-    const recentFiles = this.state.recentFiles;
-    let updateRecentFiles = false;
-    while (recentFiles.length > 0) {
-      const mostRecentFile = recentFiles.at(-1);
-      try {
-        await fs.access(mostRecentFile);
-        // File exists, load it
-        await this.loadFile(mostRecentFile);
-        break;
-      } catch (error) {
-        // File doesn't exist, remove from recent files
-        recentFiles.pop();
-        updateRecentFiles = true;
-      }
-    }
-
-    if (updateRecentFiles) {
-      await this.setState({ recentFiles });
-      await settings.saveProjectSettings(this);
-    }
-
-    if (recentFiles.length === 0 && this.state.sitePath) {
-      // Open site file
-      const siteFilePath = getSiteFilePath(this._root, this.state.sitePath);
-      if (siteFilePath) {
-        try {
-          await fs.access(siteFilePath);
-          await this.loadFile(siteFilePath);
-        } catch (error) {
-          // File doesn't exist, do nothing
-        }
-      }
     }
   }
 
@@ -342,18 +325,15 @@ export default class Project {
       return;
     }
 
-    // Reload file text
-    let text;
-    try {
-      text = await fs.readFile(filePath, "utf8");
-    } catch (error) {
-      text = "";
+    // See if file text has actually changed
+    const text = await loadFileText(filePath);
+    if (text === this.state.text) {
+      // Change event was result of our own save, ignore
+      return;
     }
 
-    await this.setState({
-      text,
-      textSource: "file",
-    });
+    // Force reload of current file through our normal path
+    await this.loadMostRecentFile();
 
     await this.clearCacheForFileChange(filePath);
     if (!this._refreshTimeout) {
@@ -630,6 +610,35 @@ async function loadSite(root, sitePath) {
   }
 
   return site;
+}
+
+/**
+ * Return the text for the given file, or the empty string for a new file.
+ *
+ * Returns null if the file couldn't be loaded (e.g., doesn't exist, permission
+ * denied), or isn't text.
+ *
+ * @param {string} filePath
+ */
+async function loadFileText(filePath) {
+  let result;
+
+  if (filePath === null) {
+    // New file
+    result = "";
+  } else {
+    // Load existing file
+    try {
+      // Don't specify UTF-8 encoding; we want a buffer, not text
+      const buffer = await fs.readFile(filePath);
+      // async-tree toString() returns null for non-text files
+      result = toString(buffer);
+    } catch (error) {
+      result = null;
+    }
+  }
+
+  return result;
 }
 
 // Reflect project state in the window
