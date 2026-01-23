@@ -278,7 +278,8 @@ export default class Project {
       await this.loadMostRecentFile();
     } else if (sitePath) {
       // No recent files, load the site file
-      await this.loadFile(sitePath);
+      const absolutePath = path.join(this._root.path, sitePath);
+      await this.loadFile(absolutePath);
     }
 
     // If the last run didn't result in an error, auto-run the last command

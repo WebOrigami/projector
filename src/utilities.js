@@ -33,21 +33,30 @@ export function getSitePath(packageData) {
     return null;
   }
 
-  // Get the `start` script
-  const startScript = packageData.scripts?.start;
-  if (!startScript) {
+  const scripts = ["dev", "start", "serve", "build"];
+  for (const scriptName of scripts) {
+    const script = packageData.scripts?.[scriptName];
+    const sitePath = getSitePathFromScript(script);
+    if (sitePath) {
+      return sitePath;
+    }
+  }
+
+  return null;
+}
+
+function getSitePathFromScript(script) {
+  if (!script) {
     return null;
   }
 
-  // Look for the first path to a .ori file in the start script
   const sitePathRegex = /[A-Za-z0-9\/\.\-]*\.ori[A-Za-z0-9\/\.\-]*/g;
-  const match = startScript.match(sitePathRegex);
+  const match = script.match(sitePathRegex);
   if (!match) {
     return null;
   }
 
-  const relativePath = match[0];
-  return relativePath;
+  return match[0];
 }
 
 /**
