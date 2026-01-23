@@ -11,7 +11,7 @@ import {
   projectRootFromPath,
 } from "@weborigami/language";
 import { dialog, shell } from "electron";
-import fs from "node:fs/promises";
+import fs from "node:fs";
 import * as path from "node:path";
 import * as menu from "./menu.js";
 import recent from "./recent.js";
@@ -199,7 +199,7 @@ export default class Project {
     const recentFiles = this.state.recentFiles;
     while (recentFiles.length > 0) {
       filePath = recentFiles.at(-1);
-      const loaded = await loadFileText(filePath);
+      const loaded = loadFileText(filePath);
       if (loaded === null) {
         // File couldn't be loaded (doesn't exist or isn't text), remove from recent files
         recentFiles.pop();
@@ -342,13 +342,13 @@ export default class Project {
       return;
     }
 
-    if (this.dirty) {
+    if (this.state.dirty) {
       // User has edited file, ignore external changes
       return;
     }
 
     // See if file text has actually changed
-    const text = await loadFileText(filePath);
+    const text = loadFileText(filePath);
     if (text === this.state.text) {
       // Change event was result of our own save, ignore
       return;
@@ -480,7 +480,7 @@ export default class Project {
   // Write text to file
   async save() {
     try {
-      await fs.writeFile(this.filePath, this.text, "utf8");
+      fs.writeFileSync(this.filePath, this.text, "utf8");
     } catch (/** @type {any} */ error) {
       dialog.showMessageBox(this._window, {
         type: "error",
@@ -491,7 +491,7 @@ export default class Project {
     }
 
     // Mark as clean
-    this.dirty = false;
+    await this.setState({ dirty: false });
 
     // Clear caches as appropriate
     await this.clearCacheForFileChange(this.filePath);
@@ -627,7 +627,7 @@ async function getPackageData(root) {
  *
  * @param {string} filePath
  */
-async function loadFileText(filePath) {
+function loadFileText(filePath) {
   let result;
 
   if (filePath === null) {
@@ -637,7 +637,7 @@ async function loadFileText(filePath) {
     // Load existing file
     try {
       // Don't specify UTF-8 encoding; we want a buffer, not text
-      const buffer = await fs.readFile(filePath);
+      const buffer = fs.readFileSync(filePath);
       // async-tree toString() returns null for non-text files
       result = toString(buffer);
     } catch (error) {
