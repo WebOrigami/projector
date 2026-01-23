@@ -25,6 +25,8 @@ const REFRESH_DELAY_MS = 250;
 
 const MAX_RECENT_COMMANDS = 50;
 const recentCommandsUpdater = recent(MAX_RECENT_COMMANDS);
+const backUpdater = recent(MAX_RECENT_COMMANDS);
+const forwardUpdater = recent(MAX_RECENT_COMMANDS);
 
 const MAX_RECENT_FILES = 10;
 const recentFilesUpdater = recent(MAX_RECENT_FILES);
@@ -46,25 +48,29 @@ export default class Project {
     this._window = window;
     this._rootPath = rootPath;
 
-    // State shared with the renderer
-    this.state = {};
+    this._back = [];
     this._filePath = null;
+    this._forward = [];
     this._packageData = null;
     this._refreshTimeout = null;
     this._result = null;
     this._root = null;
     this._site = null;
 
+    // State shared with the renderer
+    this.state = {};
     this.setState({
+      backEnabled: false,
       command: "",
       dirty: false,
       error: null,
       fileName: getFileName(this._filePath),
+      forwardEnabled: false,
       projectName: "New project",
       recentCommands: [],
       recentFiles: [],
-      resultVersion: 0,
       resultHref: defaultResultHref,
+      resultVersion: 0,
       sitePath: null,
       text: "",
       textSource: "file",
@@ -149,6 +155,52 @@ export default class Project {
 
   async focusCommand() {
     return this.invokePageMethod("focusCommand");
+  }
+
+  async goBack() {
+    if (this._back.length === 0) {
+      return;
+    }
+
+    if (this.state.command !== "") {
+      // Add current command to Forward stack
+      this._forward = forwardUpdater.add(this._forward, this.state.command);
+    }
+
+    const command = this._back.pop();
+    const backEnabled = this._back.length > 0;
+    const forwardEnabled = this._forward.length > 0;
+
+    await this.setState({
+      backEnabled,
+      command,
+      forwardEnabled,
+    });
+
+    await this.run();
+  }
+
+  async goForward() {
+    if (this._forward.length === 0) {
+      return;
+    }
+
+    if (this.state.command !== "") {
+      // Add current command to Back stack
+      this._back = backUpdater.add(this._back, this.state.command);
+    }
+
+    const command = this._forward.pop();
+    const backEnabled = this._back.length > 0;
+    const forwardEnabled = this._forward.length > 0;
+
+    await this.setState({
+      backEnabled,
+      command,
+      forwardEnabled,
+    });
+
+    await this.run();
   }
 
   async invokePageMethod(...args) {
@@ -293,6 +345,28 @@ export default class Project {
 
   get name() {
     return this.state.projectName;
+  }
+
+  async navigateAndRun(command) {
+    if (this.state.command && this.state.command !== "") {
+      // Add previous command to Back stack
+      this._back = backUpdater.add(this._back, this.state.command);
+    }
+
+    // Clear Forward stack
+    this._forward = [];
+
+    const backEnabled = this._back.length > 0;
+    const forwardEnabled = this._forward.length > 0;
+
+    await this.setState({
+      backEnabled,
+      command,
+      forwardEnabled,
+      resultHref: defaultResultHref,
+    });
+
+    await this.run();
   }
 
   async nextCommand() {
@@ -472,6 +546,7 @@ export default class Project {
       this.state.recentCommands || [],
       command,
     );
+
     this.setState({
       error,
       recentCommands: commands,

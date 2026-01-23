@@ -29,14 +29,6 @@ input, textarea {
 .toolbar {
   background: var(--background-color);
   color: var(--text-color);
-}
-
-#recentBar {
-  display: grid;
-  font-size: 0.8rem;
-  grid-template-columns: auto 1fr;
-  padding-right: 0.5rem; /* Gap before command */
-  user-select: none;
 
   button {
     align-items: center;
@@ -47,19 +39,37 @@ input, textarea {
     font-family: inherit;
     font-size: inherit;
 
-    &:hover {
-      background: #444;
+    &:not(:disabled) {
+      &:hover {
+        background: #444;
+      }
+      
+      &:active {
+        background: #666;
+      }
+    }
+
+    &.iconButton {
+      /* Since white color is baked into SVG, reduce opacity instead */
+      opacity: 0.6;
+
+      &:disabled {
+        opacity: 0.3;
+      }
+
+      &:hover:not(:disabled) {
+        opacity: 1;
+      }
     }
   }
+}
 
-  #fileOpen {
-    /* HACK: Since white color is baked into SVG, reduce opacity instead */
-    opacity: 0.6;
-
-    &:hover {
-      opacity: 1;
-    }
-  }
+#recentBar {
+  display: grid;
+  font-size: 0.8rem;
+  grid-template-columns: auto 1fr;
+  padding-right: 0.5rem; /* Gap before command */
+  user-select: none;
 
   #recentButtons {
     align-items: center;
@@ -92,36 +102,40 @@ input, textarea {
 }
 
 #commandBar {
-  align-items: center;
   display: grid;
   font-family: var(--code-font-family);
   font-size: var(--code-font-size);
-  grid-template-columns: 1fr fit-content(50%);
-  padding: 0.25rem;
-  padding-left: 0; /* to align left edge with result pane */
+  grid-template-columns: auto auto 1fr;
 
-  input {
-    --input-background: white;
-    border: 1px solid #555;
-    font-family: inherit;
-    font-size: inherit;
-  }
+  #commandContainer {
+    align-items: center;
+    display: grid;
+    grid-template-columns: 1fr fit-content(50%);
+    padding: 0.25rem;
 
-  #command {
-    background: var(--input-background);
-  
-    &.error {
-      background: pink;
+    input {
+      --input-background: white;
+      border: 1px solid #555;
+      font-family: inherit;
+      font-size: inherit;
     }
-  }
 
-  #resultPath {
-    color: var(--text-color-faded);
-    overflow: scroll;
-    white-space: nowrap;
+    #command {
+      background: var(--input-background);
+    
+      &.error {
+        background: pink;
+      }
+    }
 
-    &:not(:empty) {
-      margin-left: 0.25rem;
+    #resultPath {
+      color: var(--text-color-faded);
+      overflow: scroll;
+      white-space: nowrap;
+
+      &:not(:empty) {
+        margin-left: 0.25rem;
+      }
     }
   }
 }

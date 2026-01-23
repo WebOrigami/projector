@@ -118,9 +118,34 @@ export async function createMenu() {
       ],
     },
     {
-      label: "Debug",
+      label: "View",
       enabled: isProjectOpen,
-      submenu: [{ role: "toggleDevTools" }],
+      submenu: [
+        {
+          label: "Back",
+          accelerator: "CmdOrCtrl+[",
+          click: viewGoBack,
+        },
+        {
+          label: "Back",
+          accelerator: "CmdOrCtrl+Left",
+          click: viewGoBack,
+          visible: false,
+        },
+        {
+          label: "Forward",
+          accelerator: "CmdOrCtrl+]",
+          click: viewGoForward,
+        },
+        {
+          label: "Forward",
+          accelerator: "CmdOrCtrl+Right",
+          click: viewGoForward,
+          visible: false,
+        },
+        { type: "separator" },
+        { role: "toggleDevTools" },
+      ],
     },
     {
       role: "window",
@@ -276,4 +301,12 @@ export async function promptSaveChanges(window) {
   }
 
   return shouldContinue;
+}
+
+async function viewGoBack(_menuItem, window) {
+  await window.project.goBack();
+}
+
+async function viewGoForward(_menuItem, window) {
+  await window.project.goForward();
 }

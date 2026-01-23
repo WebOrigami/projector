@@ -30,6 +30,10 @@ function getFileName(filePath) {
 }
 
 function render(state, changed) {
+  if (changed.backEnabled) {
+    backButton.disabled = !state.backEnabled;
+  }
+
   if (changed.command) {
     if (command.value !== state.command) {
       command.value = state.command;
@@ -48,6 +52,10 @@ function render(state, changed) {
     command.classList.toggle("error", state.error !== null);
     error.textContent = state.error || "";
     error.style.display = state.error ? "block" : "none";
+  }
+
+  if (changed.forwardEnabled) {
+    forwardButton.disabled = !state.forwardEnabled;
   }
 
   if (changed.recentFiles) {
@@ -170,6 +178,12 @@ Object.assign(window, {
 });
 
 window.addEventListener("DOMContentLoaded", () => {
+  // Wire up event handlers
+
+  fileOpen.addEventListener("click", async () => {
+    await window.api.invokeProjectMethod("fileOpen");
+  });
+
   editor.addEventListener("input", async () => {
     // Notify main process that the content has changed
     await window.api.invokeProjectMethod("setState", {
@@ -179,23 +193,14 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  command.addEventListener("input", async () => {
-    // Notify main process that the command has changed
-    await window.api.invokeProjectMethod("setState", {
-      command: command.value,
-    });
-  });
-
   command.addEventListener("keydown", async (event) => {
     if (
       event.key === "Enter" &&
       !(event.shiftKey || event.ctrlKey || event.altKey)
     ) {
+      // Navigate forward to result of command
       event.preventDefault();
-      await window.api.invokeProjectMethod("setState", {
-        resultHref: defaultResultHref,
-      });
-      await window.api.invokeProjectMethod("run");
+      await window.api.invokeProjectMethod("navigateAndRun", command.value);
     } else if (event.key === "ArrowDown") {
       event.preventDefault();
       await window.api.invokeProjectMethod("nextCommand");
@@ -205,8 +210,12 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  fileOpen.addEventListener("click", async () => {
-    await window.api.invokeProjectMethod("fileOpen");
+  backButton.addEventListener("click", async () => {
+    window.api.invokeProjectMethod("goBack");
+  });
+
+  forwardButton.addEventListener("click", async () => {
+    window.api.invokeProjectMethod("goForward");
   });
 
   result.addEventListener("load", () => {
@@ -244,7 +253,10 @@ window.addEventListener("DOMContentLoaded", () => {
       if (link) {
         const href = link.getAttribute("href");
         const isValidUrl = URL.canParse(href, appAreaHref);
-        if (!isValidUrl) return; // Ignore invalid URLs
+        if (!isValidUrl) {
+          // Ignore invalid URLs
+          return;
+        }
         const url = new URL(href, resultHref);
         const isExternal = !url.href.startsWith(appAreaHref);
         if (isExternal) {

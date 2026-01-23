@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -7,14 +7,22 @@
   </head>
   <body>
     <div id="recentBar" class="toolbar">
-      <button id="fileOpen">
+      <button id="fileOpen" class="iconButton">
         <img src="images/folder_open.svg" alt="Open folder" />
       </button>
       <div id="recentButtons"></div>
     </div>
     <div id="commandBar" class="toolbar">
-      <input id="command" type="text" placeholder="Enter command" />
-      <span id="resultPath"></span>
+      <button id="backButton" class="iconButton">
+        <img src="images/arrow_back.svg" alt="Go back" />
+      </button>
+      <button id="forwardButton" class="iconButton">
+        <img src="images/arrow_forward.svg" alt="Go forward" />
+      </button>
+      <div id="commandContainer">
+        <input id="command" type="text" placeholder="Enter command" />
+        <span id="resultPath"></span>
+      </div>
     </div>
     <textarea id="editor"></textarea>
     <div id="resultPane">

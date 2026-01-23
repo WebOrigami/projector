@@ -74,9 +74,9 @@ When you are editing a file that eventually renders as HTML, the framed page may
 
 Projector uses a heuristic to find the default site for a project.
 
-* If the project contains a package.json file with `scripts`, Projector searches the `dev`, `serve`, `start`, or `build` scripts (in that order) for the first script that references an `.ori` file. That `.ori` file will be loaded as the project’s default site. For example, if the script follows the [standard incantation to start a server](https://weborigami.org/cli/incantations#starting-an-origami-server-with-debugging), then the project’s default site will be the same as the one you normally start with `npm run start`.
+- If the project contains a package.json file with `scripts`, Projector searches the `dev`, `serve`, `start`, or `build` scripts (in that order) for the first script that references an `.ori` file. That `.ori` file will be loaded as the project’s default site. For example, if the script follows the [standard incantation to start a server](https://weborigami.org/cli/incantations#starting-an-origami-server-with-debugging), then the project’s default site will be the same as the one you normally start with `npm run start`.
 
-* If such a site path can’t be found, the project’s default site will be the project’s root folder. That is, absolute local URLs paths will be resolved with the root folder as the root of the site.
+- If such a site path can’t be found, the project’s default site will be the project’s root folder. That is, absolute local URLs paths will be resolved with the root folder as the root of the site.
 
 # User interface
 
@@ -125,7 +125,7 @@ Using Save As to save a file outside of the project’s folder tree will save th
 - **Paste**
 - **Select All**
 
-### Debug menu
+### View menu
 
 - **Toggle Developer Tools**. Shows standard Chromium Dev Tools.
 
