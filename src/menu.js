@@ -139,18 +139,8 @@ export async function createMenu() {
 }
 
 async function fileNew(_menuItem, window) {
-  const project = window.project;
-
-  // Check if there are unsaved changes
-  if (project.dirty) {
-    const shouldContinue = await promptSaveChanges(window);
-    if (!shouldContinue) {
-      return;
-    }
-  }
-
-  // Set to new document state
-  await project.loadFile(null);
+  // Have project load a new untitled file
+  await window.project.loadFile(null);
 }
 
 export async function fileOpen(_menuItem, window) {

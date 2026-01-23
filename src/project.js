@@ -161,11 +161,14 @@ export default class Project {
     if (!this._root) {
       throw new Error("Tried to load file before loading project");
     }
-    const relative = path.relative(this._root.path, filePath);
-    if (relative.startsWith("..")) {
-      throw new Error(
-        `File "${filePath}" is outside of project root "${this._root.path}"`,
-      );
+
+    if (filePath) {
+      const relative = path.relative(this._root.path, filePath);
+      if (relative.startsWith("..")) {
+        throw new Error(
+          `File "${filePath}" is outside of project root "${this._root.path}"`,
+        );
+      }
     }
 
     if (this.state.dirty) {

@@ -2,19 +2,22 @@
 
 Origami Projector (hereafter, Projector) is an editor and expression evaluation system for quickly iterating on code, data, and content.
 
-Projector shortens the conventional cycle in which you edit a text file (e.g., a markdown file), run some code to generate an affected artifact (a HTML file incorporating that content), view the artifact, then edit again.
+Projector shortens the conventional cycle in which you edit a text file (e.g., a markdown file), save it, run some code to generate an affected artifact (a HTML file incorporating that content), view the artifact, then edit again.
 
-Edit → Run → View → (repeat)
+Traditional: Edit → Save → Run → View → (repeat)
+Projector: Edit → View → (repeat)
 
-Projector is aimed at traditional developers, designers, as well as people with a degree of technical proficiency but who do not think of themselves as coders. To that end, Projector is envisioned as a standalone application for performing tasks which are normally done with a terminal.
+Projector is aimed at developers and designers, as well as people with a degree of technical comfort who do not think of themselves as coders. To that end, Projector is envisioned as a standalone application for performing tasks which are normally done with a terminal.
 
 Projector is designed to coexist with other design and development tools such as code editors (e.g., Microsoft VS Code, NeoVim), text editing applications (Obsidian, iA Writer), and command-line shells (bash).
 
 ## Current status
 
-Projector is an experimental application. The initial feature set is small and designed to be reasonably self-consistent, but even an extremely basic file-editing application carries high user expectations. If you find a bug, please report it.
+The initial feature set is small and designed to be reasonably self-consistent. That said, even an extremely basic file-editing application carries high user expectations.
 
-The focus at this early stage is confirming the idea’s viability and working out the proper shape of the tool. The current app experience is all but certain to have bugs and rough edges; hopefully it’s good enough to envision what you’d really like the application to do and be motivated to provide feedback. Experience suggests that feedback will direct the app’s evolution in directions that are hard to imagine at this point, so don’t get too attached to anything yet.
+The focus at this early stage is confirming the idea’s viability and working out the proper shape of the tool. The current app experience is all but certain to have bugs and rough edges; hopefully it’s good enough to envision what you’d really like the application to do and be motivated to provide feedback. If you find a bug, please report it.
+
+Experience suggests that feedback will direct the app’s evolution in directions that are hard to imagine at this point. It’s best to avoid getting too attached to anything yet.
 
 The application should be sufficient to perform basic editing of Origami projects. You should be able to:
 
@@ -25,7 +28,7 @@ The application should be sufficient to perform basic editing of Origami project
 
 ## Out of scope
 
-- Standard file editing tabs (drag and drop, etc.)
+- Standard file tab behavior common in IDEs (drag and drop, Close to Right, etc.)
 - Adjusting or disabling auto-save or auto-reload
 - Directly specifying the default site for a project
 - Window or Linux versions
@@ -35,9 +38,10 @@ The application should be sufficient to perform basic editing of Origami project
 - Reloading project settings if you edit `config.ori` or `package.json` inside the app; you’ll need to close the window and then reopen it to see the changes
 - In-app File Explorer
 - Real code editor
-- LSP integration (among other things: no syntax highlighting)
+- LSP integration for syntax highlighting and inline errors
+- Selectable views (YAML, JSON, SVG diagram, etc.)
 - Reloading JavaScript modules (other than ones directly loaded by Origami, just like `ori serve watch` does)
-- JavaScript module isolation. All modules for all project windows are loaded in a single Node application space; if one project loads JavaScript that manipulates global objects, that might interfere with the running of a project in a different window.
+- JavaScript module isolation. All modules for all project windows are loaded in a single Node application space; if one project loads JavaScript that manipulates global state, that might interfere with the running of a project in a different window.
 - Build, serve, or deploy a site
 - Help
 
@@ -66,9 +70,9 @@ A project’s name is used as a way to identify the project in window title bars
 
 Each project can be associated with an optional _default site_: a tree of resources used to handle absolute local URLs.
 
-When you are editing a file that eventually renders as HTML, the framed page may reference stylesheets, scripts, or other resources with absolute paths like `/assets/styles.css`. Project loads such absolute local URLs from the project’s default site.
+When you are editing a file that eventually renders as HTML, the framed page may reference stylesheets, scripts, or other resources with absolute paths like `/assets/styles.css`. Projector loads such absolute local URLs from the project’s default site.
 
-Projector currently uses a heuristic to find the default site for a project.
+Projector uses a heuristic to find the default site for a project.
 
 * If the project contains a package.json file with `scripts`, Projector searches the `dev`, `serve`, `start`, or `build` scripts (in that order) for the first script that references an `.ori` file. That `.ori` file will be loaded as the project’s default site. For example, if the script follows the [standard incantation to start a server](https://weborigami.org/cli/incantations#starting-an-origami-server-with-debugging), then the project’s default site will be the same as the one you normally start with `npm run start`.
 
@@ -146,7 +150,7 @@ The window is divided into a 2x2 grid:
 
 ## Auto-reload
 
-Projector will detect if you edit project files outside the application and reload the window as appropriate.
+Projector will detect if you edit project files outside the application and reload both the editing area and the result pane. This lets you use Projector in parallel with other editors.
 
 ## Recent bar
 
