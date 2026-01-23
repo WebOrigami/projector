@@ -1,5 +1,6 @@
 import { projectRootFromPath } from "@weborigami/language";
 import { app, BrowserWindow, session } from "electron";
+import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createMenu, folderOpen, promptSaveChanges } from "./menu.js";
@@ -183,7 +184,9 @@ export async function openProject(rootPath) {
 
 async function removeFromOpenProjects(project) {
   const appSettings = await settings.loadSettings();
-  let openProjects = appSettings.openProjects || [];
+  let openProjects = appSettings.openProjects
+    ? appSettings.openProjects.slice()
+    : [];
   openProjects = openProjectsUpdater.remove(openProjects, project.root.path);
   await settings.saveSettings({
     openProjects,
@@ -193,25 +196,30 @@ async function removeFromOpenProjects(project) {
 // As startup, restore project windows from settings
 export async function restoreProjectWindows() {
   const appSettings = await settings.loadSettings();
-  const openProjects = appSettings.openProjects || [];
-  for (const rootPath of openProjects) {
+  const projectsToOpen = appSettings.openProjects
+    ? appSettings.openProjects.slice()
+    : [];
+  const openProjects = [];
+  while (projectsToOpen.length > 0) {
+    const rootPath = projectsToOpen.shift();
     try {
+      fs.accessSync(rootPath);
       await openProject(rootPath);
+      openProjects.push(rootPath);
     } catch (error) {
-      console.error(`Failed to restore project: ${rootPath}`, error);
+      // Ignore and continue
     }
-  }
-
-  // The openProject() call will refresh the menu as needed. If no projects
-  // were opened, explicitly create the menu here.
-  if (openProjects.length === 0) {
-    await createMenu();
   }
 
   loading = false;
 
+  await settings.saveSettings({ openProjects });
+
   if (openProjects.length === 0) {
-    // No projects to restore, show Open Folder dialog
+    // The openProject() call will refresh the menu as needed. If no projects
+    // were opened, explicitly create the menu here.
+    await createMenu();
+    // Since no projects were opened, show Open Folder dialog
     await folderOpen();
   }
 }

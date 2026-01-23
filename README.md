@@ -27,15 +27,15 @@ The application should be sufficient to perform basic editing of Origami project
 
 - Standard file editing tabs (drag and drop, etc.)
 - Adjusting or disabling auto-save or auto-reload
-- Manually setting the default site for a project
+- Directly specifying the default site for a project
 - Window or Linux versions
 - Dark mode
 - Context menus
 - Resizing the 50/50 split of the window panes
-- In-app File Explorer
 - Reloading project settings if you edit `config.ori` or `package.json` inside the app; you’ll need to close the window and then reopen it to see the changes
+- In-app File Explorer
 - Real code editor
-- LSP integration
+- LSP integration (among other things: no syntax highlighting)
 - Reloading JavaScript modules (other than ones directly loaded by Origami, just like `ori serve watch` does)
 - JavaScript module isolation. All modules for all project windows are loaded in a single Node application space; if one project loads JavaScript that manipulates global objects, that might interfere with the running of a project in a different window.
 - Build, serve, or deploy a site
