@@ -27,7 +27,6 @@ export async function createMenu() {
         await settings.saveSettings({
           recentProjects: [],
         });
-        createMenu();
       },
     });
   } else {

@@ -31,7 +31,7 @@ async function addToOpenProjects(project) {
   });
 }
 
-async function addToRecentProjects(project) {
+export async function addToRecentProjects(project) {
   const appSettings = await settings.loadSettings();
   let projects = appSettings.recentProjects || [];
   // Remove if already present
@@ -115,7 +115,7 @@ async function createProjectWindow(rootPath) {
   // Track when window becomes active
   window.on("focus", async () => {
     if (!loading) {
-      addToOpenProjects(/** @type {any} */ (window).project);
+      addToOpenProjects(project);
     }
   });
 
@@ -124,9 +124,15 @@ async function createProjectWindow(rootPath) {
     if (!quitting) {
       // The user is closing the window, not quitting the app. We update the
       // settings to remove this window from the open projects.
-      await removeFromOpenProjects(/** @type {any} */ (window).project);
+      await removeFromOpenProjects(project);
+
+      // Tell project it's closing
+      project.close();
+
+      // Break references to project so we fail faster if accessed
+      /** @type {any} */ (window).project = null;
+      /** @type {any} */ (windowSession).project = null;
     }
-    await createMenu();
   });
 
   // Load the renderer HTML file via our custom protocol
@@ -171,7 +177,6 @@ export async function openProject(rootPath) {
   }
 
   await addToRecentProjects(/** @type {any} */ (window).project);
-  await createMenu();
 
   return /** @type {any} */ (window).project;
 }
@@ -197,7 +202,11 @@ export async function restoreProjectWindows() {
     }
   }
 
-  await createMenu();
+  // The openProject() call will refresh the menu as needed. If no projects
+  // were opened, explicitly create the menu here.
+  if (openProjects.length === 0) {
+    await createMenu();
+  }
 
   loading = false;
 

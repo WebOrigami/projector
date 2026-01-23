@@ -19,6 +19,7 @@ import { defaultResultHref, resultAreaHref } from "./renderer/shared.js";
 import updateState from "./renderer/updateState.js"; // Shared with renderer
 import * as settings from "./settings.js";
 import { formatError, getSitePath } from "./utilities.js";
+import * as windowManager from "./windowManager.js";
 
 const REFRESH_DELAY_MS = 250;
 
@@ -107,6 +108,16 @@ export default class Project {
     if (reloadExtension.includes(extname)) {
       await clearBrowserCache(this._window);
     }
+  }
+
+  // Project window is closing
+  close() {
+    // Stop any file watching
+    // @ts-ignore unwatch() does exist but isn't declared yet
+    this._root?.unwatch();
+
+    // Break connection to window
+    /** @type {any} */ (this._window) = null;
   }
 
   get command() {
@@ -251,13 +262,12 @@ export default class Project {
 
     updateWindow(this);
 
-    // If the last run didn't result in an error, auto-run the last command
-    if (!projectSettings.lastRunHadError && command) {
-      await this.run();
-    }
-
     // Watch for file changes in the project file tree
+    const project = this;
     this._root.addEventListener("change", async (/** @type {any} */ event) => {
+      if (!project._window) {
+        debugger;
+      }
       const { filePath } = event.options;
       this.onChange(filePath);
     });
@@ -271,8 +281,8 @@ export default class Project {
       await this.loadFile(sitePath);
     }
 
-    if (this.state.command !== "") {
-      // Run the command to restore result pane
+    // If the last run didn't result in an error, auto-run the last command
+    if (!projectSettings.lastRunHadError && command) {
       await this.run();
     }
   }
@@ -308,11 +318,23 @@ export default class Project {
       return;
     }
 
-    console.log(`changed: ${relativePath}`);
-
     if (filePath !== this._filePath) {
       // Editing some file that's not the active file
       await this.clearCacheForFileChange(filePath);
+
+      if (relativePath === "package.json" || relativePath === "config.ori") {
+        // Need to reload project: project name, site, and config/globals may
+        // have changed.
+        await this.loadProject();
+        await windowManager.addToRecentProjects(this); // in case name changed
+        return;
+      }
+
+      if (relativePath === this.state.sitePath) {
+        // Will need to reload site
+        this._site = null;
+      }
+
       if (!this._refreshTimeout) {
         // If we haven't already queued a refresh, do so now
         this.restartRefreshTimeout();
@@ -597,21 +619,6 @@ async function getPackageData(root) {
   return packageJson?.unpack();
 }
 
-async function loadSite(root, sitePath) {
-  // Evaluate the site file to get the site object
-  let site;
-  try {
-    site = await Tree.traversePath(root, sitePath);
-    if (isUnpackable(site)) {
-      site = await site.unpack();
-    }
-  } catch (error) {
-    return null;
-  }
-
-  return site;
-}
-
 /**
  * Return the text for the given file, or the empty string for a new file.
  *
@@ -641,9 +648,28 @@ async function loadFileText(filePath) {
   return result;
 }
 
+async function loadSite(root, sitePath) {
+  // Evaluate the site file to get the site object
+  let site;
+  try {
+    site = await Tree.traversePath(root, sitePath);
+    if (isUnpackable(site)) {
+      site = await site.unpack();
+    }
+  } catch (error) {
+    return null;
+  }
+
+  return site;
+}
+
 // Reflect project state in the window
 function updateWindow(project) {
   const { _window: window, state } = project;
-  window.setTitle(state.projectName);
-  window.setDocumentEdited(state.dirty);
+  try {
+    window.setTitle(state.projectName);
+    window.setDocumentEdited(state.dirty);
+  } catch (error) {
+    console.error("Failed to update window state:", error);
+  }
 }

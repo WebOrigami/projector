@@ -1,6 +1,7 @@
 import { app } from "electron";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { createMenu } from "./menu.js";
 import updateState from "./renderer/updateState.js";
 
 const settingsPath = join(app.getPath("userData"), "settings.json");
@@ -70,5 +71,11 @@ export async function saveSettings(changes) {
     await writeFile(settingsPath, json, "utf8");
   } catch (error) {
     console.error("Failed to save settings:", error);
+  }
+
+  if (changed.openProjects || changed.recentProjects) {
+    // Refresh menu of recent projects and state of menu items that depend on a
+    // project being open.
+    await createMenu();
   }
 }
