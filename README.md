@@ -19,23 +19,25 @@ The focus at this early stage is confirming the idea’s viability and working o
 The application should be sufficient to perform basic editing of Origami projects. You should be able to:
 
 - Install the application on macOS with Apple silicon.
-- Issue Origami commands and see the results immediately appear in the result pane.
-- Edit a text file (.md, .js, .ori, etc.) and see the result pane automatically reload.
+- Issue Origami commands and see the result instantly appear in the result pane.
+- Edit a text file (.md, .js, .ori, etc.) and see the result automatically reload.
 - If the displayed HTML contains links, browse within the local site.
 
-Out of scope for now:
+## Out of scope
 
+- Standard file editing tabs (drag and drop, etc.)
 - Adjusting or disabling auto-save or auto-reload
 - Manually setting the default site for a project
 - Window or Linux versions
 - Dark mode
-- Window pane management (showing, hiding, resizing)
+- Context menus
+- Resizing the 50/50 split of the window panes
 - In-app File Explorer
-- Watching file edits made outside the application
-- Reloading project settings when `config.ori` or `package.json` is edited
+- Reloading project settings if you edit `config.ori` or `package.json` inside the app; you’ll need to close the window and then reopen it to see the changes
 - Real code editor
 - LSP integration
-- JavaScript file cache resets
+- Reloading JavaScript modules (other than ones directly loaded by Origami, just like `ori serve watch` does)
+- JavaScript module isolation. All modules for all project windows are loaded in a single Node application space; if one project loads JavaScript that manipulates global objects, that might interfere with the running of a project in a different window.
 - Build, serve, or deploy a site
 - Help
 
@@ -64,19 +66,19 @@ A project’s name is used as a way to identify the project in window title bars
 
 Each project can be associated with an optional _default site_: a tree of resources used to handle absolute local URLs.
 
-When you are editing a file that eventually renders as HTML, the framed page needs to know where to obtain any stylesheets, scripts, or other resources referenced with absolute paths like `/assets/styles.css`.
+When you are editing a file that eventually renders as HTML, the framed page may reference stylesheets, scripts, or other resources with absolute paths like `/assets/styles.css`. Project loads such absolute local URLs from the project’s default site.
 
 Projector currently uses a heuristic to find the default site for a project.
 
-If the project contains a package.json file with a `start` script, Projector searches that script command for the first path that includes a `.ori` file. If the script follows the [standard incantation to start a server](https://weborigami.org/cli/incantations#starting-an-origami-server-with-debugging), then the project’s default site will be the same as the one you normally start with `npm run start`.
+* If the project contains a package.json file with `scripts`, Projector searches the `dev`, `serve`, `start`, or `build` scripts (in that order) for the first script that references an `.ori` file. That `.ori` file will be loaded as the project’s default site. For example, if the script follows the [standard incantation to start a server](https://weborigami.org/cli/incantations#starting-an-origami-server-with-debugging), then the project’s default site will be the same as the one you normally start with `npm run start`.
 
-If such a site path can’t be found, the project’s default site will be the project’s root folder. That is, absolute local URLs paths will be resolved with the root folder as the root of the site.
+* If such a site path can’t be found, the project’s default site will be the project’s root folder. That is, absolute local URLs paths will be resolved with the root folder as the root of the site.
 
 # User interface
 
 ## Basic application behavior
 
-When you start Projector, it opens a window for the most recently opened project(s) for those project(s) that still exist. If no such recent project exists, it shows the Open Folder dialog.
+When you start Projector, it restores the windows that were open when you last quit the application, skipping any projects whose project root folder no longer exists.
 
 When reopening a project window, Projector attempts to restore the state of the window when you closed it. It reopens the most recently opened file, and shows the most recently run command in the command bar. If, in the last session, that command had completed without errors, then it re-runs that command.
 
@@ -97,13 +99,12 @@ The application menu bar offers the standard commands for a text editor.
 
 ### File menu
 
-- **New**
-- **Open File…**. Shows a standard File Open dialog to pick an existing file.
-- **Open Folder…**. Shows a standard File Open dialog to pick an existing folder.
+- **Open Project Folder…**. Shows a standard File Open dialog to pick an existing folder.
 - **Open Recent Project**. A submenu showing the friendly names of recently opened projects.
-- **Close**. Closes the current window.
-- **Save**
-- **Save As…**. Shows a standard File Save As dialog.
+- **Close**. Closes the current project window.
+- **New File**. Clears the text editor.
+- **Open File…**. Shows a standard File Open dialog to pick an existing file.
+- **Save File As…**. Shows a standard File Save As dialog.
 
 Opening a file via the Open menu implies opening the associated project. If that project is already open in a window, the file is opened in that project window. Otherwise a file opens in a new window for that project.
 
@@ -134,66 +135,74 @@ Using Save As to save a file outside of the project’s folder tree will save th
 
 ## Project window
 
-Each open project is represented by a single window.
+Each open project is represented by a single window. The window title bar shows the project’s friendly name.
 
 The window is divided into a 2x2 grid:
 
-- Tab bar in upper left
+- Recent bar in upper left
 - Editing area in main part of left side
 - Command bar in upper right
 - Result pane in main part of right side
 
-## Title bar
+## Auto-reload
 
-The window shows the project’s friendly name.
+Projector will detect if you edit project files outside the application and reload the window as appropriate.
 
-## Tab bar
+## Recent bar
 
-Projector tracks the 10 most recently opened files for a given project. These are rendered as tabs across the top of the editing area. The tab bar shows as many tabs as can fit horizontally; the remainder are clipped.
+Projector tracks the 10 most recently opened files for a given project. These are rendered as tabs across the top of the editing area. The recent bar shows as many tabs as can fit horizontally; the remainder are clipped.
 
-Each tab displays the name of the associated file, or "Untitled" if the file has not been saved yet. If the file is `dirty` (has unsaved changes), an circle (`⚫︎`) is appended to the title.
+Each tab displays the name of the associated file, or "Untitled" if the file has not been saved yet.
 
 The active file is always the most recent one, and always shown in the leftmost tab. Opening another file in the project (via File / Open, or by clicking a different tab) makes that new file the recent file, and therefore the active and leftmost tab.
 
-If the user selects a recent file from either the tab bar or the Open Recent File and that file no longer exists, the file is removed from both locations.
+If you select a recent file from the tab bar and that file no longer exists, the tab for that file is removed.
 
 In an `unsaved` project, it is possible to have no file open and so no file tabs visible.
 
 ## Editing area
 
-- When a file is opened, its contents are loaded and displayed in the editing area. The `dirty` state is set to `false`.
-- When the user modifies the contents of the editing area, the `dirty` state is set to `true`.
-- If the user tries to save the file but the file has not yet been saved (i.e., `filePath` is `null`), a Save As dialog is shown first. The `filePath` is then set to the selected path.
-- When the user saves the file via the Save or Save As menu commands, the contents of the editing area are written to the file, and the `dirty` state is set to `false`.
-- If the user attempts to create a new file, open an existing file via Open, or close the window while the current file has unsaved changes -- i.e., `dirty` is `true` -- the application prompts the user with a Yes/No/Cancel dialog to "Save changes?" before proceeding.
+The editing area is a standard text box.
+
+### Auto-save
+
+When you type into the editing area for an existing file, after a short delay the edits will be saved; it is not necessary to use a Save command.
+
+If you are working in a new file, your edits will not be saved until you use the File → Save File As command to save the file.
+
+If you have made changes to a new file but not saved it, attempting to open another file will display a Yes/No/Cancel dialog prompting you to save the changes.
 
 ## Command bar
 
-A text box in the upper right lets the user enter Origami commands.
+A text box in the upper right lets you enter Origami commands. These are parsed and evaluated as with the `ori` CLI. (Because you are not working inside of a shell program, e.g., bash, you don’t have to worry about a shell parser parsing things such as a parentheses, so you don’t have to quote parentheses.)
 
-Pressing Return evaluates the current command in the context of the project root folder. (An empty command has no effect.)
+When you open a project for the first time, if the project has a default site, then the default command will evaluate that site. E.g., if the default site is defined in `src/site.ori`, then the default command will be `src/site.ori/`. This will cause the site’s default index.html page to appear.
+
+When the keyboard focus is in the command bar, pressing Return evaluates the current command in the context of the project root folder. (An empty command does nothing.)
 
 Each project records the 10 most recent commands for that project. Issuing a command makes it the most recent command.
 
-While the command bar has focus, the user can press the Up or Down arrow keys to navigate to, respectively, the previous or next command in the recent command list.
+While the command bar has focus, you can press the Up or Down arrow keys to navigate to, respectively, the previous or next command in the recent command list.
 
-If the user has navigated within the result pane (see below), the right side of the command bar shows the current path within the result.
+If you have navigated within the result pane (see below), the right side of the command bar shows the current path within the result.
 
 ## Result pane
 
 The result pane shows the result of the most recently-issued command: an HTML page, text file, etc.
 
-### Reload
+If the result is an image, its width is constrained to the width of the pane.
 
-When the active file is saved, after a short delay the result pane will reload to show any effects of the edits.
+### Auto-run
 
-Before reloading, Projector saves the scroll position of scrollable elements on the page. After the result pane reloads, if the command and result path have stayed the same (i.e., if the user is not navigating), then Projector attempts to restore the scroll position of those elements. The goal is to let the user continue viewing the same area of the page in the case the user had to scroll to view that area.
+Whenever the active file is saved, after a short delay the result pane will reload to show any effects of the edits.
+
+Before reloading, Projector saves the scroll position of all scrollable elements on the page. After the result pane reloads, if the command and result path have stayed the same (i.e., you are not navigating), then Projector attempts to restore the scroll position of those elements. The goal is to let you continue viewing the same area of the page you were looking at previously.
 
 ### Navigation
 
-If the result is an HTML page and the user clicks on a link to navigate, this creates a _result path_: a path inside the result or, possibly, within the default site. This path will be shown on the right of the command bar.
+If the result is an HTML page and you click on a link to navigate, this creates a _result path_: a path inside the result or, possibly, within the default site. This path will be shown on the right of the command bar.
 
-# Error reports
+# Error handling
 
 If the main application suffers a top-level unexpected error, it displays an error dialog. It also saves an error report in `~/Library/Application Support/Origami Projector/error.log`.
 
