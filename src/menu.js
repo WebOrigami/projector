@@ -56,7 +56,22 @@ export async function createMenu() {
       label: "File",
       submenu: [
         {
-          label: "New",
+          label: "Open Project Folder…",
+          accelerator: "CmdOrCtrl+Shift+O",
+          click: folderOpen,
+        },
+        {
+          label: "Open Recent Project",
+          submenu: recentProjectsSubmenu,
+        },
+        {
+          label: "Close Project",
+          role: "close",
+          enabled: isProjectOpen,
+        },
+        { type: "separator" },
+        {
+          label: "New File",
           accelerator: "CmdOrCtrl+N",
           click: fileNew,
           enabled: isProjectOpen,
@@ -67,29 +82,14 @@ export async function createMenu() {
           click: fileOpen,
           enabled: isProjectOpen,
         },
+        // {
+        //   label: "Save",
+        //   accelerator: "CmdOrCtrl+S",
+        //   click: fileSave,
+        //   enabled: isProjectOpen,
+        // },
         {
-          label: "Open Folder…",
-          accelerator: "CmdOrCtrl+Shift+O",
-          click: folderOpen,
-        },
-        {
-          label: "Open Recent",
-          submenu: recentProjectsSubmenu,
-        },
-        { type: "separator" },
-        {
-          label: "Close",
-          role: "close",
-          enabled: isProjectOpen,
-        },
-        {
-          label: "Save",
-          accelerator: "CmdOrCtrl+S",
-          click: fileSave,
-          enabled: isProjectOpen,
-        },
-        {
-          label: "Save As…",
+          label: "Save File As…",
           accelerator: "CmdOrCtrl+Shift+S",
           click: fileSaveAs,
           enabled: isProjectOpen,
