@@ -257,12 +257,14 @@ window.addEventListener("DOMContentLoaded", () => {
           // Ignore invalid URLs
           return;
         }
-        const url = new URL(href, resultHref);
-        const isExternal = !url.href.startsWith(appAreaHref);
-        if (isExternal) {
-          event.preventDefault();
-          window.api.invokeProjectMethod("openExternalLink", href);
-        }
+        // const url = new URL(href, resultHref);
+        // const isExternal = !url.href.startsWith(appAreaHref);
+        // if (isExternal) {
+        //   event.preventDefault();
+        //   window.api.invokeProjectMethod("openExternalLink", href);
+        // }
+        event.preventDefault();
+        window.api.invokeProjectMethod("navigateToHref", href);
       }
     });
   });

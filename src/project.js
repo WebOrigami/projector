@@ -18,7 +18,7 @@ import recent from "./recent.js";
 import { defaultResultHref, resultAreaHref } from "./renderer/shared.js";
 import updateState from "./renderer/updateState.js"; // Shared with renderer
 import * as settings from "./settings.js";
-import { formatError, getSitePath } from "./utilities.js";
+import { formatError, getSitePath, resolveHref } from "./utilities.js";
 import * as windowManager from "./windowManager.js";
 
 const REFRESH_DELAY_MS = 250;
@@ -376,6 +376,23 @@ export default class Project {
     await this.run();
   }
 
+  /**
+   * The user clicked a link with the given href.
+   *
+   * @param {string} href
+   */
+  async navigateToHref(href) {
+    const command = resolveHref(href, this.state.command, this.state.sitePath);
+
+    if (command === null) {
+      // External URL, open in browser
+      await shell.openExternal(href);
+      return;
+    }
+
+    await this.navigateAndRun(command);
+  }
+
   async nextCommand() {
     const command = this.state.command;
     const commands = this.state.recentCommands || [];
@@ -447,10 +464,6 @@ export default class Project {
       // Refresh immediately
       this.refresh();
     }
-  }
-
-  async openExternalLink(href) {
-    await shell.openExternal(href);
   }
 
   async previousCommand() {

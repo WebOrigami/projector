@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, test } from "node:test";
-import { getSitePath, isSimpleObject } from "../src/utilities.js";
+import { getSitePath, isSimpleObject, resolveHref } from "../src/utilities.js";
 
 describe("utilities", () => {
   test("getSitePath returns site path from package.json start script", async () => {
@@ -40,6 +40,17 @@ describe("utilities", () => {
       };
       const result = await isSimpleObject(fixture);
       assert(!result);
+    });
+
+    test("resolveHref", () => {
+      assert.equal(resolveHref("https://example.com", "", ""), null);
+      assert.equal(
+        resolveHref("/about", "command", "src/site.ori/"),
+        "src/site.ori/about",
+      );
+      assert.equal(resolveHref("contact", "foo/bar", ""), "foo/bar/contact");
+      assert.equal(resolveHref("../up", "foo/bar", "src/site.ori"), "foo/up");
+      assert.equal(resolveHref("key", "fn.js data", ""), "(fn.js data)/key");
     });
   });
 });

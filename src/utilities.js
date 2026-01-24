@@ -1,5 +1,9 @@
 import { isPlainObject, Tree } from "@weborigami/async-tree";
-import { formatError as cliFormatError } from "@weborigami/language";
+import {
+  formatError as cliFormatError,
+  markers,
+  parse,
+} from "@weborigami/language";
 import * as path from "node:path";
 
 export function formatError(error) {
@@ -85,4 +89,58 @@ export async function isSimpleObject(object) {
   }
 
   return true;
+}
+
+/**
+ * The user is viewing the HTML result of a command and clicks a link on the
+ * given href.
+ *
+ * If the href is:
+ *
+ * * an external URL: return null.
+ * * an absolute path: add that to the site path.
+ * * otherwise: resolve it against the command.
+ *
+ * When resolving against a command, if the command is already a path traversal
+ * we extend it. If it's not, we enclose the entire command in parentheses and
+ * then extend it.
+ *
+ * @param {string} href
+ * @param {string} command
+ * @param {string} sitePath
+ */
+export function resolveHref(href, command, sitePath) {
+  if (URL.canParse(href)) {
+    // If we can parse it as a URL, it's external.
+    return null;
+  }
+
+  if (path.isAbsolute(href)) {
+    return path.join(sitePath, href);
+  }
+
+  let trimmed = command.trim();
+  let isTraversal;
+  try {
+    const parsed = parse(trimmed, {
+      grammarSource: {
+        text: trimmed,
+      },
+      mode: "shell",
+      startRule: "expression",
+    });
+    isTraversal = parsed[0] === markers.traverse;
+  } catch (e) {
+    // This shouldn't happen: for the user to be clicking on a link, the command
+    // must have already executed successfully.
+    isTraversal = false;
+  }
+
+  if (!isTraversal) {
+    // Wrap in parentheses
+    command = `(${command})`;
+    trimmed = command.trim();
+  }
+
+  return path.join(trimmed, href);
 }
