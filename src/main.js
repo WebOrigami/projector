@@ -3,6 +3,9 @@ import { appendFile } from "node:fs/promises";
 import { join } from "node:path";
 import * as windowManager from "./windowManager.js";
 
+let appReadyToOpenFiles = false;
+const openFileQueue = [];
+
 /**
  * Main application startup, shutdown, and interprocess communication
  */
@@ -76,6 +79,19 @@ process.on("unhandledRejection", (reason, promise) => {
   showErrorDialog(error);
 });
 
+// Register to handle files open from outside app (e.g., macOS Finder)
+app.on("open-file", async (event, filePath) => {
+  event.preventDefault();
+
+  if (!filePath) {
+    return;
+  } else if (appReadyToOpenFiles) {
+    await windowManager.openFile(filePath);
+  } else {
+    openFileQueue.push(filePath);
+  }
+});
+
 app.on("window-all-closed", () => {
   // Don't quit the app when all windows are closed
   // User must explicitly quit via Cmd+Q or menu
@@ -86,6 +102,14 @@ app.on("window-all-closed", () => {
  */
 app.whenReady().then(async () => {
   await windowManager.restoreProjectWindows();
+
+  appReadyToOpenFiles = true;
+
+  // Open any files that were queued before the app was ready
+  while (openFileQueue.length > 0) {
+    const filePath = openFileQueue.shift();
+    await windowManager.openFile(filePath);
+  }
 
   // Bring the app to the foreground; only works if we have windows open
   app.show();

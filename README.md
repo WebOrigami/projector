@@ -97,6 +97,12 @@ Projector persists the following settings:
 
 These settings are saved whenever their values change.
 
+### File associations
+
+Projector registers itself as a handler for the `.ori` file extension. Double-clicking a file in a folder window should open the project for that file, then open the file in the editor.
+
+At this time it doesn't appear possible to register a handler for combination extensions like `.ori.html`.
+
 ## Menu bar
 
 The application menu bar offers the standard commands for a text editor.
