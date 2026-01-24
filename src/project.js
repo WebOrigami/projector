@@ -203,6 +203,13 @@ export default class Project {
     await this.run();
   }
 
+  async goHome() {
+    const command = this.state.sitePath ? `${this.state.sitePath}/` : "";
+    if (command !== this.state.command) {
+      await this.navigateAndRun(command);
+    }
+  }
+
   async invokePageMethod(...args) {
     await this._window.webContents.send("invoke-page", ...args);
   }

@@ -30,7 +30,7 @@ export function getSiteFilePath(root, sitePath) {
 export function getSitePath(packageData) {
   // Check if we have package.json data
   if (!packageData) {
-    return null;
+    return ".";
   }
 
   const scripts = ["dev", "start", "serve", "build"];
@@ -42,7 +42,7 @@ export function getSitePath(packageData) {
     }
   }
 
-  return null;
+  return ".";
 }
 
 function getSitePathFromScript(script) {

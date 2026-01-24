@@ -122,6 +122,11 @@ export async function createMenu() {
       enabled: isProjectOpen,
       submenu: [
         {
+          label: "Home",
+          accelerator: "Shift+CmdOrCtrl+H",
+          click: viewHome,
+        },
+        {
           label: "Back",
           accelerator: "CmdOrCtrl+[",
           click: viewGoBack,
@@ -148,13 +153,7 @@ export async function createMenu() {
       ],
     },
     {
-      role: "window",
-      submenu: [
-        { role: "minimize" },
-        { role: "zoom" },
-        { type: "separator" },
-        { role: "front" },
-      ],
+      role: "windowMenu",
     },
   ];
 
@@ -309,4 +308,8 @@ async function viewGoBack(_menuItem, window) {
 
 async function viewGoForward(_menuItem, window) {
   await window.project.goForward();
+}
+
+async function viewHome(_menuItem, window) {
+  await window.project.goHome();
 }
