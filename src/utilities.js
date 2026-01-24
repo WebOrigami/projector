@@ -137,10 +137,13 @@ export function resolveHref(href, command, sitePath) {
   }
 
   if (!isTraversal) {
-    // Wrap in parentheses
-    command = `(${command})`;
-    trimmed = command.trim();
+    // Wrap in parentheses and append the path
+    return `(${trimmed})/${href}`;
   }
 
-  return path.join(trimmed, href);
+  // Extend the path using URL rules
+  const base = new URL(trimmed, "http://fake");
+  const resolved = new URL(href, base);
+  const pathname = resolved.pathname;
+  return pathname.startsWith("/") ? pathname.slice(1) : pathname;
 }

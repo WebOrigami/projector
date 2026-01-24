@@ -48,8 +48,8 @@ describe("utilities", () => {
         resolveHref("/about", "command", "src/site.ori/"),
         "src/site.ori/about",
       );
-      assert.equal(resolveHref("contact", "foo/bar", ""), "foo/bar/contact");
-      assert.equal(resolveHref("../up", "foo/bar", "src/site.ori"), "foo/up");
+      assert.equal(resolveHref("contact", "foo/bar", ""), "foo/contact");
+      assert.equal(resolveHref("../up", "a/b/c", "src/site.ori"), "a/up");
       assert.equal(resolveHref("key", "fn.js data", ""), "(fn.js data)/key");
     });
   });
