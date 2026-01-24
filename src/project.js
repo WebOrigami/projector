@@ -15,7 +15,6 @@ import fs from "node:fs";
 import * as path from "node:path";
 import * as menu from "./menu.js";
 import recent from "./recent.js";
-import { defaultResultHref, resultAreaHref } from "./renderer/shared.js";
 import updateState from "./renderer/updateState.js"; // Shared with renderer
 import * as settings from "./settings.js";
 import { formatError, getSitePath, resolveHref } from "./utilities.js";
@@ -55,6 +54,7 @@ export default class Project {
     this._refreshTimeout = null;
     this._result = null;
     this._root = null;
+    this._runVersion = 0;
     this._site = null;
 
     // State shared with the renderer
@@ -66,10 +66,10 @@ export default class Project {
       error: null,
       fileName: getFileName(this._filePath),
       forwardEnabled: false,
+      loadedVersion: 0,
       projectName: "New project",
       recentCommands: [],
       recentFiles: [],
-      resultHref: defaultResultHref,
       resultVersion: 0,
       sitePath: null,
       text: "",
@@ -301,7 +301,6 @@ export default class Project {
     const projectSettings = await settings.loadProjectSettings(this._root.path);
     const recentCommands = projectSettings.recentCommands || [];
     const recentFiles = projectSettings.recentFiles || [];
-    const resultHref = projectSettings.resultHref || defaultResultHref;
 
     let command;
     // Use last command if it exists, otherwise run site if that exists
@@ -318,7 +317,6 @@ export default class Project {
       projectName,
       recentCommands,
       recentFiles,
-      resultHref,
       sitePath,
     });
 
@@ -370,7 +368,6 @@ export default class Project {
       backEnabled,
       command,
       forwardEnabled,
-      resultHref: defaultResultHref,
     });
 
     await this.run();
@@ -506,17 +503,7 @@ export default class Project {
     // Clear cached site so it will be reloaded
     this._site = null;
 
-    // Is the current result href inside the result area?
-    const relativePath = path.relative(resultAreaHref, this.state.resultHref);
-    if (relativePath.startsWith("..")) {
-      // Outside default, bump result version to force reload
-      await this.setState({
-        resultVersion: this.state.resultVersion + 1,
-      });
-    } else {
-      // Inside default, rerun
-      await this.run();
-    }
+    await this.run();
   }
 
   restartRefreshTimeout() {
@@ -538,6 +525,9 @@ export default class Project {
   }
 
   async run() {
+    this._runVersion++;
+    await settings.saveProjectSettings(this);
+
     let command = this.state.command;
 
     if (!command) {
@@ -559,7 +549,7 @@ export default class Project {
     let resultVersion = this.state.resultVersion;
     if (!error) {
       // Bump result version to let renderer know to reload result
-      resultVersion++;
+      resultVersion = this._runVersion;
     }
 
     const commands = recentCommandsUpdater.add(
@@ -572,7 +562,6 @@ export default class Project {
       recentCommands: commands,
       resultVersion,
     });
-
     settings.saveProjectSettings(this);
   }
 
@@ -625,8 +614,14 @@ export default class Project {
       }
     }
 
-    if (changed.resultHref) {
-      settings.saveProjectSettings(this);
+    if (changed.loadedVersion) {
+      if (
+        newState.loadedVersion > 0 &&
+        newState.loadedVersion === this._runVersion
+      ) {
+        // Result has finished loading successfully
+        await settings.saveProjectSettings(this);
+      }
     }
 
     updateWindow(this);
@@ -640,11 +635,14 @@ export default class Project {
       (filePath) => filePath !== null,
     );
 
+    // If the run version is greater than the loaded version, the last run had
+    // an error.
+    const lastRunHadError = this._runVersion > this.state.loadedVersion;
+
     return {
-      lastRunHadError: this.state.error !== null,
+      lastRunHadError,
       recentCommands: this.state.recentCommands,
       recentFiles,
-      resultHref: this.state.resultHref,
     };
   }
 

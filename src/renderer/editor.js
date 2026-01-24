@@ -1,5 +1,5 @@
 import * as scrollState from "./scrollState.js";
-import { appAreaHref, defaultResultHref, resultAreaHref } from "./shared.js";
+import { appAreaHref, defaultResultHref } from "./shared.js";
 import updateState from "./updateState.js";
 
 // Page state
@@ -63,12 +63,6 @@ function render(state, changed) {
     updateRecentBar(state);
   }
 
-  if (changed.resultHref) {
-    if (resultPath.value !== state.resultHref) {
-      updateResultPath(state.resultHref);
-    }
-  }
-
   if (changed.resultVersion && state.resultVersion > 0) {
     reloadResult();
   }
@@ -117,42 +111,6 @@ function updateRecentBar(state) {
   });
 }
 
-// Trim down the result href to a path and display it
-function updateResultPath(resultHref) {
-  let displayPath = resultHref;
-  if (displayPath === defaultResultHref) {
-    // Viewing default, hide result path
-    displayPath = "";
-  } else if (displayPath.startsWith(resultAreaHref)) {
-    // Within result of command, show relative path
-    displayPath = displayPath.slice(resultAreaHref.length);
-    if (state.command && !state.command.endsWith("/")) {
-      displayPath = "/" + displayPath;
-    }
-  } else if (displayPath.startsWith(appAreaHref)) {
-    // Within default site
-    displayPath = displayPath.slice(appAreaHref.length);
-
-    // Is the current command for the default site?
-    let normalizedCommand = state.command || "";
-    if (normalizedCommand && normalizedCommand.endsWith("/")) {
-      normalizedCommand = normalizedCommand.slice(0, -1);
-    }
-    let normalizedSitePath = state.sitePath || "";
-    if (normalizedSitePath && normalizedSitePath.endsWith("/")) {
-      normalizedSitePath = normalizedSitePath.slice(0, -1);
-    }
-    const isCommandForDefaultSite = normalizedCommand === normalizedSitePath;
-    if (!isCommandForDefaultSite) {
-      // Outside command
-      displayPath = "[default]/" + displayPath;
-    }
-  }
-
-  resultPath.textContent = displayPath;
-  resultPath.display = displayPath ? "block" : "none";
-}
-
 /**
  * Add methods to window so main process can call them
  */
@@ -167,7 +125,7 @@ Object.assign(window, {
     setState({ lastScroll });
 
     // Force iframe to reload
-    result.src = state.resultHref;
+    result.src = defaultResultHref;
   },
 
   setState(changes) {
@@ -240,12 +198,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
     // Restore scroll position
     restoreScrollPositionIfSamePage();
-    const resultHref = result.contentWindow.location.href;
-    if (state.resultHref !== resultHref) {
-      window.api.invokeProjectMethod("setState", {
-        resultHref,
-      });
-    }
 
     // Intercept external link clicks to open in default browser
     result.contentDocument.addEventListener("click", (event) => {
@@ -257,15 +209,14 @@ window.addEventListener("DOMContentLoaded", () => {
           // Ignore invalid URLs
           return;
         }
-        // const url = new URL(href, resultHref);
-        // const isExternal = !url.href.startsWith(appAreaHref);
-        // if (isExternal) {
-        //   event.preventDefault();
-        //   window.api.invokeProjectMethod("openExternalLink", href);
-        // }
         event.preventDefault();
         window.api.invokeProjectMethod("navigateToHref", href);
       }
+    });
+
+    // Notify main process that the result has loaded
+    window.api.invokeProjectMethod("setState", {
+      loadedVersion: state.resultVersion,
     });
   });
 

@@ -108,9 +108,7 @@ input, textarea {
   grid-template-columns: auto auto 1fr;
 
   #commandContainer {
-    align-items: center;
     display: grid;
-    grid-template-columns: 1fr fit-content(50%);
     padding: 0.25rem;
 
     input {
@@ -125,16 +123,6 @@ input, textarea {
     
       &.error {
         background: pink;
-      }
-    }
-
-    #resultPath {
-      color: var(--text-color-faded);
-      overflow: scroll;
-      white-space: nowrap;
-
-      &:not(:empty) {
-        margin-left: 0.25rem;
       }
     }
   }
