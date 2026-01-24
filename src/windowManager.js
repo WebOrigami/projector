@@ -175,6 +175,7 @@ export async function openProject(rootPath) {
   } else {
     // Create a new window for the project
     window = await createProjectWindow(rootPath);
+    await addToOpenProjects(/** @type {any} */ (window).project);
   }
 
   await addToRecentProjects(/** @type {any} */ (window).project);
