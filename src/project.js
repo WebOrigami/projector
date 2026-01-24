@@ -67,6 +67,7 @@ export default class Project {
       fileName: getFileName(this._filePath),
       forwardEnabled: false,
       loadedVersion: 0,
+      pageTitle: "",
       projectName: "New project",
       recentCommands: [],
       recentFiles: [],
@@ -764,7 +765,11 @@ async function loadSite(root, sitePath) {
 function updateWindow(project) {
   const { _window: window, state } = project;
   try {
-    window.setTitle(state.projectName);
+    let title = state.projectName;
+    if (state.pageTitle && state.pageTitle !== "") {
+      title += ` — ${state.pageTitle}`;
+    }
+    window.setTitle(title);
     window.setDocumentEdited(state.dirty);
   } catch (error) {
     console.error("Failed to update window state:", error);

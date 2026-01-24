@@ -214,9 +214,10 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // Notify main process that the result has loaded
+    // Notify main process that the result has loaded, also pass page title
     window.api.invokeProjectMethod("setState", {
       loadedVersion: state.resultVersion,
+      pageTitle: result.contentDocument.title,
     });
   });
 
