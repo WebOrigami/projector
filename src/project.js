@@ -66,6 +66,7 @@ export default class Project {
       error: null,
       fileName: getFileName(this._filePath),
       forwardEnabled: false,
+      lastScroll: null,
       loadedVersion: 0,
       pageTitle: "",
       projectName: "New project",
@@ -209,6 +210,10 @@ export default class Project {
     if (command !== this.state.command) {
       await this.navigateAndRun(command);
     }
+  }
+
+  async invokePageFunction(functionName) {
+    return this._window.webContents.executeJavaScript(`${functionName}()`);
   }
 
   async invokePageMethod(...args) {
@@ -503,6 +508,9 @@ export default class Project {
 
     // Clear cached site so it will be reloaded
     this._site = null;
+
+    const lastScroll = await this.invokePageFunction("getScrollPosition");
+    await this.setState({ lastScroll });
 
     await this.run();
   }

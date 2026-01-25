@@ -2,10 +2,8 @@ import * as scrollState from "./scrollState.js";
 import { appAreaHref, defaultResultHref } from "./shared.js";
 import updateState from "./updateState.js";
 
-// Page state
-window.state = {
-  lastScroll: scrollState.defaultState,
-};
+// Page state, will be populated by main process
+window.state = {};
 
 const imageExtensions = [
   ".avif",
@@ -40,14 +38,6 @@ function render(state, changed) {
     }
   }
 
-  if (changed.dirty || changed.fileName) {
-    // let name = state.fileName;
-    // if (state.dirty) {
-    //   name += " ⚫︎";
-    // }
-    // fileName.textContent = name;
-  }
-
   if (changed.error) {
     command.classList.toggle("error", state.error !== null);
     error.textContent = state.error || "";
@@ -70,20 +60,6 @@ function render(state, changed) {
   if (changed.text && state.textSource === "file") {
     editor.value = state.text;
   }
-}
-
-function restoreScrollPositionIfSamePage() {
-  const { lastScroll } = state;
-  const { command, href } = lastScroll;
-  if (command !== state.command) {
-    // Different command, do not restore scroll
-    return;
-  }
-  if (href !== result.contentWindow.location.href) {
-    // Different page, do not restore scroll
-    return;
-  }
-  scrollState.restoreState(result.contentWindow, lastScroll);
 }
 
 function updateRecentBar(state) {
@@ -119,11 +95,11 @@ Object.assign(window, {
     command.focus();
   },
 
-  reloadResult() {
-    // Save scroll position
-    const lastScroll = scrollState.getState(result.contentWindow);
-    setState({ lastScroll });
+  getScrollPosition() {
+    return scrollState.getState(result.contentWindow);
+  },
 
+  reloadResult() {
     // Force iframe to reload
     result.src = defaultResultHref;
   },
@@ -169,11 +145,11 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   backButton.addEventListener("click", async () => {
-    window.api.invokeProjectMethod("goBack");
+    await window.api.invokeProjectMethod("goBack");
   });
 
   forwardButton.addEventListener("click", async () => {
-    window.api.invokeProjectMethod("goForward");
+    await window.api.invokeProjectMethod("goForward");
   });
 
   result.addEventListener("load", () => {
@@ -196,11 +172,13 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Restore scroll position
-    restoreScrollPositionIfSamePage();
+    if (state.lastScroll) {
+      // We're refreshing the command result; restore scroll position
+      scrollState.restoreState(result.contentWindow, state.lastScroll);
+    }
 
     // Intercept external link clicks to open in default browser
-    result.contentDocument.addEventListener("click", (event) => {
+    result.contentDocument.addEventListener("click", async (event) => {
       const link = event.target.closest("a");
       if (link) {
         const href = link.getAttribute("href");
@@ -210,12 +188,14 @@ window.addEventListener("DOMContentLoaded", () => {
           return;
         }
         event.preventDefault();
-        window.api.invokeProjectMethod("navigateToHref", href);
+
+        await window.api.invokeProjectMethod("navigateToHref", href);
       }
     });
 
     // Notify main process that the result has loaded, also pass page title
     window.api.invokeProjectMethod("setState", {
+      lastScroll: null,
       loadedVersion: state.resultVersion,
       pageTitle: result.contentDocument.title,
     });
@@ -230,7 +210,7 @@ const invokePageMethodUnsubscribe = window.api.onInvokePageMethod(
     const fnName = args.shift();
     const fn = window[fnName];
     if (fn instanceof Function) {
-      await fn(...args);
+      return await fn(...args);
     } else {
       console.error(
         `Main process tried to invoke non-existent page method: ${fnName}`,

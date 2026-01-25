@@ -1,6 +1,4 @@
 export const defaultState = {
-  command: "",
-  href: "",
   x: 0,
   y: 0,
   elements: [],
@@ -81,8 +79,6 @@ export function getState(window) {
   try {
     // Get window scroll position
     scrollState = {
-      command: state.command,
-      href: window.location.href,
       x: window.scrollX,
       y: window.scrollY,
       elements: [],
@@ -107,6 +103,7 @@ export function getState(window) {
     // Ignore errors (e.g., if iframe is cross-origin)
     scrollState = defaultState;
   }
+
   return scrollState;
 }
 
