@@ -53,7 +53,11 @@ function render(state, changed) {
     updateRecentBar(state);
   }
 
-  if (changed.resultVersion && state.resultVersion > 0) {
+  if (
+    changed.resultVersion &&
+    state.resultVersion > 0 &&
+    state.error === null
+  ) {
     reloadResult();
   }
 
@@ -194,11 +198,15 @@ window.addEventListener("DOMContentLoaded", () => {
     });
 
     // Notify main process that the result has loaded, also pass page title
-    window.api.invokeProjectMethod("setState", {
-      lastScroll: null,
+    const newState = {
       loadedVersion: state.resultVersion,
       pageTitle: result.contentDocument.title,
-    });
+    };
+    if (!state.error) {
+      // Clear lastScroll only if there was no error loading the result
+      state.lastScroll = null;
+    }
+    window.api.invokeProjectMethod("setState", newState);
   });
 
   editor.focus();

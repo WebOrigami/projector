@@ -1,7 +1,7 @@
 import { FileMap, trailingSlash, Tree } from "@weborigami/async-tree";
-import { constructResponse, keysFromUrl, Origami } from "@weborigami/origami";
+import { constructResponse, keysFromUrl } from "@weborigami/origami";
 import { protocol } from "electron";
-import { formatError, isSimpleObject } from "./utilities.js";
+import { formatError, preprocessResource } from "./utilities.js";
 
 // Client-side files used by the renderer are also served via origami: protocol
 const rendererUrl = new URL("renderer", import.meta.url);
@@ -30,34 +30,12 @@ async function handleRequest(request, session) {
   console.log(request.url);
 
   const keys = keysFromUrl(url);
-  let resource = await traverse(session.project, ...keys);
-
-  if (resource instanceof Function) {
-    // Invoke the function to get the final desired result
-    resource = await resource();
-  }
-
-  if (Tree.isMaplike(resource)) {
-    // The following operations can invoke project code, so wrap in try/catch
-    try {
-      let map = await Tree.from(resource);
-      let indexHtml = await map.get("index.html");
-      if (indexHtml instanceof Function) {
-        indexHtml = await indexHtml(); // Get the actual index page
-      }
-      if (indexHtml) {
-        // Return index.html page
-        resource = indexHtml;
-      } else if (await isSimpleObject(resource)) {
-        // Serialize to YAML
-        resource = await Origami.yaml(map);
-      } else {
-        // Return index page
-        resource = await Origami.indexPage(map);
-      }
-    } catch (error) {
-      resource = error;
-    }
+  let resource;
+  try {
+    resource = await traverse(session.project, ...keys);
+    resource = await preprocessResource(resource);
+  } catch (/** @type {any} */ e) {
+    resource = e;
   }
 
   if (resource == null) {

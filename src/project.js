@@ -17,7 +17,12 @@ import * as menu from "./menu.js";
 import recent from "./recent.js";
 import updateState from "./renderer/updateState.js"; // Shared with renderer
 import * as settings from "./settings.js";
-import { formatError, getSitePath, resolveHref } from "./utilities.js";
+import {
+  formatError,
+  getSitePath,
+  preprocessResource,
+  resolveHref,
+} from "./utilities.js";
 import * as windowManager from "./windowManager.js";
 
 const REFRESH_DELAY_MS = 250;
@@ -506,9 +511,6 @@ export default class Project {
       }
     }
 
-    // Clear cached site so it will be reloaded
-    this._site = null;
-
     const lastScroll = await this.invokePageFunction("getScrollPosition");
     await this.setState({ lastScroll });
 
@@ -545,11 +547,12 @@ export default class Project {
 
     let error = null;
     try {
-      this._result = await evaluate(command, {
+      let result = await evaluate(command, {
         enableCaching: false,
         mode: "shell",
         parent: this._root,
       });
+      this._result = await preprocessResource(result);
     } catch (/** @type {any} */ e) {
       this._result = null;
       error = formatError(e);
