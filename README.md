@@ -17,14 +17,15 @@ The initial feature set is small and designed to be reasonably self-consistent. 
 
 The focus at this early stage is confirming the idea’s viability and working out the proper shape of the tool. The current app experience is all but certain to have bugs and rough edges; hopefully it’s good enough to envision what you’d really like the application to do and be motivated to provide feedback. If you find a bug, please report it.
 
-Experience suggests that feedback will direct the app’s evolution in directions that are hard to imagine at this point. It’s best to avoid getting too attached to anything yet.
+Experience suggests that feedback will direct the app’s evolution in directions that are hard to imagine at this point. It’s best to avoid getting too attached to any specific feature designs yet.
 
-The application should be sufficient to perform basic editing of Origami projects. You should be able to:
+The application should let you perform basic editing of typical Origami projects:
 
 - Install the application on macOS with Apple silicon.
 - Issue Origami commands and see the result instantly appear in the result pane.
 - Edit a text file (.md, .js, .ori, etc.) and see the result automatically reload.
 - If the displayed HTML contains links, browse within the local site.
+- Use Back/Forward buttons to navigate command results.
 
 ## Out of scope
 
@@ -51,13 +52,13 @@ Projector’s user model is organized around _projects_: a folder tree of relate
 
 Within a project, Projector can edit text files: plain text, markdown, CSS, JSON, YAML, JavaScript, Origami, etc. Files are always viewed in the context of a project.
 
-## Project root and type
+## Project root
 
-When you open a file or folder, Projector establishes its associated root folder and type based on the file/folder’s location:
+When you open a file or folder, Projector establishes its associated root folder based on the file/folder’s location:
 
-1. From the location, Projector walks up the folder hierarchy looking for an Origami configuration file called `config.ori`. If found, the folder containing that file is the project root. The project type will be `origami`. Note: an `origami` project may also have a `package.json` at the root level.
-2. From the location, Projector walks up the folder hierarchy looking for an npm `package.json` file. If found, the folder containing that file is the project root. The project type will be `npm`.
-3. Otherwise, the file’s containing folder is the project root; or, if the given object was a folder, the folder itself is the project root. The project type will be `folder`.
+1. From the location, Projector walks up the folder hierarchy looking for an Origami configuration file called `config.ori`. If found, the folder containing that file is the project root. Note: an `origami` project may also have a `package.json` at the root level.
+2. From the location, Projector walks up the folder hierarchy looking for an npm `package.json` file. If found, the folder containing that file is the project root.
+3. Otherwise, the file’s containing folder is the project root; or, if the given object was a folder, the folder itself is the project root.
 
 ## Project name
 
@@ -68,11 +69,11 @@ A project’s name is used as a way to identify the project in window title bars
 
 ## Default site
 
-Each project can be associated with an optional _default site_: a tree of resources used to handle absolute local URLs.
+Each project can be associated with a _default site_: a tree of resources used to handle absolute local URLs.
 
-When you are editing a file that eventually renders as HTML, the framed page may reference stylesheets, scripts, or other resources with absolute paths like `/assets/styles.css`. Projector loads such absolute local URLs from the project’s default site.
+If you render an HTML page, it may reference stylesheets, scripts, or other resources with absolute paths like `/assets/styles.css`. Projector needs to load those resources from somewhere — and there may not be any obvious connection between the command (or the active file) and the location of those resources.
 
-Projector uses a heuristic to find the default site for a project.
+Therefore, Projector loads such absolute local URLs from the project’s default site, which it finds with the following heuristic:
 
 - If the project contains a package.json file with `scripts`, Projector searches the `dev`, `serve`, `start`, or `build` scripts (in that order) for the first script that references an `.ori` file. That `.ori` file will be loaded as the project’s default site. For example, if the script follows the [standard incantation to start a server](https://weborigami.org/cli/incantations#starting-an-origami-server-with-debugging), then the project’s default site will be the same as the one you normally start with `npm run start`.
 
@@ -82,9 +83,13 @@ Projector uses a heuristic to find the default site for a project.
 
 ## Basic application behavior
 
-When you start Projector, it restores the windows that were open when you last quit the application, skipping any projects whose project root folder no longer exists.
+When you start Projector, it restores the project windows that were open when you last quit the application, skipping any project whose root folder no longer exists.
 
-When reopening a project window, Projector attempts to restore the state of the window when you closed it. It reopens the most recently opened file, and shows the most recently run command in the command bar. If, in the last session, that command had completed without errors, then it re-runs that command.
+When reopening a project window, Projector attempts to restore the state of the window when you closed it:
+
+* It reopens the most recently opened file.
+* It shows the most recently run command in the command bar.
+* If in the last session that most recent command had completed without errors, then Projector re-runs that command and displays the result.
 
 ### Settings
 
@@ -101,7 +106,11 @@ These settings are saved whenever their values change.
 
 Projector registers itself as a handler for the `.ori` file extension. Double-clicking a file in a folder window should open the project for that file, then open the file in the editor.
 
-At this time it doesn't appear possible to register a handler for combination extensions like `.ori.html`.
+It doesn't appear possible to register a handler for combination extensions like `.ori.html`.
+
+### Auto-reload
+
+Projector will detect if you edit project files outside the application and reload both the editing area and the result pane. This lets you use Projector in parallel with other tools.
 
 ## Menu bar
 
@@ -116,32 +125,34 @@ The application menu bar offers the standard commands for a text editor.
 - **Open File…**. Shows a standard File Open dialog to pick an existing file.
 - **Save File As…**. Shows a standard File Save As dialog.
 
-Opening a file via the Open menu implies opening the associated project. If that project is already open in a window, the file is opened in that project window. Otherwise a file opens in a new window for that project.
+Opening a folder via the Open menu implies opening the project for the project’s root (see project root, above). If that project is already open in a window, that project window is made active. Otherwise the folder opens in a new window for that project.
 
-The Open Recent Project submenu tracks the 10 most recently opened project. The submenu also includes a "Clear Menu" command to clear the recent projects list. Selecting a project from this submenu opens it in a new window (or, if the project is already open, it activates that window). If the project path no longer exists, an error message indicates this, and the item is removed from the recent projects menu.
+The Open Recent Project submenu shows the friendly names of the 10 most recently opened projects. The submenu also includes a "Clear Menu" command to clear the recent projects list. Selecting a project from this submenu opens it. If the project path no longer exists, an error message indicates this, and the project is removed from the recent projects menu.
 
 Using Save As to save a file outside of the project’s folder tree will save that text to the indicated location and close the file in that project window. A project window for the file’s new location will open (or, if that new location’s project is already open, that window will activate).
 
 ### Edit menu
 
-- **Undo**
-- **Redo**
-- **Cut**
-- **Copy**
-- **Paste**
-- **Select All**
+The menu bar shows a stock Edit menu with the usual commands: Cut, Copy, Paste, etc.
 
 ### View menu
 
+- **Home**. Runs the command that will show the project’s root.
+- **Back**. Backs up to the last command and reruns it.
+- **Forward**. Navigates forward in the command history.
 - **Toggle Developer Tools**. Shows standard Chromium Dev Tools.
+
+The Back/Forward buttons generally emulate standard browser behavior with a back/forward stack.
 
 ### Window menu
 
-- **Minimize**
-- **Zoom**
-- **Bring All to Front**
-- **Toggle Full Screen**
-- List of friendly names of open project windows. A checkmark is shown next to the active window.
+The Window menu is a stock menu with the usual commands: Minimize, etc.
+
+### Keyboard shortcuts
+
+In addition to the menu item keyboard shortcuts, Projector supports:
+
+* **Command+L**: Moves the focus to the command area and selects the command text.
 
 ## Project window
 
@@ -154,10 +165,6 @@ The window is divided into a 2x2 grid:
 - Command bar in upper right
 - Result pane in main part of right side
 
-## Auto-reload
-
-Projector will detect if you edit project files outside the application and reload both the editing area and the result pane. This lets you use Projector in parallel with other editors.
-
 ## Recent bar
 
 Projector tracks the 10 most recently opened files for a given project. These are rendered as tabs across the top of the editing area. The recent bar shows as many tabs as can fit horizontally; the remainder are clipped.
@@ -166,27 +173,27 @@ Each tab displays the name of the associated file, or "Untitled" if the file has
 
 The active file is always the most recent one, and always shown in the leftmost tab. Opening another file in the project (via File / Open, or by clicking a different tab) makes that new file the recent file, and therefore the active and leftmost tab.
 
+If you have made changes to a new file but not saved it, attempting to open another file will display a Yes/No/Cancel dialog prompting you to save the changes.
+
 If you select a recent file from the tab bar and that file no longer exists, the tab for that file is removed.
 
-In an `unsaved` project, it is possible to have no file open and so no file tabs visible.
+It is possible to have no file open and hence no file tabs visible.
 
 ## Editing area
 
-The editing area is a standard text box.
+The editing area is a standard, multi-line text box.
 
 ### Auto-save
 
-When you type into the editing area for an existing file, after a short delay the edits will be saved; it is not necessary to use a Save command.
+When you type into the editing area for an existing file, after a short (subsecond) delay Projector automatically saves the edits; it is not necessary to use a Save command.
 
 If you are working in a new file, your edits will not be saved until you use the File → Save File As command to save the file.
 
-If you have made changes to a new file but not saved it, attempting to open another file will display a Yes/No/Cancel dialog prompting you to save the changes.
-
 ## Command bar
 
-A text box in the upper right lets you enter Origami commands. These are parsed and evaluated as with the `ori` CLI. (Because you are not working inside of a shell program, e.g., bash, you don’t have to worry about a shell parser parsing things such as a parentheses, so you don’t have to quote parentheses.)
+A single line text box in the upper right lets you enter Origami commands. These are parsed and evaluated as with the `ori` CLI. (Because you are not working inside of a shell program, e.g., bash, you don’t have to worry about a shell parser parsing things. Among other things, you don’t have to quote parentheses.)
 
-When you open a project for the first time, if the project has a default site, then the default command will evaluate that site. E.g., if the default site is defined in `src/site.ori`, then the default command will be `src/site.ori/`. This will cause the site’s default index.html page to appear.
+When you open a project for the first time, if the project has a default site, then the default command will evaluate that site. E.g., if the default site is defined in `src/site.ori`, then the default command will be `src/site.ori/`. This will generally cause the site’s default index.html page to appear.
 
 When the keyboard focus is in the command bar, pressing Return evaluates the current command in the context of the project root folder. (An empty command does nothing.)
 
@@ -195,6 +202,10 @@ Each project records the 10 most recent commands for that project. Issuing a com
 While the command bar has focus, you can press the Up or Down arrow keys to navigate to, respectively, the previous or next command in the recent command list.
 
 If you have navigated within the result pane (see below), the right side of the command bar shows the current path within the result.
+
+### Back and Forward buttons
+
+Back and Forward buttons like you navigate your command history in the same way you can navigate web history in a browser.
 
 ## Result pane
 
@@ -208,9 +219,12 @@ Whenever the active file is saved, after a short delay the result pane will relo
 
 Before reloading, Projector saves the scroll position of all scrollable elements on the page. After the result pane reloads, if the command and result path have stayed the same (i.e., you are not navigating), then Projector attempts to restore the scroll position of those elements. The goal is to let you continue viewing the same area of the page you were looking at previously.
 
-### Navigation
+### Navigation within the result
 
-If the result is an HTML page and you click on a link to navigate, this creates a _result path_: a path inside the result or, possibly, within the default site. This path will be shown on the right of the command bar.
+If you click a link in an HTML result:
+
+* An external link opens in your default browser.
+* An internal link is intercepted and handled by modifying the current command. E.g., if the current command is `src/site.ori/` and you click a link to “about.html”, Projector updates the command to `src/site.ori/about.html` and then runs that.
 
 # Error handling
 
@@ -218,7 +232,7 @@ If the main application suffers a top-level unexpected error, it displays an err
 
 # Architecture
 
-Projector is an Electron application, so it includes both the Node runtime and the Chromium browser engine.
+Projector is an Electron application, so includes both the Node runtime and the Chromium browser engine.
 
 Some important pieces:
 
