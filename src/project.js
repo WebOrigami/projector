@@ -303,6 +303,12 @@ export default class Project {
   async loadProject() {
     this._root = await projectRootFromPath(this._rootPath);
 
+    // Force determination of project globals so we can patch them
+    await projectGlobals(this._root);
+    const globals = /** @type {any}  */ (this._root).globals;
+    // Add all Dev globals at top level for convenience and to match CLI
+    Object.assign(globals, globals.Dev);
+
     this._packageData = await getPackageData(this._root);
     const projectName = getProjectName(this._root, this._packageData);
 
