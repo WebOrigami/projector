@@ -1,6 +1,7 @@
 import { FileMap, trailingSlash, Tree } from "@weborigami/async-tree";
 import { constructResponse, keysFromUrl } from "@weborigami/origami";
 import { protocol } from "electron";
+import { defaultResultHref } from "./renderer/shared.js";
 import { formatError, preprocessResource } from "./utilities.js";
 
 // Client-side files used by the renderer are also served via origami: protocol
@@ -48,7 +49,7 @@ async function handleRequest(request, session) {
   }
 
   let requestForResponse = request;
-  if (url.pathname === "/_result") {
+  if (url.href === defaultResultHref) {
     // Use command as URL, might be able to use file extension to determine
     // media type
     requestForResponse = Object.create(request);

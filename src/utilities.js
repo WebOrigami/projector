@@ -1,4 +1,4 @@
-import { isPlainObject, Tree } from "@weborigami/async-tree";
+import { isPlainObject, isPrimitive, Tree } from "@weborigami/async-tree";
 import {
   formatError as cliFormatError,
   markers,
@@ -65,27 +65,28 @@ function getSitePathFromScript(script) {
 }
 
 /**
- * A simple object is defined as an object that does not have any keys
- * containing a period (.) and does not have any getters.
+ * Returns true if the object is "simple": a plain object that does not have any
+ * getters in its deep structure.
+ *
+ * This test is used to avoid serializing complex objects to YAML.
  *
  * @param {any} object
  */
-export async function isSimpleObject(object) {
-  const keys = await Tree.keys(object);
-  const isPlain = isPlainObject(object);
+export function isSimpleObject(object) {
+  if (!isPlainObject(object)) {
+    return false;
+  }
 
-  for (const key of keys) {
-    if (isPlain) {
-      const descriptor = Object.getOwnPropertyDescriptor(object, key);
-      if (descriptor && typeof descriptor.get === "function") {
-        return false;
-      }
-    }
-
-    if (typeof key === "string") {
-      if (key.includes(".")) {
-        return false;
-      }
+  for (const key of Object.keys(object)) {
+    const descriptor = Object.getOwnPropertyDescriptor(object, key);
+    if (!descriptor) {
+      continue; // not sure why this would happen
+    } else if (typeof descriptor.get === "function") {
+      return false; // Getters aren't simple
+    } else if (isPrimitive(descriptor.value)) {
+      continue; // Primitives are simple
+    } else if (!isSimpleObject(descriptor.value)) {
+      return false; // Deep structure wasn't simple
     }
   }
 
@@ -168,7 +169,7 @@ export async function preprocessResource(resource) {
     if (indexHtml) {
       // Return index.html page
       resource = indexHtml;
-    } else if (await isSimpleObject(resource)) {
+    } else if (isSimpleObject(resource)) {
       // Serialize to YAML
       resource = await Origami.yaml(map);
     } else {
