@@ -39,11 +39,16 @@ input, textarea {
     font-family: inherit;
     font-size: inherit;
 
+    img {
+      -webkit-user-drag: none;
+      pointer-events: none;
+    }
+
     &:not(:disabled) {
       &:hover {
         background: #444;
       }
-      
+
       &:active {
         background: #666;
       }
