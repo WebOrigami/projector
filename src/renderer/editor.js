@@ -158,11 +158,10 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   result.addEventListener("load", () => {
-    const href = result.contentWindow.location.href;
-
-    // If the href is for an image, limit the width of the image to fit
-    // within the iframe
-    if (imageExtensions.some((ext) => href.endsWith(ext))) {
+    // If the command ends with image extension, limit the width of the image to
+    // fit within the iframe
+    const command = state.command || "";
+    if (imageExtensions.some((ext) => command.endsWith(ext))) {
       const img = result.contentDocument.querySelector("img");
       if (img) {
         Object.assign(result.contentDocument.body.style, {
