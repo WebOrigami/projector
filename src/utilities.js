@@ -38,7 +38,7 @@ export function getSitePath(packageData) {
     return ".";
   }
 
-  const scripts = ["dev", "start", "serve", "build"];
+  const scripts = ["dev", "serve", "start", "build"];
   for (const scriptName of scripts) {
     const script = packageData.scripts?.[scriptName];
     const sitePath = getSitePathFromScript(script);

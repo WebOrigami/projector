@@ -11,6 +11,8 @@ Projector is aimed at developers and designers, as well as people with a degree 
 
 Projector is designed to coexist with other design and development tools such as code editors (e.g., Microsoft VS Code, NeoVim), text editing applications (Obsidian, iA Writer), and command-line shells (bash).
 
+For the present time, Projector is only available on macOS for Apple Silicon. The projector is architected to allow for the possible addition of Windows and/or Linux versions in the future.
+
 ## Current status
 
 The initial feature set is small and designed to be reasonably self-consistent. That said, even an extremely basic file-editing application carries high user expectations.
@@ -83,13 +85,13 @@ Therefore, Projector loads such absolute local URLs from the project’s default
 
 ## Basic application behavior
 
-When you start Projector, it restores the project windows that were open when you last quit the application, skipping any project whose root folder no longer exists.
+When you start Projector, it restores the project windows that were open when you last quit the application, skipping any project whose root folder no longer exists. Reopening projects is viewed as a non-critical user convenience; even if none of the previous projects exist, no message is shown.
 
 When reopening a project window, Projector attempts to restore the state of the window when you closed it:
 
 * It reopens the most recently opened file.
 * It shows the most recently run command in the command bar.
-* If in the last session that most recent command had completed without errors, then Projector re-runs that command and displays the result.
+* If in the last session that most recent command had completed without errors, then Projector re-runs that command and displays the result. If, in the last session, the command caused the application to hang or crash, then when restarting Projector displays the command but _not_ run it.
 
 ### Settings
 
@@ -106,11 +108,16 @@ These settings are saved whenever their values change.
 
 Projector registers itself as a handler for the `.ori` file extension. Double-clicking a file in a folder window should open the project for that file, then open the file in the editor.
 
-It doesn't appear possible to register a handler for combination extensions like `.ori.html`.
+On macOS it doesn't appear possible to register a handler for combination extensions like `.ori.html`.
 
 ### Auto-reload
 
 Projector will detect if you edit project files outside the application and reload both the editing area and the result pane. This lets you use Projector in parallel with other tools.
+
+Externally editing certain files have additional effects:
+
+* External edits to `package.json` or `config.ori` reload the project. This will pick up changes in, for example, project name or default site.
+* External edits to the project’s default site file (e.g., `src/site.ori`) will cause the site to be reloaded.
 
 ## Menu bar
 
@@ -188,6 +195,8 @@ The editing area is a standard, multi-line text box.
 When you type into the editing area for an existing file, after a short (subsecond) delay Projector automatically saves the edits; it is not necessary to use a Save command.
 
 If you are working in a new file, your edits will not be saved until you use the File → Save File As command to save the file.
+
+Stopgap: It’s possible to edit `package.json` and `config.ori` in Projector — but edits you make to those files within the application will _not_ trigger a reload of the project. Reloading is a somewhat expensive operation, and deemed too hard to support with auto-save. You will need to close the project window and reopen it to reload the project with those changes.
 
 ## Command bar
 
