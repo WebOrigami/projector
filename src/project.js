@@ -606,11 +606,33 @@ export default class Project {
   }
 
   async saveAs(filePath) {
+    if (!this._root) {
+      return; // shouldn't happen
+    }
+
     // Hack: set the filePath first so that save() works correctly
+    const oldPath = this._filePath;
     this._filePath = filePath;
     const saved = await this.save();
-    // Then reload the project from the new file path
-    await this.loadFile(filePath);
+
+    const withinProject = path
+      .resolve(this._root.path, filePath)
+      .startsWith(path.resolve(this._root.path));
+
+    if (withinProject) {
+      // Reload the file from the new file path
+      await this.loadFile(filePath);
+    } else {
+      // File is outside project, remove old path from recent files
+      const recentFiles = this.state.recentFiles.filter(
+        (path) => path !== oldPath,
+      );
+      await this.setState({ recentFiles });
+
+      // Tell window manager to open the file in a new project
+      await windowManager.openFile(filePath);
+    }
+
     return saved;
   }
 

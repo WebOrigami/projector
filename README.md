@@ -136,7 +136,7 @@ Opening a folder via the Open menu implies opening the project for the project�
 
 The Open Recent Project submenu shows the friendly names of the 10 most recently opened projects. The submenu also includes a "Clear Menu" command to clear the recent projects list. Selecting a project from this submenu opens it. If the project path no longer exists, an error message indicates this, and the project is removed from the recent projects menu.
 
-Using Save As to save a file outside of the project’s folder tree will save that text to the indicated location and close the file in that project window. A project window for the file’s new location will open (or, if that new location’s project is already open, that window will activate).
+Using Save As to save a file outside of the project’s folder tree will save that text to the indicated location and open a new project window (or open an existing one) for the project rooted at the new location.
 
 ### Edit menu
 
@@ -206,11 +206,9 @@ When you open a project for the first time, if the project has a default site, t
 
 When the keyboard focus is in the command bar, pressing Return evaluates the current command in the context of the project root folder. (An empty command does nothing.)
 
-Each project records the 10 most recent commands for that project. Issuing a command makes it the most recent command.
+Each project records the most recent commands for that project. Issuing a command makes it the most recent command. Note that this most-recently used list is related to, but distinct from, the back/forward stacks used by the Back/Forward buttons.
 
 While the command bar has focus, you can press the Up or Down arrow keys to navigate to, respectively, the previous or next command in the recent command list.
-
-If you have navigated within the result pane (see below), the right side of the command bar shows the current path within the result.
 
 ### Back and Forward buttons
 
@@ -220,7 +218,13 @@ Back and Forward buttons like you navigate your command history in the same way 
 
 The result pane shows the result of the most recently-issued command: an HTML page, text file, etc.
 
-If the result is an image, its width is constrained to the width of the pane.
+If the result is an image, Projector renders it roughly the same way Chrome does: the image is shown on a black background, and the image width is constrained to the width of the result pane.
+
+### Error pane
+
+If a command results in an error (exception), the result pane is  not updated. Instead, an error pane will appear over the top of the result pane and show the error message. The command bar will also change color to emphasize the error state.
+
+Once the error has been resolved, the error pane will disappear, the result pane will show the new result, and the command bar will revert to its normal color.
 
 ### Auto-run
 
