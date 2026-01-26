@@ -65,15 +65,15 @@ function getSitePathFromScript(script) {
 }
 
 /**
- * Returns true if the object is "simple": a plain object that does not have any
- * getters in its deep structure.
+ * Returns true if the object is "simple": a plain object or array that does not
+ * have any getters in its deep structure.
  *
  * This test is used to avoid serializing complex objects to YAML.
  *
  * @param {any} object
  */
 export function isSimpleObject(object) {
-  if (!isPlainObject(object)) {
+  if (!(object instanceof Array || isPlainObject(object))) {
     return false;
   }
 
