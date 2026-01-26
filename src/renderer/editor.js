@@ -97,6 +97,7 @@ function updateRecentBar(state) {
 Object.assign(window, {
   focusCommand() {
     command.focus();
+    command.select();
   },
 
   getScrollPosition() {
