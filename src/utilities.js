@@ -169,6 +169,10 @@ export async function preprocessResource(resource) {
     if (indexHtml) {
       // Return index.html page
       resource = indexHtml;
+      // Like Origami.indexPage() does, we attach an unpack() method to get the
+      // underlying map. If the index page loads relative resources, those will
+      // be loaded from the map.
+      resource.unpack = () => map;
     } else if (isSimpleObject(resource)) {
       // Serialize to YAML
       resource = await Origami.yaml(map);
