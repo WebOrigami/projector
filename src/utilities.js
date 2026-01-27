@@ -1,4 +1,4 @@
-import { isPlainObject, isPrimitive, Tree } from "@weborigami/async-tree";
+import { box, isPlainObject, isPrimitive, Tree } from "@weborigami/async-tree";
 import {
   formatError as cliFormatError,
   markers,
@@ -172,6 +172,7 @@ export async function preprocessResource(resource) {
       // Like Origami.indexPage() does, we attach an unpack() method to get the
       // underlying map. If the index page loads relative resources, those will
       // be loaded from the map.
+      resource = box(resource);
       resource.unpack = () => map;
     } else if (isSimpleObject(resource)) {
       // Serialize to YAML

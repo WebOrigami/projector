@@ -57,7 +57,7 @@ describe("utilities", () => {
     test("returns map index.html if it exists", async () => {
       const fixture = new Map([["index.html", "<h1>Hello World</h1>"]]);
       const result = await utilities.preprocessResource(fixture);
-      assert.strictEqual(result, "<h1>Hello World</h1>");
+      assert.strictEqual(String(result), "<h1>Hello World</h1>");
     });
 
     test("generates default index page is map isn't simple", async () => {
