@@ -2,6 +2,9 @@
 
 Origami Projector (hereafter, Projector) is an editor and expression evaluation system for quickly iterating on code, data, and content.
 
+[Demo](https://www.youtube.com/watch?v=KJcAQMZNrDM)
+[Download files](https://drive.google.com/drive/folders/1jqMvJXALPLw2qeJD7LbiymlNFRlQgB1L?usp=sharing)
+
 Projector shortens the conventional cycle in which you edit a text file (e.g., a markdown file), save it, run some code to generate an affected artifact (a HTML file incorporating that content), view the artifact, then edit again.
 
 Traditional: Edit → Save → Run → View → (repeat)
@@ -89,9 +92,9 @@ When you start Projector, it restores the project windows that were open when yo
 
 When reopening a project window, Projector attempts to restore the state of the window when you closed it:
 
-* It reopens the most recently opened file.
-* It shows the most recently run command in the command bar.
-* If in the last session that most recent command had completed without errors, then Projector re-runs that command and displays the result. If, in the last session, the command caused the application to hang or crash, then when restarting Projector displays the command but _not_ run it.
+- It reopens the most recently opened file.
+- It shows the most recently run command in the command bar.
+- If in the last session that most recent command had completed without errors, then Projector re-runs that command and displays the result. If, in the last session, the command caused the application to hang or crash, then when restarting Projector displays the command but _not_ run it.
 
 ### Settings
 
@@ -116,8 +119,8 @@ Projector will detect if you edit project files outside the application and relo
 
 Externally editing certain files have additional effects:
 
-* External edits to `package.json` or `config.ori` reload the project. This will pick up changes in, for example, project name or default site.
-* External edits to the project’s default site file (e.g., `src/site.ori`) will cause the site to be reloaded.
+- External edits to `package.json` or `config.ori` reload the project. This will pick up changes in, for example, project name or default site.
+- External edits to the project’s default site file (e.g., `src/site.ori`) will cause the site to be reloaded.
 
 ## Menu bar
 
@@ -159,7 +162,7 @@ The Window menu is a stock menu with the usual commands: Minimize, etc.
 
 In addition to the menu item keyboard shortcuts, Projector supports:
 
-* **Command+L**: Moves the focus to the command area and selects the command text.
+- **Command+L**: Moves the focus to the command area and selects the command text.
 
 ## Project window
 
@@ -222,7 +225,7 @@ If the result is an image, Projector renders it roughly the same way Chrome does
 
 ### Error pane
 
-If a command results in an error (exception), the result pane is  not updated. Instead, an error pane will appear over the top of the result pane and show the error message. The command bar will also change color to emphasize the error state.
+If a command results in an error (exception), the result pane is not updated. Instead, an error pane will appear over the top of the result pane and show the error message. The command bar will also change color to emphasize the error state.
 
 Once the error has been resolved, the error pane will disappear, the result pane will show the new result, and the command bar will revert to its normal color.
 
@@ -236,8 +239,8 @@ Before reloading, Projector saves the scroll position of all scrollable elements
 
 If you click a link in an HTML result:
 
-* An external link opens in your default browser.
-* An internal link is intercepted and handled by modifying the current command. E.g., if the current command is `src/site.ori/` and you click a link to “about.html”, Projector updates the command to `src/site.ori/about.html` and then runs that.
+- An external link opens in your default browser.
+- An internal link is intercepted and handled by modifying the current command. E.g., if the current command is `src/site.ori/` and you click a link to “about.html”, Projector updates the command to `src/site.ori/about.html` and then runs that.
 
 # Error handling
 
