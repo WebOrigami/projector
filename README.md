@@ -2,12 +2,13 @@
 
 Origami Projector (hereafter, Projector) is an editor and expression evaluation system for quickly iterating on code, data, and content.
 
-[Demo](https://www.youtube.com/watch?v=KJcAQMZNrDM)
-[Download files](https://drive.google.com/drive/folders/1jqMvJXALPLw2qeJD7LbiymlNFRlQgB1L?usp=sharing)
+- [Demo](https://www.youtube.com/watch?v=KJcAQMZNrDM)
+- [Download files](https://drive.google.com/drive/folders/1jqMvJXALPLw2qeJD7LbiymlNFRlQgB1L?usp=sharing)
 
 Projector shortens the conventional cycle in which you edit a text file (e.g., a markdown file), save it, run some code to generate an affected artifact (a HTML file incorporating that content), view the artifact, then edit again.
 
 Traditional: Edit → Save → Run → View → (repeat)
+
 Projector: Edit → View → (repeat)
 
 Projector is aimed at developers and designers, as well as people with a degree of technical comfort who do not think of themselves as coders. To that end, Projector is envisioned as a standalone application for performing tasks which are normally done with a terminal.
@@ -69,7 +70,7 @@ When you open a file or folder, Projector establishes its associated root folder
 
 A project’s name is used as a way to identify the project in window title bars and the Open Recent Project submenu.
 
-- For an `origami` or `npm` project with a package.json at its root, the project name is the `name` field from that file.
+- For a project with a package.json at its root, the project name is the `name` field from that file.
 - Otherwise the friendly name is the name of the project’s root folder. E.g., for `/Users/Alice/hello`, the project name is “hello”.
 
 ## Default site
