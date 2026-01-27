@@ -7,9 +7,9 @@ Origami Projector (hereafter, Projector) is an editor and expression evaluation 
 
 Projector shortens the conventional cycle in which you edit a text file (e.g., a markdown file), save it, run some code to generate an affected artifact (a HTML file incorporating that content), view the artifact, then edit again.
 
-Traditional: Edit → Save → Run → View → (repeat)
+Traditional cycle: Edit → Save → Run → View → (repeat)
 
-Projector: Edit → View → (repeat)
+Projector cycle: Edit → View → (repeat)
 
 Projector is aimed at developers and designers, as well as people with a degree of technical comfort who do not think of themselves as coders. To that end, Projector is envisioned as a standalone application for performing tasks which are normally done with a terminal.
 
