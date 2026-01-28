@@ -1,3 +1,4 @@
+import { dialog, shell } from "#electron";
 import {
   isUnpackable,
   keysFromPath,
@@ -10,7 +11,6 @@ import {
   projectGlobals,
   projectRootFromPath,
 } from "@weborigami/language";
-import { dialog, shell } from "electron";
 import fs from "node:fs";
 import * as path from "node:path";
 import * as menu from "./menu.js";

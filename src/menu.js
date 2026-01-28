@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, Menu } from "electron";
+import { app, BrowserWindow, dialog, Menu } from "#electron";
 import fs from "node:fs/promises";
 import * as path from "node:path";
 import * as settings from "./settings.js";

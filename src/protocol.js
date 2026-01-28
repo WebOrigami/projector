@@ -1,6 +1,6 @@
+import { protocol } from "#electron";
 import { FileMap, trailingSlash, Tree } from "@weborigami/async-tree";
 import { constructResponse, keysFromUrl } from "@weborigami/origami";
-import { protocol } from "electron";
 import { defaultResultHref } from "./renderer/shared.js";
 import { formatError, preprocessResource } from "./utilities.js";
 

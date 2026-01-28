@@ -1,5 +1,5 @@
+import { app, BrowserWindow, session } from "#electron";
 import { projectRootFromPath } from "@weborigami/language";
-import { app, BrowserWindow, session } from "electron";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";

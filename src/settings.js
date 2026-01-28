@@ -1,4 +1,4 @@
-import { app } from "electron";
+import { app } from "#electron";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createMenu } from "./menu.js";

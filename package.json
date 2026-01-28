@@ -25,8 +25,14 @@
     "build": "electron-builder --mac",
     "postinstall": "electron-builder install-app-deps",
     "start": "electron .",
-    "test": "node --test --test-reporter=spec",
+    "test": "node --test --test-reporter=spec --conditions=test",
     "typecheck": "tsc"
+  },
+  "imports": {
+    "#electron": {
+      "test": "./test/mocks/electron.js",
+      "default": "./src/platform/electron.js"
+    }
   },
   "build": {
     "appId": "org.weborigami.projector",
