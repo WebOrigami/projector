@@ -2,10 +2,22 @@
  * Mock Electron APIs for testing purposes
  */
 
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 export const app = {
-  name: "",
+  // For faking settings path
   getPath(name) {
-    return `/mock/path/${name}`;
+    const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
+    return path.join(moduleDirectory, name);
+  },
+
+  name: "",
+
+  on() {},
+
+  whenReady() {
+    return Promise.resolve();
   },
 };
 

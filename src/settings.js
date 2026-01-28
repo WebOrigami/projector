@@ -25,6 +25,7 @@ export async function loadSettings() {
   } catch (error) {
     // File doesn't exist or is invalid
     state = {
+      openProjects: [],
       recentProjects: [],
       projects: {},
     };
