@@ -1,7 +1,13 @@
 {
-  "openProjects": [
-    "/path/to/project1"
-  ],
+  "openProjects": [],
   "recentProjects": [],
-  "projects": {}
+  "projects": {
+    "/Users/jan/Source/Origami/projector/test/fixtures/sample": {
+      "lastRunHadError": true,
+      "recentCommands": [
+        "./"
+      ],
+      "recentFiles": []
+    }
+  }
 }

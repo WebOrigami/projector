@@ -22,11 +22,19 @@ export const app = {
 };
 
 export const BrowserWindow = class {
+  focus() {}
+
   static getAllWindows() {
     return [];
   }
 
-  focus() {}
+  setDocumentEdited() {}
+
+  setTitle() {}
+
+  webContents = {
+    send() {},
+  };
 };
 
 export const dialog = {

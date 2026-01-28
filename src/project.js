@@ -52,6 +52,7 @@ export default class Project {
     this._window = window;
     this._rootPath = rootPath;
 
+    // Internal state
     this._back = [];
     this._filePath = null;
     this._forward = [];
@@ -63,8 +64,7 @@ export default class Project {
     this._site = null;
 
     // State shared with the renderer
-    this.state = {};
-    this.setState({
+    this.state = {
       backEnabled: false,
       command: "",
       dirty: false,
@@ -81,7 +81,7 @@ export default class Project {
       sitePath: null,
       text: "",
       textSource: "file",
-    });
+    };
   }
 
   /**
@@ -329,15 +329,13 @@ export default class Project {
       command = "";
     }
 
-    this.setState({
+    await this.setState({
       command,
       projectName,
       recentCommands,
       recentFiles,
       sitePath,
     });
-
-    updateWindow(this);
 
     // Watch for file changes in the project file tree
     const project = this;
@@ -346,7 +344,7 @@ export default class Project {
         debugger;
       }
       const { filePath } = event.options;
-      this.onChange(filePath);
+      await this.onChange(filePath);
     });
     // @ts-ignore watch() does exist but isn't declared yet
     this._root.watch();
