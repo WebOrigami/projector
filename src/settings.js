@@ -34,8 +34,8 @@ export async function loadSettings() {
   return state;
 }
 
-export async function saveProjectSettings(project) {
-  const { root, settings } = project;
+export async function saveProjectSettings(project, settings) {
+  const { root } = project;
   if (!root?.path) {
     return;
   }

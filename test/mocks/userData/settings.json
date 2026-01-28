@@ -3,7 +3,7 @@
   "recentProjects": [],
   "projects": {
     "/Users/jan/Source/Origami/projector/test/fixtures/sample": {
-      "lastRunHadError": true,
+      "lastRunCrashed": false,
       "recentCommands": [
         "./"
       ],

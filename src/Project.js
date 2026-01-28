@@ -72,6 +72,7 @@ export default class Project {
       fileName: getFileName(this._filePath),
       forwardEnabled: false,
       lastScroll: null,
+      lastRunCrashed: false,
       loadedVersion: 0,
       pageTitle: "",
       projectName: "New project",
@@ -293,8 +294,6 @@ export default class Project {
       text: text ?? "",
       textSource: "file",
     });
-
-    await settings.saveProjectSettings(this);
   }
 
   /**
@@ -316,6 +315,7 @@ export default class Project {
     this._site = null;
 
     const projectSettings = await settings.loadProjectSettings(this._root.path);
+    const lastRunCrashed = projectSettings.lastRunCrashed || false;
     const recentCommands = projectSettings.recentCommands || [];
     const recentFiles = projectSettings.recentFiles || [];
 
@@ -331,6 +331,7 @@ export default class Project {
 
     await this.setState({
       command,
+      lastRunCrashed,
       projectName,
       recentCommands,
       recentFiles,
@@ -357,8 +358,8 @@ export default class Project {
       await this.loadFile(absolutePath);
     }
 
-    // If the last run didn't result in an error, auto-run the last command
-    if (!projectSettings.lastRunHadError && command) {
+    // If the last run didn't crash, auto-run the last command
+    if (!lastRunCrashed && command) {
       await this.run();
     }
   }
@@ -394,7 +395,11 @@ export default class Project {
    * @param {string} href
    */
   async navigateToHref(href) {
-    const command = resolveHref(href, this.state.command, this.state.sitePath);
+    const command = resolveHref(
+      href,
+      this.state.command,
+      this.state.sitePath ?? "",
+    );
 
     if (command === null) {
       // External URL, open in browser
@@ -541,7 +546,10 @@ export default class Project {
 
   async run() {
     this._runVersion++;
-    await settings.saveProjectSettings(this);
+    // We assume the run will crash until it completes successfully
+    await this.setState({
+      lastRunCrashed: true,
+    });
 
     let command = this.state.command;
 
@@ -573,12 +581,12 @@ export default class Project {
       command,
     );
 
-    this.setState({
+    await this.setState({
       error,
+      lastRunCrashed: false,
       recentCommands: commands,
       resultVersion,
     });
-    settings.saveProjectSettings(this);
   }
 
   // Write text to file
@@ -634,6 +642,22 @@ export default class Project {
     return saved;
   }
 
+  // Tell the app to save project-specific settings
+  async saveSettings() {
+    // Remove null (unsaved) files from recent files
+    const recentFiles = this.state.recentFiles.filter(
+      (filePath) => filePath !== null,
+    );
+
+    const projectSettings = {
+      lastRunCrashed: this.state.lastRunCrashed,
+      recentCommands: this.state.recentCommands,
+      recentFiles,
+    };
+
+    await settings.saveProjectSettings(this, projectSettings);
+  }
+
   // Used by protocol to signal error to renderer
   async setError(error) {
     // Don't overwrite an error already present in state
@@ -652,36 +676,22 @@ export default class Project {
       }
     }
 
-    if (changed.loadedVersion) {
-      if (
-        newState.loadedVersion > 0 &&
-        newState.loadedVersion === this._runVersion
-      ) {
-        // Result has finished loading successfully
-        await settings.saveProjectSettings(this);
-      }
+    if (
+      changed.lastRunCrashed ||
+      changed.recentCommands ||
+      changed.recentFiles
+    ) {
+      await this.saveSettings();
     }
 
-    updateWindow(this);
-    await this.broadcastState();
-  }
+    if (changed.projectName || changed.pageTitle || changed.dirty) {
+      updateWindow(this);
+    }
 
-  // Return the project settings that should be persisted
-  get settings() {
-    // Remove null (unsaved) files from recent files
-    const recentFiles = this.state.recentFiles.filter(
-      (filePath) => filePath !== null,
-    );
-
-    // If the run version is greater than the loaded version, the last run had
-    // an error.
-    const lastRunHadError = this._runVersion > this.state.loadedVersion;
-
-    return {
-      lastRunHadError,
-      recentCommands: this.state.recentCommands,
-      recentFiles,
-    };
+    if (Object.keys(changed).length > 0) {
+      // Notify renderer of state change
+      await this.broadcastState();
+    }
   }
 
   // Return a promise for the loaded site

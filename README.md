@@ -95,7 +95,7 @@ When reopening a project window, Projector attempts to restore the state of the 
 
 - It reopens the most recently opened file.
 - It shows the most recently run command in the command bar.
-- If in the last session that most recent command had completed without errors, then Projector re-runs that command and displays the result. If, in the last session, the command caused the application to hang or crash, then when restarting Projector displays the command but _not_ run it.
+- If in the last session that most recent command had completed without hanging or crashing, then Projector re-runs that command and displays the result. Otherwise Projector does _not_ run it to avoid a cycle of crashes.
 
 ### Settings
 

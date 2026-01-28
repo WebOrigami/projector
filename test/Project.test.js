@@ -2,7 +2,7 @@ import assert from "node:assert";
 import path from "node:path";
 import { describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import Project from "../src/project.js";
+import Project from "../src/Project.js";
 import { BrowserWindow } from "../test/mocks/electron.js";
 
 describe("Project", () => {
@@ -23,6 +23,7 @@ describe("Project", () => {
       error: null,
       fileName: "Untitled",
       forwardEnabled: false,
+      lastRunCrashed: false,
       pageTitle: "",
       projectName: "sample",
       recentCommands: ["./"],
