@@ -1,7 +1,8 @@
-import { app } from "#electron";
+import { app, Menu } from "#electron";
 import fs from "node:fs";
 import path from "node:path";
 import AppBase from "./AppBase.js";
+import { createMenuTemplate } from "./menu.js";
 
 const settingsFileName = "settings.json";
 const settingsPath = path.join(app.getPath("userData"), settingsFileName);
@@ -25,6 +26,13 @@ export default class ProjectorApp extends AppBase {
     }
   }
 
+  createMenu() {
+    const template = createMenuTemplate(this.state);
+    // @ts-ignore
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
+  }
+
   async render(state, changed) {
     await super.render(state, changed);
 
@@ -32,9 +40,9 @@ export default class ProjectorApp extends AppBase {
     //   // Window manager
     // }
 
-    // if (changed.openProjects || changed.recentProjects) {
-    //   await createMenu();
-    // }
+    if (changed.openProjects || changed.recentProjects) {
+      this.createMenu();
+    }
 
     if (Object.keys(changed).length > 0) {
       await this.saveSettings();

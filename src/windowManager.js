@@ -3,7 +3,7 @@ import { projectRootFromPath } from "@weborigami/language";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createMenu, folderOpen, promptSaveChanges } from "./menu.js";
+import { folderOpen, promptSaveChanges } from "./menu.js";
 import Project from "./Project.js";
 import projector from "./projector.js";
 import { registerOrigamiProtocol } from "./protocol.js";
@@ -20,7 +20,14 @@ const recentProjectsUpdater = recent(MAX_RECENT_PROJECTS);
 const openProjectsUpdater = recent(Infinity);
 
 /**
- * Main application state and window management
+ * Window managament: opening, closing, and restoring project windows
+ *
+ * At present this directly manipulates the projector state instead of being
+ * reactive to changes in that state. If we want to do that, we should probably
+ * replace the openProjects array with an `open` flag on the recent projects.
+ * One likely complexity is that Electron's BrowserWindow API can't give us a
+ * list of windows by z-order, which would complicate a purely reactive approach
+ * to opening windows for the projects when their `open` state changes.
  */
 
 async function addToOpenProjects(project) {
@@ -211,9 +218,9 @@ export async function restoreProjectWindows() {
   await projector.setState({ openProjects });
 
   if (openProjects.length === 0) {
-    // The openProject() call will refresh the menu as needed. If no projects
-    // were opened, explicitly create the menu here.
-    await createMenu();
+    // The setState call will refresh the menu as needed, but if no projects
+    // were opened, we need to explicitly create the menu here.
+    await projector.createMenu();
     // Since no projects were opened, show Open Folder dialog
     await folderOpen();
   }

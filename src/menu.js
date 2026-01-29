@@ -1,11 +1,14 @@
-import { app, BrowserWindow, dialog, Menu } from "#electron";
+import { app, dialog } from "#electron";
 import * as path from "node:path";
 import projector from "./projector.js";
 import * as windowManager from "./windowManager.js";
 
-export async function createMenu() {
+/**
+ * Return a template for the application menu
+ */
+export function createMenuTemplate(state) {
   // Build Open Recent submenu
-  let recentProjects = projector.state.recentProjects;
+  let recentProjects = state.recentProjects;
 
   // Reverse order to show most recent at top
   recentProjects = recentProjects.slice().reverse();
@@ -35,9 +38,9 @@ export async function createMenu() {
   }
 
   // Do we have an open project?
-  const isProjectOpen = BrowserWindow.getAllWindows().length > 0;
+  const isProjectOpen = state.openProjects.length > 0;
 
-  const template = [
+  return [
     {
       label: app.name,
       submenu: [
@@ -98,66 +101,87 @@ export async function createMenu() {
     },
     {
       label: "Edit",
-      enabled: isProjectOpen,
       submenu: [
-        { role: "undo" },
-        { role: "redo" },
+        {
+          role: "undo",
+          enabled: isProjectOpen,
+        },
+        {
+          role: "redo",
+          enabled: isProjectOpen,
+        },
         { type: "separator" },
-        { role: "cut" },
-        { role: "copy" },
-        { role: "paste" },
-        { role: "selectAll" },
+        {
+          role: "cut",
+          enabled: isProjectOpen,
+        },
+        {
+          role: "copy",
+          enabled: isProjectOpen,
+        },
+        {
+          role: "paste",
+          enabled: isProjectOpen,
+        },
+        {
+          role: "selectAll",
+          enabled: isProjectOpen,
+        },
         {
           label: "Focus Command",
-          visible: false,
           accelerator: "CmdOrCtrl+L",
           click: focusCommand,
+          enabled: isProjectOpen,
+          visible: false,
         },
       ],
     },
     {
       label: "View",
-      enabled: isProjectOpen,
       submenu: [
         {
           label: "Home",
           accelerator: "Shift+CmdOrCtrl+H",
           click: viewHome,
+          enabled: isProjectOpen,
         },
         {
           label: "Back",
           accelerator: "CmdOrCtrl+[",
           click: viewGoBack,
+          enabled: isProjectOpen,
         },
         {
           label: "Back",
           accelerator: "CmdOrCtrl+Left",
           click: viewGoBack,
+          enabled: isProjectOpen,
           visible: false,
         },
         {
           label: "Forward",
           accelerator: "CmdOrCtrl+]",
           click: viewGoForward,
+          enabled: isProjectOpen,
         },
         {
           label: "Forward",
           accelerator: "CmdOrCtrl+Right",
           click: viewGoForward,
+          enabled: isProjectOpen,
           visible: false,
         },
         { type: "separator" },
-        { role: "toggleDevTools" },
+        {
+          role: "toggleDevTools",
+          enabled: isProjectOpen,
+        },
       ],
     },
     {
       role: "windowMenu",
     },
   ];
-
-  // @ts-ignore
-  const menu = Menu.buildFromTemplate(template);
-  Menu.setApplicationMenu(menu);
 }
 
 async function fileNew(_menuItem, window) {
