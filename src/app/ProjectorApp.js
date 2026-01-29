@@ -31,7 +31,7 @@ export default class ProjectorApp extends AppBase {
   }
 
   createMenu() {
-    const template = createMenuTemplate(this.state);
+    const template = createMenuTemplate(this.state, this._isFileOpen);
     // @ts-ignore
     const menu = Menu.buildFromTemplate(template);
     Menu.setApplicationMenu(menu);
@@ -40,7 +40,7 @@ export default class ProjectorApp extends AppBase {
   async render(state, changed) {
     await super.render(state, changed);
 
-    if (changed.openProjects || changed.recentProjects) {
+    if (changed.openProjects || changed.recentProjects || changed.projects) {
       this.createMenu();
     }
 

@@ -6,7 +6,7 @@ import * as windowManager from "./windowManager.js";
 /**
  * Return a template for the application menu
  */
-export function createMenuTemplate(state) {
+export function createMenuTemplate(state, isFileOpen) {
   // Build Open Recent submenu
   let recentProjects = state.recentProjects;
 
@@ -39,20 +39,6 @@ export function createMenuTemplate(state) {
 
   // Do we have an open project?
   const isProjectOpen = state.openProjects.length > 0;
-
-  // Do we have an open file?
-  let isFileOpen;
-  if (isProjectOpen && state.openProjects.length > 0) {
-    const openProjectPath = state.openProjects.at(-1);
-    /** @type {any} */
-    const openProjectWindow =
-      windowManager.getWindowForProject(openProjectPath);
-    const openProject = openProjectWindow?.project;
-    const recentFiles = openProject?.recentFiles || [];
-    isFileOpen = recentFiles.length > 0;
-  } else {
-    isFileOpen = false;
-  }
 
   return [
     {
