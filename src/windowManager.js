@@ -218,10 +218,7 @@ export async function restoreProjectWindows() {
   await projector.setState({ openProjects });
 
   if (openProjects.length === 0) {
-    // The setState call will refresh the menu as needed, but if no projects
-    // were opened, we need to explicitly create the menu here.
-    await projector.createMenu();
-    // Since no projects were opened, show Open Folder dialog
+    // No projects were opened: show Open Folder dialog
     await folderOpen();
   }
 }

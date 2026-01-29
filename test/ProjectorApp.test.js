@@ -1,15 +1,26 @@
 import assert from "node:assert";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { describe, test } from "node:test";
+import { before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import ProjectorApp from "../src/ProjectorApp.js";
+
+// To test the loading and saving of settings, we need to control the loading
+// of the projector singleton by using a dynamic import.
+let projector;
+
+// Tests load settings from a different location
+const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
+const settingsPath = path.join(moduleDirectory, "mocks/userData/settings.json");
 
 describe("ProjectorApp", () => {
-  test("returns empty settings if settings.json doesn't exist", async () => {
-    await resetSettings();
+  before(async () => {
+    // Erase any existing settings file
+    await fs.rm(settingsPath, { force: true });
 
-    const projector = new ProjectorApp();
+    ({ default: projector } = await import("../src/projector.js"));
+  });
+
+  test("returns empty settings if settings.json doesn't exist", async () => {
     const { state } = projector;
     assert.deepStrictEqual(state, {
       openProjects: [],
@@ -18,30 +29,12 @@ describe("ProjectorApp", () => {
     });
   });
 
-  test("saves and loads settings", async () => {
-    await resetSettings();
+  test("saves settings", async () => {
+    const openProjects = ["/path/to/project1"];
+    await projector.setState({ openProjects });
 
-    const projector = new ProjectorApp();
-    const oldState = projector.state;
-    const changes = {
-      openProjects: ["/path/to/project1"],
-    };
-    await projector.setState(changes);
-
-    const { state } = projector;
-    assert.deepStrictEqual(state, {
-      ...oldState,
-      ...changes,
-    });
+    const json = await fs.readFile(settingsPath, "utf8");
+    const data = JSON.parse(json);
+    assert.deepStrictEqual(data.openProjects, openProjects);
   });
 });
-
-// Erase any existing settings file
-export async function resetSettings() {
-  const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
-  const settingsPath = path.join(
-    moduleDirectory,
-    "mocks/userData/settings.json",
-  );
-  await fs.rm(settingsPath, { force: true });
-}

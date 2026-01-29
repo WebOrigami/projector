@@ -24,6 +24,10 @@ export default class ProjectorApp extends AppBase {
     } catch (error) {
       // File doesn't exist or is invalid, will use default state
     }
+
+    // If projects are loaded, the menu will be updated -- but since there may
+    // not be any, we initialize the menu to its default state here.
+    this.createMenu();
   }
 
   createMenu() {
