@@ -204,7 +204,7 @@ window.addEventListener("DOMContentLoaded", () => {
     };
     if (!state.error) {
       // Clear lastScroll only if there was no error loading the result
-      state.lastScroll = null;
+      newState.lastScroll = null;
     }
     window.api.invokeProjectMethod("setState", newState);
   });

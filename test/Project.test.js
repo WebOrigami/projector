@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import AppBase from "../src/AppBase.js";
-import Project from "../src/Project.js";
+import Project from "../src/project/Project.js";
 import { BrowserWindow } from "../test/mocks/electron.js";
 
 describe("Project", () => {

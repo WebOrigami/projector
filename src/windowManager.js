@@ -4,7 +4,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { folderOpen, promptSaveChanges } from "./menu.js";
-import Project from "./Project.js";
+import Project from "./project/Project.js";
 import projector from "./projector.js";
 import { registerOrigamiProtocol } from "./protocol.js";
 import recent from "./recent.js";
