@@ -53,6 +53,7 @@ export default class ProjectorApp extends AppBase {
   async saveSettings() {
     try {
       const json = JSON.stringify(this._state, null, 2);
+      await fs.promises.mkdir(path.dirname(settingsPath), { recursive: true });
       await fs.promises.writeFile(settingsPath, json, "utf8");
     } catch (error) {
       console.error("Failed to save settings:", error);
