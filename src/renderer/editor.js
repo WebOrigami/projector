@@ -62,7 +62,8 @@ function render(state, changed) {
   }
 
   if (changed.text && state.textSource === "file") {
-    editor.value = state.text;
+    editor.value = state.text ?? "";
+    editor.toggleAttribute("disabled", state.text === null);
   }
 }
 
@@ -98,6 +99,10 @@ Object.assign(window, {
   focusCommand() {
     command.focus();
     command.select();
+  },
+
+  focusEditor() {
+    editor.focus();
   },
 
   getScrollPosition() {

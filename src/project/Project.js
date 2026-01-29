@@ -109,7 +109,7 @@ export default class Project extends RunFeatures(
 
     if (recentFiles.length > 0) {
       await this.loadMostRecentFile();
-    } else if (sitePath) {
+    } else if (sitePath && sitePath !== ".") {
       // No recent files, load the site file
       const absolutePath = path.join(this._root.path, sitePath);
       await this.loadFile(absolutePath);
@@ -191,18 +191,11 @@ export default class Project extends RunFeatures(
 
   // Tell the app to save project-specific settings
   async saveSettings() {
-    // Remove null (unsaved) files from recent files
-    const recentFiles = this.state.recentFiles.filter(
-      (filePath) => filePath !== null,
-    );
-
-    const projectSettings = {
+    await this._projector.setProjectSettings(this, {
       lastRunCrashed: this.state.lastRunCrashed,
       recentCommands: this.state.recentCommands,
-      recentFiles,
-    };
-
-    await this._projector.setProjectSettings(this, projectSettings);
+      recentFiles: this.state.recentFiles,
+    });
   }
 
   // Used by protocol to signal error to renderer

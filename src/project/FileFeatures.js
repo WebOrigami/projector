@@ -18,14 +18,27 @@ export default function FileFeatures(Base) {
       super(...args);
 
       // Internal state
+
+      // The full path to the active file, or null if the file hasn't been saved
+      // or there is no open file
       this._filePath = null;
 
       // State shared with the renderer
       Object.assign(this.state, {
+        // True if the file has unsaved changes
         dirty: false,
+
+        // Base name of the active file, "Untitled" for a new file, or null if
+        // no file is open
         fileName: null,
+
+        // List of recently opened files in this project
         recentFiles: [],
-        text: "",
+
+        // Text of the active file, "" for a new file, null if no file is open
+        text: null,
+
+        // Where the text came from: "file" or "editor"
         textSource: "file",
       });
     }
@@ -75,7 +88,11 @@ export default function FileFeatures(Base) {
       return this._filePath;
     }
 
-    // Read file
+    /**
+     * Load the file at the given path, or null for a new file
+     *
+     * @param {string|null} filePath
+     */
     async loadFile(filePath) {
       // Assert that we have a project root that contains filePath
       if (!this._root) {
@@ -99,7 +116,7 @@ export default function FileFeatures(Base) {
       }
 
       // Add file to recent files list
-      let recentFiles = this.state.recentFiles;
+      let recentFiles = this.state.recentFiles.slice();
       if (recentFiles.at(-1) === null) {
         // Remove unsaved file entry
         recentFiles.pop();
@@ -147,33 +164,49 @@ export default function FileFeatures(Base) {
      * Load the most recent existing text file
      */
     async loadMostRecentFile() {
+      let fileName = null;
       let filePath = null;
-      let text;
-      const recentFiles = this.state.recentFiles;
+      let text = null;
+
+      // Try each recent file until we find one that can be loaded
+      const recentFiles = this.state.recentFiles.slice();
       while (recentFiles.length > 0) {
-        filePath = recentFiles.at(-1);
-        const loaded = this.loadFileText(filePath);
-        if (loaded === null) {
-          // File couldn't be loaded (doesn't exist or isn't text), remove from recent files
-          recentFiles.pop();
+        const mostRecentFilePath = recentFiles.at(-1);
+
+        if (mostRecentFilePath === null) {
+          // New file
+          fileName = "Untitled";
           filePath = null;
-        } else {
-          // Loaded file successfully
-          text = loaded;
+          text = "";
           break;
         }
+
+        text = this.loadFileText(mostRecentFilePath);
+        if (text !== null) {
+          // Loaded file successfully
+          fileName = path.basename(mostRecentFilePath);
+          filePath = mostRecentFilePath;
+          break;
+        }
+
+        // File couldn't be loaded or isn't text; remove from recent files
+        recentFiles.pop();
       }
 
       this._filePath = filePath;
-      const fileName = filePath ? path.basename(filePath) : "Untitled";
 
       this.setState({
         dirty: false,
         fileName,
         recentFiles,
-        text: text ?? "",
+        text,
         textSource: "file",
       });
+    }
+
+    async newFile() {
+      await this.loadFile(null);
+      await this.invokePageMethod("focusEditor");
     }
 
     get recentFiles() {
@@ -185,6 +218,10 @@ export default function FileFeatures(Base) {
 
     // Write text to file
     async save() {
+      if (!this.state.text) {
+        return false; // nothing to save
+      }
+
       try {
         fs.writeFileSync(this.filePath, this.text, "utf8");
       } catch (/** @type {any} */ error) {

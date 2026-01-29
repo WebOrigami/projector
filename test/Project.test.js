@@ -16,14 +16,14 @@ describe("Project", () => {
       command: "./",
       dirty: false,
       error: null,
-      fileName: "Untitled",
+      fileName: null,
       forwardEnabled: false,
       lastRunCrashed: false,
       pageTitle: "",
       projectName: "sample",
       recentCommands: ["./"],
       sitePath: ".",
-      text: "",
+      text: null,
       textSource: "file",
     };
     assertSubset(expected, project.state);

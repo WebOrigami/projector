@@ -40,6 +40,20 @@ export function createMenuTemplate(state) {
   // Do we have an open project?
   const isProjectOpen = state.openProjects.length > 0;
 
+  // Do we have an open file?
+  let isFileOpen;
+  if (isProjectOpen && state.openProjects.length > 0) {
+    const openProjectPath = state.openProjects.at(-1);
+    /** @type {any} */
+    const openProjectWindow =
+      windowManager.getWindowForProject(openProjectPath);
+    const openProject = openProjectWindow?.project;
+    const recentFiles = openProject?.recentFiles || [];
+    isFileOpen = recentFiles.length > 0;
+  } else {
+    isFileOpen = false;
+  }
+
   return [
     {
       label: app.name,
@@ -93,7 +107,7 @@ export function createMenuTemplate(state) {
           label: "Save File As…",
           accelerator: "CmdOrCtrl+Shift+S",
           click: fileSaveAs,
-          enabled: isProjectOpen,
+          enabled: isFileOpen,
         },
         // { type: "separator" },
         // { label: "Run", accelerator: "CmdOrCtrl+Enter", click: fileRun },
@@ -186,7 +200,7 @@ export function createMenuTemplate(state) {
 
 async function fileNew(_menuItem, window) {
   // Have project load a new untitled file
-  await window.project.loadFile(null);
+  await window.project.newFile();
 }
 
 export async function fileOpen(_menuItem, window) {

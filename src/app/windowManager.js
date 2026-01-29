@@ -150,7 +150,7 @@ async function createProjectWindow(rootPath) {
 }
 
 // Return the window for a given project root path, or null
-function getWindowForProject(rootPath) {
+export function getWindowForProject(rootPath) {
   const windows = BrowserWindow.getAllWindows();
   for (const window of windows) {
     const project = /** @type {any} */ (window).project;
