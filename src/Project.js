@@ -14,7 +14,6 @@ import {
 import fs from "node:fs";
 import * as path from "node:path";
 import * as menu from "./menu.js";
-import projector from "./projector.js";
 import recent from "./recent.js";
 import updateState from "./renderer/updateState.js"; // Shared with renderer
 import {
@@ -40,17 +39,20 @@ const recentFilesUpdater = recent(MAX_RECENT_FILES);
  */
 export default class Project {
   /**
-   * Create a Project instance for the given window and project root path.
+   * Create a Project instance for the project root path, running in the given
+   * window, in the given Projector application instance.
    *
    * To be used, the project must be loaded via loadProject(), which is async so
    * can't be called from the constructor.
    *
-   * @param {import("electron").BrowserWindow} window
    * @param {string} rootPath
+   * @param {import("electron").BrowserWindow} window
+   * @param {import("./AppBase.js").default} projector
    */
-  constructor(window, rootPath) {
-    this._window = window;
+  constructor(rootPath, window, projector) {
     this._rootPath = rootPath;
+    this._window = window;
+    this._projector = projector;
 
     // Internal state
     this._back = [];
@@ -314,7 +316,7 @@ export default class Project {
     const sitePath = getSitePath(this._packageData);
     this._site = null;
 
-    const projectSettings = await projector.getProjectSettings(this);
+    const projectSettings = await this._projector.getProjectSettings(this);
     const lastRunCrashed = projectSettings.lastRunCrashed || false;
     const recentCommands = projectSettings.recentCommands || [];
     const recentFiles = projectSettings.recentFiles || [];
@@ -655,7 +657,7 @@ export default class Project {
       recentFiles,
     };
 
-    await projector.setProjectSettings(this, projectSettings);
+    await this._projector.setProjectSettings(this, projectSettings);
   }
 
   // Used by protocol to signal error to renderer
@@ -715,6 +717,10 @@ export default class Project {
 
   get text() {
     return this.state.text;
+  }
+
+  get window() {
+    return this._window;
   }
 }
 

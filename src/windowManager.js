@@ -94,7 +94,7 @@ async function createProjectWindow(rootPath) {
   }
 
   // Create the Project instance for this window
-  const project = new Project(window, rootPath);
+  const project = new Project(rootPath, window, projector);
   await project.loadProject();
 
   /** @type {any} */ (window).project = project;

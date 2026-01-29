@@ -1,22 +1,15 @@
 import assert from "node:assert";
 import fs from "node:fs/promises";
-import path from "node:path";
 import { before, describe, test } from "node:test";
-import { fileURLToPath } from "node:url";
+import { eraseSettings, settingsPath } from "./eraseSettings.js";
 
 // To test the loading and saving of settings, we need to control the loading
 // of the projector singleton by using a dynamic import.
 let projector;
 
-// Tests load settings from a different location
-const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
-const settingsPath = path.join(moduleDirectory, "mocks/userData/settings.json");
-
 describe("ProjectorApp", () => {
   before(async () => {
-    // Erase any existing settings file
-    await fs.rm(settingsPath, { force: true });
-
+    await eraseSettings();
     ({ default: projector } = await import("../src/projector.js"));
   });
 

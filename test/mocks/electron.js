@@ -21,7 +21,20 @@ export const app = {
   },
 };
 
-export const BrowserWindow = class {
+export class BrowserWindow {
+  constructor() {
+    const client = new MockClient();
+    this._client = client;
+
+    this.webContents = {
+      send(...args) {
+        if (args[0] === "invoke-page" && args[1] === "setState") {
+          client.setState(args[2]);
+        }
+      },
+    };
+  }
+
   focus() {}
 
   static getAllWindows() {
@@ -31,23 +44,29 @@ export const BrowserWindow = class {
   setDocumentEdited() {}
 
   setTitle() {}
-
-  webContents = {
-    send() {},
-  };
-};
+}
 
 export const dialog = {
   showMessageBox() {},
 };
 
-export const Menu = class {
+export class Menu {
   static buildFromTemplate(template) {
     return {};
   }
 
   static setApplicationMenu(menu) {}
-};
+}
+
+class MockClient {
+  constructor() {
+    this.state = {};
+  }
+
+  setState(changes) {
+    Object.assign(this.state, changes);
+  }
+}
 
 export const protocol = {
   registerSchemesAsPrivileged() {},
