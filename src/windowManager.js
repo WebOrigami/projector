@@ -5,9 +5,9 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createMenu, folderOpen, promptSaveChanges } from "./menu.js";
 import Project from "./Project.js";
+import projector from "./projector.js";
 import { registerOrigamiProtocol } from "./protocol.js";
 import recent from "./recent.js";
-import * as settings from "./settings.js";
 
 let windowCount = 0;
 let loading = true;
@@ -24,17 +24,15 @@ const openProjectsUpdater = recent(Infinity);
  */
 
 async function addToOpenProjects(project) {
-  const appSettings = await settings.loadSettings();
-  let openProjects = appSettings.openProjects || [];
+  let openProjects = projector.state.openProjects;
   openProjects = openProjectsUpdater.add(openProjects, project.root.path);
-  await settings.saveSettings({
+  await projector.setState({
     openProjects,
   });
 }
 
 export async function addToRecentProjects(project) {
-  const appSettings = await settings.loadSettings();
-  let projects = appSettings.recentProjects || [];
+  let projects = projector.state.recentProjects;
   // Remove if already present
   const index = projects.findIndex(
     (record) => record.path === project.root.path,
@@ -47,7 +45,7 @@ export async function addToRecentProjects(project) {
     name: project.name,
     path: project.root.path,
   });
-  await settings.saveSettings({
+  await projector.setState({
     recentProjects: projects,
   });
 }
@@ -116,6 +114,8 @@ async function createProjectWindow(rootPath) {
   // Track when window becomes active
   window.on("focus", async () => {
     if (!loading) {
+      // Update open projects list to move this project to the front so that we
+      // can restore windows in the same order next time.
       addToOpenProjects(project);
     }
   });
@@ -184,22 +184,16 @@ export async function openProject(rootPath) {
 }
 
 async function removeFromOpenProjects(project) {
-  const appSettings = await settings.loadSettings();
-  let openProjects = appSettings.openProjects
-    ? appSettings.openProjects.slice()
-    : [];
+  let openProjects = projector.state.openProjects;
   openProjects = openProjectsUpdater.remove(openProjects, project.root.path);
-  await settings.saveSettings({
+  await projector.setState({
     openProjects,
   });
 }
 
 // As startup, restore project windows from settings
 export async function restoreProjectWindows() {
-  const appSettings = await settings.loadSettings();
-  const projectsToOpen = appSettings.openProjects
-    ? appSettings.openProjects.slice()
-    : [];
+  const projectsToOpen = projector.state.openProjects.slice();
   const openProjects = [];
   while (projectsToOpen.length > 0) {
     const rootPath = projectsToOpen.shift();
@@ -214,7 +208,7 @@ export async function restoreProjectWindows() {
 
   loading = false;
 
-  await settings.saveSettings({ openProjects });
+  await projector.setState({ openProjects });
 
   if (openProjects.length === 0) {
     // The openProject() call will refresh the menu as needed. If no projects

@@ -14,9 +14,9 @@ import {
 import fs from "node:fs";
 import * as path from "node:path";
 import * as menu from "./menu.js";
+import projector from "./projector.js";
 import recent from "./recent.js";
 import updateState from "./renderer/updateState.js"; // Shared with renderer
-import * as settings from "./settings.js";
 import {
   formatError,
   getSitePath,
@@ -314,7 +314,7 @@ export default class Project {
     const sitePath = getSitePath(this._packageData);
     this._site = null;
 
-    const projectSettings = await settings.loadProjectSettings(this._root.path);
+    const projectSettings = await projector.getProjectSettings(this);
     const lastRunCrashed = projectSettings.lastRunCrashed || false;
     const recentCommands = projectSettings.recentCommands || [];
     const recentFiles = projectSettings.recentFiles || [];
@@ -655,7 +655,7 @@ export default class Project {
       recentFiles,
     };
 
-    await settings.saveProjectSettings(this, projectSettings);
+    await projector.setProjectSettings(this, projectSettings);
   }
 
   // Used by protocol to signal error to renderer

@@ -3,14 +3,15 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import * as settings from "../src/settings.js";
+import ProjectorApp from "../src/ProjectorApp.js";
 
-describe("settings", () => {
+describe("ProjectorApp", () => {
   test("returns empty settings if settings.json doesn't exist", async () => {
     await resetSettings();
 
-    const loadedSettings = await settings.loadSettings();
-    assert.deepStrictEqual(loadedSettings, {
+    const projector = new ProjectorApp();
+    const { state } = projector;
+    assert.deepStrictEqual(state, {
       openProjects: [],
       recentProjects: [],
       projects: {},
@@ -20,15 +21,16 @@ describe("settings", () => {
   test("saves and loads settings", async () => {
     await resetSettings();
 
-    const fixture = await settings.loadSettings();
+    const projector = new ProjectorApp();
+    const oldState = projector.state;
     const changes = {
       openProjects: ["/path/to/project1"],
     };
-    await settings.saveSettings(changes);
+    await projector.setState(changes);
 
-    const reloaded = await settings.loadSettings();
-    assert.deepStrictEqual(reloaded, {
-      ...fixture,
+    const { state } = projector;
+    assert.deepStrictEqual(state, {
+      ...oldState,
       ...changes,
     });
   });

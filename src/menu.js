@@ -1,13 +1,11 @@
 import { app, BrowserWindow, dialog, Menu } from "#electron";
-import fs from "node:fs/promises";
 import * as path from "node:path";
-import * as settings from "./settings.js";
+import projector from "./projector.js";
 import * as windowManager from "./windowManager.js";
 
 export async function createMenu() {
   // Build Open Recent submenu
-  const appSettings = await settings.loadSettings();
-  let recentProjects = appSettings.recentProjects || [];
+  let recentProjects = projector.state.recentProjects;
 
   // Reverse order to show most recent at top
   recentProjects = recentProjects.slice().reverse();
@@ -24,7 +22,7 @@ export async function createMenu() {
     recentProjectsSubmenu.push({
       label: "Clear Menu",
       click: async () => {
-        await settings.saveSettings({
+        await projector.setState({
           recentProjects: [],
         });
       },
@@ -253,11 +251,9 @@ export async function folderOpen(_menuItem, window) {
 
 export async function openRecentProject(rootPath) {
   try {
-    // Check if the project path still exists
-    await fs.access(rootPath);
     await windowManager.openProject(rootPath);
   } catch (error) {
-    // Project path no longer exists
+    // Project no longer exists or couldn't be opened
     await dialog.showMessageBox({
       type: "error",
       title: "Project Not Found",
@@ -267,12 +263,11 @@ export async function openRecentProject(rootPath) {
     });
 
     // Remove the project from recent projects
-    const appSettings = await settings.loadSettings();
-    const recentProjects = appSettings.recentProjects || [];
+    const recentProjects = projector.state.recentProjects;
     const updatedProjects = recentProjects.filter(
       (project) => project.path !== rootPath,
     );
-    await settings.saveSettings({
+    await projector.setState({
       recentProjects: updatedProjects,
     });
   }
