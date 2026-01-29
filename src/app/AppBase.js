@@ -1,4 +1,4 @@
-import updateState from "./renderer/updateState.js";
+import updateState from "../renderer/updateState.js";
 
 /**
  * Base application object

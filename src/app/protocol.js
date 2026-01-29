@@ -1,11 +1,11 @@
 import { protocol } from "#electron";
 import { FileMap, trailingSlash, Tree } from "@weborigami/async-tree";
 import { constructResponse, keysFromUrl } from "@weborigami/origami";
-import { defaultResultHref } from "./renderer/shared.js";
-import { formatError, preprocessResource } from "./utilities.js";
+import { defaultResultHref } from "../renderer/shared.js";
+import { formatError, preprocessResource } from "../utilities.js";
 
 // Client-side files used by the renderer are also served via origami: protocol
-const rendererUrl = new URL("renderer", import.meta.url);
+const rendererUrl = new URL("../renderer", import.meta.url);
 const renderer = new FileMap(rendererUrl);
 
 // Register the custom protocol at the module's top level so it happens before

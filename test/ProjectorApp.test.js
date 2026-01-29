@@ -10,7 +10,7 @@ let projector;
 describe("ProjectorApp", () => {
   before(async () => {
     await eraseSettings();
-    ({ default: projector } = await import("../src/projector.js"));
+    ({ default: projector } = await import("../src/app/projector.js"));
   });
 
   test("returns empty settings if settings.json doesn't exist", async () => {

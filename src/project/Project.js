@@ -1,8 +1,8 @@
 import { isUnpackable, keysFromPath, Tree } from "@weborigami/async-tree";
 import { projectGlobals, projectRootFromPath } from "@weborigami/language";
 import * as path from "node:path";
+import * as windowManager from "../app/windowManager.js";
 import { getSitePath } from "../utilities.js";
-import * as windowManager from "../windowManager.js";
 import FileFeatures from "./FileFeatures.js";
 import PageCommunication from "./PageCommunication.js";
 import ProjectState from "./ProjectState.js";
@@ -23,7 +23,7 @@ export default class Project extends RunFeatures(
    *
    * @param {string} rootPath
    * @param {import("electron").BrowserWindow} window
-   * @param {import("../AppBase.js").default} projector
+   * @param {import("../app/AppBase.js").default} projector
    */
   constructor(rootPath, window, projector) {
     super();

@@ -3,11 +3,11 @@ import { projectRootFromPath } from "@weborigami/language";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import Project from "../project/Project.js";
+import recent from "../recent.js";
 import { folderOpen, promptSaveChanges } from "./menu.js";
-import Project from "./project/Project.js";
 import projector from "./projector.js";
 import { registerOrigamiProtocol } from "./protocol.js";
-import recent from "./recent.js";
 
 let windowCount = 0;
 let loading = true;

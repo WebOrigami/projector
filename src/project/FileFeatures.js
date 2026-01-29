@@ -3,9 +3,9 @@ import { toString } from "@weborigami/async-tree";
 import { moduleCache } from "@weborigami/language";
 import fs from "node:fs";
 import * as path from "node:path";
-import * as menu from "../menu.js";
+import * as menu from "../app/menu.js";
+import * as windowManager from "../app/windowManager.js";
 import recent from "../recent.js";
-import * as windowManager from "../windowManager.js";
 
 const recentFilesUpdater = recent(10);
 

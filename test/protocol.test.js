@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { describe, test } from "node:test";
-import * as protocol from "../src/protocol.js";
+import * as protocol from "../src/app/protocol.js";
 
 describe("protocol", () => {
   // This test is mostly just proving we can mock the electron package

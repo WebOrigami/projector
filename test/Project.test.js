@@ -2,7 +2,7 @@ import assert from "node:assert";
 import path from "node:path";
 import { describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import AppBase from "../src/AppBase.js";
+import AppBase from "../src/app/AppBase.js";
 import Project from "../src/project/Project.js";
 import { BrowserWindow } from "../test/mocks/electron.js";
 

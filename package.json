@@ -6,7 +6,7 @@
   "author": "weborigami.org",
   "license": "MIT",
   "type": "module",
-  "main": "src/main.js",
+  "main": "src/app/main.js",
   "devDependencies": {
     "@types/node": "25.0.9",
     "electron": "39.2.7",

@@ -40,10 +40,6 @@ export default class ProjectorApp extends AppBase {
   async render(state, changed) {
     await super.render(state, changed);
 
-    // if (changed.openProjects) {
-    //   // Window manager
-    // }
-
     if (changed.openProjects || changed.recentProjects) {
       this.createMenu();
     }
