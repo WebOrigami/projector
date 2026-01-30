@@ -28,6 +28,21 @@ function getFileName(filePath) {
   return parts[parts.length - 1];
 }
 
+function getCurrentResultFrame() {
+  const activeFrameId = resultPane.getAttribute("data-active-frame");
+  return document.getElementById(activeFrameId);
+}
+
+function getResultFrames() {
+  return [frame0, frame1];
+}
+
+function getNextResultFrame() {
+  const activeFrameId = resultPane.getAttribute("data-active-frame");
+  const nextFrameId = activeFrameId === "frame0" ? "frame1" : "frame0";
+  return document.getElementById(nextFrameId);
+}
+
 function render(state, changed) {
   if (changed.backEnabled) {
     backButton.disabled = !state.backEnabled;
@@ -74,7 +89,11 @@ function render(state, changed) {
 }
 
 // Called when the result iframe has finished loading
-function resultLoaded() {
+function resultLoaded(event) {
+  const result = event.target;
+  const frameId = result.id;
+  resultPane.setAttribute("data-active-frame", frameId);
+
   // If the command ends with image extension, limit the width of the image to
   // fit within the iframe
   const command = state.command || "";
@@ -165,12 +184,14 @@ Object.assign(window, {
   },
 
   getScrollPosition() {
-    return scrollState.getState(result.contentWindow);
+    const frame = getCurrentResultFrame();
+    return scrollState.getState(frame.contentWindow);
   },
 
   reloadResult() {
     // Force iframe to reload
-    result.src = defaultResultHref;
+    const frame = getNextResultFrame();
+    frame.src = defaultResultHref;
   },
 
   setState(changes) {
@@ -221,7 +242,9 @@ window.addEventListener("DOMContentLoaded", () => {
     await window.api.invokeProjectMethod("goForward");
   });
 
-  result.addEventListener("load", resultLoaded);
+  getResultFrames().forEach((frame) =>
+    frame.addEventListener("load", resultLoaded),
+  );
 
   editor.focus();
 });

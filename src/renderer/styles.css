@@ -158,11 +158,17 @@ monaco-editor {
   position: relative;
   width: 100%;
 
-  #result {
+  &[data-active-frame="frame0"] #frame0,
+  &[data-active-frame="frame1"] #frame1 {
+    visibility: visible;
+  }
+
+  .result {
     border: none;
     display: block;
     height: 100%;
-    /* transition: opacity 0.3s; */
+    position: absolute;
+    visibility: hidden;
     width: 100%;
   }
 
