@@ -1,7 +1,7 @@
+import { getLanguageFromPath } from "./languageMap.js";
 import * as scrollState from "./scrollState.js";
 import { appAreaHref, defaultResultHref } from "./shared.js";
 import updateState from "./updateState.js";
-import { getLanguageFromPath } from "./languageMap.js";
 
 // Page state, will be populated by main process
 window.state = {};
@@ -71,6 +71,59 @@ function render(state, changed) {
     const language = getLanguageFromPath(state.fileName);
     editor.setLanguage(language);
   }
+}
+
+// Called when the result iframe has finished loading
+function resultLoaded() {
+  // If the command ends with image extension, limit the width of the image to
+  // fit within the iframe
+  const command = state.command || "";
+  if (imageExtensions.some((ext) => command.endsWith(ext))) {
+    const img = result.contentDocument.querySelector("img");
+    if (img) {
+      Object.assign(result.contentDocument.body.style, {
+        backgroundColor: "black",
+        display: "grid",
+        height: "100%",
+      });
+      Object.assign(img.style, {
+        margin: "auto",
+        maxWidth: "100%",
+      });
+    }
+  }
+
+  if (state.lastScroll) {
+    // We're refreshing the command result; restore scroll position
+    scrollState.restoreState(result.contentWindow, state.lastScroll);
+  }
+
+  // Intercept external link clicks to open in default browser
+  result.contentDocument.addEventListener("click", async (event) => {
+    const link = event.target.closest("a");
+    if (link) {
+      const href = link.getAttribute("href");
+      const isValidUrl = URL.canParse(href, appAreaHref);
+      if (!isValidUrl) {
+        // Ignore invalid URLs
+        return;
+      }
+      event.preventDefault();
+
+      await window.api.invokeProjectMethod("navigateToHref", href);
+    }
+  });
+
+  // Notify main process that the result has loaded, also pass page title
+  const newState = {
+    loadedVersion: state.resultVersion,
+    pageTitle: result.contentDocument.title,
+  };
+  if (!state.error) {
+    // Clear lastScroll only if there was no error loading the result
+    newState.lastScroll = null;
+  }
+  window.api.invokeProjectMethod("setState", newState);
 }
 
 function updateRecentBar(state) {
@@ -168,57 +221,7 @@ window.addEventListener("DOMContentLoaded", () => {
     await window.api.invokeProjectMethod("goForward");
   });
 
-  result.addEventListener("load", () => {
-    // If the command ends with image extension, limit the width of the image to
-    // fit within the iframe
-    const command = state.command || "";
-    if (imageExtensions.some((ext) => command.endsWith(ext))) {
-      const img = result.contentDocument.querySelector("img");
-      if (img) {
-        Object.assign(result.contentDocument.body.style, {
-          backgroundColor: "black",
-          display: "grid",
-          height: "100%",
-        });
-        Object.assign(img.style, {
-          margin: "auto",
-          maxWidth: "100%",
-        });
-      }
-    }
-
-    if (state.lastScroll) {
-      // We're refreshing the command result; restore scroll position
-      scrollState.restoreState(result.contentWindow, state.lastScroll);
-    }
-
-    // Intercept external link clicks to open in default browser
-    result.contentDocument.addEventListener("click", async (event) => {
-      const link = event.target.closest("a");
-      if (link) {
-        const href = link.getAttribute("href");
-        const isValidUrl = URL.canParse(href, appAreaHref);
-        if (!isValidUrl) {
-          // Ignore invalid URLs
-          return;
-        }
-        event.preventDefault();
-
-        await window.api.invokeProjectMethod("navigateToHref", href);
-      }
-    });
-
-    // Notify main process that the result has loaded, also pass page title
-    const newState = {
-      loadedVersion: state.resultVersion,
-      pageTitle: result.contentDocument.title,
-    };
-    if (!state.error) {
-      // Clear lastScroll only if there was no error loading the result
-      newState.lastScroll = null;
-    }
-    window.api.invokeProjectMethod("setState", newState);
-  });
+  result.addEventListener("load", resultLoaded);
 
   editor.focus();
 });

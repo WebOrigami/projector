@@ -54,6 +54,7 @@ export const languageMap = {
 
 /**
  * Get Monaco language ID from file path
+ *
  * @param {string} filePath - Full file path or just filename
  * @returns {string} Monaco language ID
  */
