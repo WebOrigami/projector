@@ -16,6 +16,7 @@
   "dependencies": {
     "@emnapi/runtime": "1.8.1",
     "@weborigami/origami": "0.6.8",
+    "monaco-editor": "^0.52.0",
     "sharp": "0.34.5"
   },
   "optionalDependencies": {
@@ -23,7 +24,8 @@
   },
   "scripts": {
     "build": "electron-builder --mac",
-    "postinstall": "electron-builder install-app-deps",
+    "copy-monaco": "mkdir -p src/renderer/monaco && cp -R node_modules/monaco-editor/min* src/renderer/monaco",
+    "postinstall": "electron-builder install-app-deps && npm run copy-monaco",
     "start": "electron .",
     "test": "node --test --test-reporter=spec --conditions=test",
     "typecheck": "tsc"

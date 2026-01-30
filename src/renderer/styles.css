@@ -133,16 +133,25 @@ input, textarea {
   }
 }
 
-#editor {
-  background: color-mix(in oklch, var(--background-color) 80%, white);
-  border: none;
-  color: var(--text-color);
-  font-family: var(--code-font-family);
-  font-size: var(--code-font-size);
-  resize: none;
-  outline: none;
-  padding: 0.5rem;
+monaco-editor {
+  /* Without this we end up with a 1px gap at the bottom */
+  height: 100.1%;
+
+  /* Theme integration */
+  .monaco-editor .margin {
+    background: color-mix(in oklch, var(--background-color) 80%, white) !important;
+  }
+
+  .monaco-editor .monaco-editor-background {
+    background: color-mix(in oklch, var(--background-color) 80%, white) !important;
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
 }
+
 
 #resultPane {
   height: 100%;

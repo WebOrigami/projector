@@ -3,6 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="styles.css" />
+    <script>
+      self.MonacoEnvironment = {
+        getWorkerUrl: function (moduleId, label) {
+          return "./monaco/min/vs/base/worker/workerMain.js";
+        },
+      };
+    </script>
+    <script src="monaco/min/vs/loader.js"></script>
+    <script>
+      require.config({
+        paths: {
+          vs: "monaco/min/vs",
+        },
+      });
+    </script>
+    <script src="MonacoEditor.js" type="module"></script>
     <script src="editor.js" type="module"></script>
   </head>
   <body>
@@ -23,7 +39,7 @@
         <input id="command" type="text" placeholder="Enter command" />
       </div>
     </div>
-    <textarea id="editor"></textarea>
+    <monaco-editor id="editor"></monaco-editor>
     <div id="resultPane">
       <iframe id="result"></iframe>
       <pre id="error"></pre>

@@ -6,3 +6,6 @@ dist/
 
 # OS files
 .DS_Store
+
+# Monaco editor files copied to renderer so they can be served
+src/renderer/monaco/

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script>
+      self.MonacoEnvironment = {
+        getWorkerUrl: function (moduleId, label) {
+          return "./monaco/min/vs/base/worker/workerMain.js";
+        },
+      };
+    </script>
+    <script src="monaco/min/vs/loader.js"></script>
+    <script>
+      require.config({
+        paths: {
+          vs: "monaco/min/vs",
+        },
+      });
+    </script>
+    <script src="MonacoEditor.js" type="module"></script>
+    <style>
+      html {
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        display: grid;
+        height: 100%;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <monaco-editor></monaco-editor>
+  </body>
+</html>

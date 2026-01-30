@@ -1,6 +1,7 @@
 import * as scrollState from "./scrollState.js";
 import { appAreaHref, defaultResultHref } from "./shared.js";
 import updateState from "./updateState.js";
+import { getLanguageFromPath } from "./languageMap.js";
 
 // Page state, will be populated by main process
 window.state = {};
@@ -64,6 +65,11 @@ function render(state, changed) {
   if (changed.text && state.textSource === "file") {
     editor.value = state.text ?? "";
     editor.toggleAttribute("disabled", state.text === null);
+  }
+
+  if (changed.fileName && state.fileName) {
+    const language = getLanguageFromPath(state.fileName);
+    editor.setLanguage(language);
   }
 }
 

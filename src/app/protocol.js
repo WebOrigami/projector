@@ -103,11 +103,15 @@ ${message}
 async function traverse(project, ...keys) {
   let tree;
 
-  if (keys.length > 0 && trailingSlash.remove(keys[0]) === "_renderer") {
+  const firstKey = keys.length > 0 ? trailingSlash.remove(keys[0]) : null;
+  if (firstKey === "_renderer") {
     // Serve from the renderer files
     keys.shift();
     tree = renderer;
-  } else if (keys.length > 0 && trailingSlash.remove(keys[0]) === "_result") {
+  } else if (firstKey === "vs") {
+    // Monaco editor files try to load from /vs, serve from renderer
+    tree = renderer;
+  } else if (firstKey === "_result") {
     // Traverse the result
     keys = keys.slice(1);
     if (keys.length > 0 && trailingSlash.remove(keys[0]) === "_default") {
