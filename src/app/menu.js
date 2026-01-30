@@ -179,6 +179,16 @@ export function createMenuTemplate(state, isFileOpen) {
       ],
     },
     {
+      label: "Tools",
+      submenu: [
+        {
+          label: "Audit",
+          enabled: isProjectOpen,
+          click: (_, window) => toolRun("audit", window),
+        },
+      ],
+    },
+    {
       role: "windowMenu",
     },
   ];
@@ -319,6 +329,10 @@ export async function promptSaveChanges(window) {
   }
 
   return shouldContinue;
+}
+
+async function toolRun(toolName, window) {
+  await window.project.runTool(toolName);
 }
 
 async function viewGoBack(_menuItem, window) {

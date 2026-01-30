@@ -114,6 +114,17 @@ export default function RunFeatures(Base) {
         resultVersion,
       });
     }
+
+    async runTool(toolName) {
+      const command = `${toolName} ${this.state.sitePath}`;
+      if (this.state.command === command) {
+        // Re-run current command
+        await this.run();
+      } else {
+        // Set and run new command
+        await this.navigateAndRun(command);
+      }
+    }
   };
 }
 
