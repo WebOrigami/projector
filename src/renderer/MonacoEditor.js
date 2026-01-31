@@ -1,9 +1,11 @@
+import AttributeMarshallingMixin from "./AttributeMarshallingMixin.js";
+
 /**
  * Monaco Editor Web Component
  *
  * Provides a textarea-compatible API while wrapping Monaco Editor.
  */
-class MonacoEditor extends HTMLElement {
+class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
   constructor() {
     super();
     this._editor = null;
@@ -82,6 +84,18 @@ class MonacoEditor extends HTMLElement {
     this.style.overflow = "hidden";
   }
 
+  get disabled() {
+    return (
+      this._editor?.getOption(monaco.editor.EditorOption.readOnly) ?? false
+    );
+  }
+  set disabled(disabled) {
+    if (this._editor) {
+      this._editor.updateOptions({ readOnly: disabled });
+    }
+    this.toggleAttribute("disabled", disabled);
+  }
+
   disconnectedCallback() {
     if (this._editor) {
       this._editor.dispose();
@@ -116,18 +130,6 @@ class MonacoEditor extends HTMLElement {
       if (model) {
         window.monaco.editor.setModelLanguage(model, language);
       }
-    }
-  }
-
-  /**
-   * Toggle disabled attribute (textarea-compatible)
-   * @param {string} attr - Attribute name
-   * @param {boolean} force - Force state
-   */
-  toggleAttribute(attr, force) {
-    if (attr === "disabled" && this._editor) {
-      this._editor.updateOptions({ readOnly: force });
-      this.classList.toggle("disabled", force);
     }
   }
 

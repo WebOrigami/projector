@@ -79,7 +79,7 @@ function render(state, changed) {
 
   if (changed.text && state.textSource === "file") {
     editor.value = state.text ?? "";
-    editor.toggleAttribute("disabled", state.text === null);
+    editor.disabled = state.text === null;
   }
 
   if (changed.fileName && state.fileName) {
