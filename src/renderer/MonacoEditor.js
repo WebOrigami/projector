@@ -8,7 +8,20 @@ import AttributeMarshallingMixin from "./AttributeMarshallingMixin.js";
 class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
   constructor() {
     super();
+
     this._editor = null;
+
+    // Cache all options (both before and after editor is ready)
+    this._options = {
+      indentSize: 2,
+      insertSpaces: true,
+      lineNumbers: "off",
+      readOnly: false,
+      tabSize: 2,
+    };
+
+    this._language = "";
+    this._value = "";
     this._initPromise = this._initMonaco();
   }
 
@@ -33,16 +46,16 @@ class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
       });
     });
 
-    // Create Monaco editor
+    // Create Monaco editor with cached options
     this._editor = monaco.editor.create(this, {
       automaticLayout: true,
       fontFamily: "Menlo, Monaco, 'Courier New', monospace",
       fontSize: 13,
-      insertSpaces: true,
+      guides: {
+        indentation: false,
+      },
       language: "plaintext",
-      lineNumbers: "off",
       minimap: { enabled: false },
-      readOnly: false,
       renderWhitespace: "none",
       scrollbar: {
         useShadows: false,
@@ -50,12 +63,20 @@ class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
         horizontalScrollbarSize: 10,
       },
       scrollBeyondLastLine: false,
-      tabSize: 2,
       theme: "vs-dark",
-      value: "",
+      value: this._value,
       wordBasedSuggestions: "off",
       wordWrap: "on",
+      ...this._options,
     });
+
+    // Apply language if it was set before editor was ready
+    if (this._language) {
+      const model = this._editor.getModel();
+      if (model) {
+        monaco.editor.setModelLanguage(model, this._language);
+      }
+    }
 
     // Wire up input event to match textarea behavior
     this._editor.onDidChangeModelContent(() => {
@@ -86,10 +107,12 @@ class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
 
   get disabled() {
     return (
-      this._editor?.getOption(monaco.editor.EditorOption.readOnly) ?? false
+      this._editor?.getOptions(monaco.editor.EditorOption.readOnly) ??
+      this._options.readOnly
     );
   }
   set disabled(disabled) {
+    this._options.readOnly = disabled;
     if (this._editor) {
       this._editor.updateOptions({ readOnly: disabled });
     }
@@ -121,35 +144,116 @@ class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
   }
 
   /**
+   * Get whether spaces are inserted when Tab is pressed
+   *
+   * @returns {boolean}
+   */
+  get insertSpaces() {
+    return this.getModelOptions().insertSpaces;
+  }
+  /**
+   * Set whether to insert spaces when Tab is pressed
+   *
+   * @param {boolean} value
+   */
+  set insertSpaces(value) {
+    this.setModelOptions({ insertSpaces: value });
+  }
+
+  // Return model options if available, otherwise cached options
+  getModelOptions() {
+    return this.model?.getOptions() ?? this._options;
+  }
+
+  /**
+   * Get editor language
+   *
+   * @returns {string}
+   */
+  get language() {
+    return this._language;
+  }
+  /**
    * Set editor language for syntax highlighting
+   *
    * @param {string} language - Monaco language ID
    */
-  setLanguage(language) {
+  set language(language) {
+    this._language = language;
     if (this._editor) {
       const model = this._editor.getModel();
       if (model) {
-        window.monaco.editor.setModelLanguage(model, language);
+        monaco.editor.setModelLanguage(model, language);
       }
     }
   }
 
   /**
-   * Get editor value (textarea-compatible)
+   * Get line numbers display mode
+   *
    * @returns {string}
    */
-  get value() {
-    return this._editor?.getValue() ?? "";
+  get lineNumbers() {
+    return this.getModelOptions().lineNumbers;
+  }
+  /**
+   * Set line numbers display mode
+   *
+   * @param {string} value - "on", "off", "relative", or "interval"
+   */
+  set lineNumbers(value) {
+    this.setModelOptions({ lineNumbers: value });
+  }
+
+  get model() {
+    return this._editor?.getModel() ?? null;
+  }
+
+  // Set cached options and apply to model if available
+  setModelOptions(options) {
+    Object.assign(this._options, options);
+    this.model?.updateOptions(options);
   }
 
   /**
-   * Set editor value (textarea-compatible)
+   * Get tab size
+   *
+   * @returns {number}
+   */
+  get tabSize() {
+    return this.getModelOptions().tabSize;
+  }
+  /**
+   * Set tab size
+   *
+   * @param {number} value
+   */
+  set tabSize(value) {
+    this.setModelOptions({ tabSize: value });
+  }
+
+  /**
+   * Get editor text
+   *
+   * @returns {string}
+   */
+  get value() {
+    if (this._editor) {
+      return this._editor.getValue();
+    }
+    return this._value;
+  }
+  /**
+   * Set editor text
+   *
    * @param {string} text
    */
-  set value(text) {
+  set value(text = "") {
+    this._value = text;
     if (this._editor) {
       const current = this._editor.getValue();
       if (current !== text) {
-        this._editor.setValue(text || "");
+        this._editor.setValue(text);
       }
     }
   }

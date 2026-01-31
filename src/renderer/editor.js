@@ -83,8 +83,7 @@ function render(state, changed) {
   }
 
   if (changed.fileName && state.fileName) {
-    const language = getLanguageFromPath(state.fileName);
-    editor.setLanguage(language);
+    editor.language = getLanguageFromPath(state.fileName);
   }
 }
 
