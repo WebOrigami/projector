@@ -88,6 +88,7 @@ export function createMenuTemplate(state, isFileOpen) {
         //   accelerator: "CmdOrCtrl+S",
         //   click: fileSave,
         //   enabled: isProjectOpen,
+        //   visible: false,
         // },
         {
           label: "Save File As…",
@@ -178,17 +179,17 @@ export function createMenuTemplate(state, isFileOpen) {
         },
       ],
     },
-    {
-      label: "Tools",
-      visible: false,
-      submenu: [
-        {
-          label: "Audit",
-          enabled: isProjectOpen,
-          click: (_, window) => toolRun("audit", window),
-        },
-      ],
-    },
+    // {
+    //   label: "Tools",
+    //   visible: false,
+    //   submenu: [
+    //     {
+    //       label: "Audit",
+    //       enabled: isProjectOpen,
+    //       click: (_, window) => toolRun("audit", window),
+    //     },
+    //   ],
+    // },
     {
       label: "Options",
       submenu: [
@@ -417,9 +418,9 @@ function toggleLineNumbers() {
   });
 }
 
-async function toolRun(toolName, window) {
-  await window.project.runTool(toolName);
-}
+// async function toolRun(toolName, window) {
+//   await window.project.runTool(toolName);
+// }
 
 async function viewGoBack(_menuItem, window) {
   await window.project.goBack();

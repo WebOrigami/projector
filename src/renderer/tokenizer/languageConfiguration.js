@@ -1,0 +1,49 @@
+/**
+ * Monaco language configuration for Origami
+ *
+ * Defines brackets, auto-closing pairs, comments, and indentation rules.
+ */
+export const conf = {
+  comments: {
+    lineComment: '//',
+    blockComment: ['/*', '*/']
+  },
+
+  brackets: [
+    ['{', '}'],
+    ['[', ']'],
+    ['(', ')']
+  ],
+
+  autoClosingPairs: [
+    { open: '{', close: '}' },
+    { open: '[', close: ']' },
+    { open: '(', close: ')' },
+    { open: '"', close: '"' },
+    { open: "'", close: "'" },
+    { open: '`', close: '`' }
+  ],
+
+  surroundingPairs: [
+    { open: '{', close: '}' },
+    { open: '[', close: ']' },
+    { open: '(', close: ')' },
+    { open: '"', close: '"' },
+    { open: "'", close: "'" },
+    { open: '`', close: '`' }
+  ],
+
+  folding: {
+    markers: {
+      start: /^\s*\/\/\s*#?region\b/,
+      end: /^\s*\/\/\s*#?endregion\b/
+    }
+  },
+
+  wordPattern: /[a-zA-Z_$@~][a-zA-Z0-9_$@~!%&*+\-^|]*/,
+
+  indentationRules: {
+    increaseIndentPattern: /^((?!\/\/).)*[\{([]\s*$/,
+    decreaseIndentPattern: /^((?!.*?\/\*).*\*\/)?\s*[}\])].*$/
+  }
+};

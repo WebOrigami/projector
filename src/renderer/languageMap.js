@@ -49,7 +49,7 @@ export const languageMap = {
   ".txt": "plaintext",
 
   // Origami-specific
-  ".ori": "javascript", // Treat as JavaScript for syntax highlighting
+  ".ori": "origami", // Use Origami tokenizer
 };
 
 /**

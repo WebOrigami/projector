@@ -1,4 +1,6 @@
 import AttributeMarshallingMixin from "./AttributeMarshallingMixin.js";
+import { conf as origamiLanguageConfig } from "./tokenizer/languageConfiguration.js";
+import { language as origamiLanguage } from "./tokenizer/origami.js";
 
 /**
  * Monaco Editor Web Component
@@ -47,6 +49,11 @@ class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
       });
     });
 
+    // Register Origami language
+    monaco.languages.register({ id: "origami" });
+    monaco.languages.setLanguageConfiguration("origami", origamiLanguageConfig);
+    monaco.languages.setMonarchTokensProvider("origami", origamiLanguage);
+
     // Create Monaco editor with cached options
     this._editor = monaco.editor.create(this, {
       automaticLayout: true,
@@ -65,6 +72,12 @@ class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
       },
       scrollBeyondLastLine: false,
       theme: "vs-dark",
+      unicodeHighlight: {
+        // Highlighting these characters would be confusing to non-devs
+        ambiguousCharacters: false,
+        invisibleCharacters: false,
+        nonBasicASCII: false,
+      },
       value: this._value,
       wordBasedSuggestions: "off",
       wordWrap: "on",

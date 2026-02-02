@@ -11,6 +11,7 @@
     "@types/node": "25.0.9",
     "electron": "39.2.7",
     "electron-builder": "26.4.0",
+    "puppeteer": "24.30.0",
     "typescript": "5.9.3"
   },
   "dependencies": {
@@ -25,6 +26,8 @@
   "scripts": {
     "build": "electron-builder --mac",
     "copy-monaco": "mkdir -p src/renderer/monaco && cp -R node_modules/monaco-editor/min* src/renderer/monaco",
+    "gen-globals": "ori Tree.json Tree.keys package:@weborigami/language/jsGlobals > src/renderer/tokenizer/globals.json",
+    "headless-test": "node scripts/headlessTest.js",
     "postinstall": "electron-builder install-app-deps && npm run copy-monaco",
     "start": "electron .",
     "test": "node --test --test-reporter=spec --conditions=test",

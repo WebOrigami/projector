@@ -16,6 +16,13 @@ describe("ProjectorApp", () => {
   test("returns empty settings if settings.json doesn't exist", async () => {
     const { state } = projector;
     assert.deepStrictEqual(state, {
+      editor: {
+        autoClosingBrackets: "languageDefined",
+        indentSize: 2,
+        insertSpaces: true,
+        lineNumbers: "off",
+        tabSize: 2,
+      },
       openProjects: [],
       recentProjects: [],
       projects: {},

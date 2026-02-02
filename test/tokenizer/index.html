@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Origami Tokenizer Tests</title>
+    <script>
+      self.MonacoEnvironment = {
+        getWorkerUrl: function (moduleId, label) {
+          return "../../src/renderer/monaco/min/vs/base/worker/workerMain.js";
+        },
+      };
+    </script>
+    <script src="../../src/renderer/monaco/min/vs/loader.js"></script>
+    <script>
+      require.config({
+        paths: {
+          vs: "../../src/renderer/monaco/min/vs",
+        },
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Origami Monarch Tokenizer Tests</h1>
+    <p>Check the browser console for test results.</p>
+
+    <script type="module">
+      import { language } from "../../src/renderer/tokenizer/origami.js";
+      import { conf } from "../../src/renderer/tokenizer/languageConfiguration.js";
+
+      require(["vs/editor/editor.main"], function () {
+        const monaco = window.monaco;
+        // Register Origami language
+        monaco.languages.register({ id: "origami" });
+        monaco.languages.setLanguageConfiguration("origami", conf);
+        monaco.languages.setMonarchTokensProvider("origami", language);
+
+        // Test helper: tokenize input and return token array
+        function tokenize(input) {
+          const model = monaco.editor.createModel(input, "origami");
+          const tokens = [];
+          for (
+            let lineNumber = 1;
+            lineNumber <= model.getLineCount();
+            lineNumber++
+          ) {
+            const lineTokens = monaco.editor.tokenize(input, "origami")[
+              lineNumber - 1
+            ];
+            for (const token of lineTokens) {
+              tokens.push({
+                type: token.type,
+                offset: token.offset,
+              });
+            }
+          }
+          model.dispose();
+          return tokens;
+        }
+
+        // Test counters
+        let totalTests = 0;
+        let passedTests = 0;
+
+        // Test helper: assert token types match expected
+        function assertTokens(input, expectedTypes, description) {
+          totalTests++;
+          const tokens = tokenize(input);
+          // Filter out empty string tokens (whitespace)
+          const actualTypes = tokens
+            .map((t) => t.type)
+            .filter((type) => type !== "");
+          const pass =
+            JSON.stringify(actualTypes) === JSON.stringify(expectedTypes);
+
+          if (pass) {
+            console.log(`PASS ${description}`);
+            passedTests++;
+          } else {
+            console.log(`FAIL ${description}`);
+            console.log(`  Input:    ${JSON.stringify(input)}`);
+            console.log(`  Expected: ${JSON.stringify(expectedTypes)}`);
+            console.log(`  Actual:   ${JSON.stringify(actualTypes)}`);
+          }
+        }
+
+        // Run tests
+        console.log("=== Path Detection Tests ===");
+        assertTokens("foo/bar", ["constant.ori"], "Slash path");
+        assertTokens("<path with spaces>", ["constant.ori"], "Angle bracket path");
+        assertTokens("https://example.com", ["constant.ori"], "Scheme-based path");
+        assertTokens("file.txt", ["constant.ori"], "File name with extension");
+
+        console.log("\n=== JS Globals vs Paths ===");
+        assertTokens(
+          "Math.max",
+          ["identifier.ori", "delimiter.ori", "identifier.ori"],
+          "JS global property access",
+        );
+        assertTokens(
+          "Object.keys",
+          ["identifier.ori", "delimiter.ori", "identifier.ori"],
+          "JS global Object.keys",
+        );
+        assertTokens("foo.bar", ["constant.ori"], "Non-global dotted name is path");
+
+        console.log("\n=== Spacing-Sensitive Operators ===");
+        assertTokens("x/y", ["constant.ori"], "No spaces = path");
+        assertTokens(
+          "x / y",
+          ["identifier.ori", "operator.ori", "identifier.ori"],
+          "Spaces = division",
+        );
+        assertTokens("x-y", ["constant.ori"], "No spaces = path");
+        assertTokens(
+          "x - y",
+          ["identifier.ori", "operator.ori", "identifier.ori"],
+          "Spaces = subtraction",
+        );
+
+        console.log("\n=== Object Property Syntax ===");
+        assertTokens(
+          "{ value = 1 }",
+          [
+            "delimiter.curly.ori",
+            "identifier.ori",
+            "delimiter.ori",
+            "number.ori",
+            "delimiter.curly.ori",
+          ],
+          "Property getter with =",
+        );
+        assertTokens(
+          "{ result: 1 }",
+          [
+            "delimiter.curly.ori",
+            "identifier.ori",
+            "delimiter.ori",
+            "number.ori",
+            "delimiter.curly.ori",
+          ],
+          "Regular property with :",
+        );
+
+        console.log("\n=== Pipe Operators ===");
+        assertTokens(
+          "x -> y",
+          ["identifier.ori", "keyword.operator.pipe.ori", "identifier.ori"],
+          "ASCII pipe operator",
+        );
+        assertTokens(
+          "x → y",
+          ["identifier.ori", "keyword.operator.pipe.ori", "identifier.ori"],
+          "Unicode pipe operator",
+        );
+
+        console.log("\n=== Extended Identifiers ===");
+        assertTokens("@special", ["identifier.ori"], "Identifier with @");
+        assertTokens("~tilde", ["identifier.ori"], "Identifier with ~");
+
+        console.log("\n=== Newlines as Separators ===");
+        assertTokens(
+          "(x\ny) => true",
+          [
+            "delimiter.parenthesis.ori",
+            "identifier.ori",
+            "identifier.ori",
+            "delimiter.parenthesis.ori",
+            "operator.ori",
+            "keyword.ori",
+          ],
+          "Lambda params with newline separator",
+        );
+        assertTokens(
+          "[1\n2\n3]",
+          [
+            "delimiter.square.ori",
+            "number.ori",
+            "number.ori",
+            "number.ori",
+            "delimiter.square.ori",
+          ],
+          "Array with newline separators",
+        );
+        assertTokens(
+          "{\n  a: 1\n  b: 2\n}",
+          [
+            "delimiter.curly.ori",
+            "identifier.ori",
+            "delimiter.ori",
+            "number.ori",
+            "identifier.ori",
+            "delimiter.ori",
+            "number.ori",
+            "delimiter.curly.ori",
+          ],
+          "Object properties with newline separators",
+        );
+
+        console.log("\n=== Standard JavaScript ===");
+        assertTokens('"hello"', ["string.ori"], "Double-quoted string");
+        assertTokens("'world'", ["string.ori"], "Single-quoted string");
+        assertTokens("42", ["number.ori"], "Integer number");
+        assertTokens("3.14", ["number.float.ori"], "Float number");
+        assertTokens("// comment", ["comment.ori"], "Line comment");
+        assertTokens("async", ["keyword.ori"], "Keyword");
+        assertTokens("true", ["keyword.ori"], "Boolean keyword");
+        assertTokens(
+          "(x) => x",
+          [
+            "delimiter.parenthesis.ori",
+            "identifier.ori",
+            "delimiter.parenthesis.ori",
+            "operator.ori",
+            "identifier.ori",
+          ],
+          "Arrow function",
+        );
+
+        console.log(
+          `\n=== Tests Complete: ${passedTests}/${totalTests} passed ===`,
+        );
+      });
+    </script>
+  </body>
+</html>
