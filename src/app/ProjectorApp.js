@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import AppBase from "./AppBase.js";
 import { createMenuTemplate } from "./menu.js";
+import { getWindowForProject } from "./windowManager.js";
 
 const settingsFileName = "settings.json";
 const settingsPath = path.join(app.getPath("userData"), settingsFileName);
@@ -30,6 +31,19 @@ export default class ProjectorApp extends AppBase {
     this.createMenu();
   }
 
+  async broadcastEditorOptions() {
+    const editorOptions = this._state.editor;
+    for (const root of this._state.openProjects) {
+      const window = getWindowForProject(root);
+      if (window) {
+        const { project } = /** @type {any}  */ (window);
+        if (project) {
+          await project.setEditorOptions(editorOptions);
+        }
+      }
+    }
+  }
+
   createMenu() {
     const template = createMenuTemplate(this.state, this._isFileOpen);
     // @ts-ignore
@@ -40,8 +54,17 @@ export default class ProjectorApp extends AppBase {
   async render(state, changed) {
     await super.render(state, changed);
 
-    if (changed.openProjects || changed.recentProjects || changed.projects) {
+    if (
+      changed.editor ||
+      changed.openProjects ||
+      changed.recentProjects ||
+      changed.projects
+    ) {
       this.createMenu();
+    }
+
+    if (changed.editor) {
+      await this.broadcastEditorOptions();
     }
 
     if (Object.keys(changed).length > 0) {

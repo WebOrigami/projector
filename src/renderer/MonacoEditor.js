@@ -13,6 +13,7 @@ class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
 
     // Cache all options (both before and after editor is ready)
     this._options = {
+      autoSurround: "languageDefined",
       indentSize: 2,
       insertSpaces: true,
       lineNumbers: "off",
@@ -67,6 +68,8 @@ class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
       value: this._value,
       wordBasedSuggestions: "off",
       wordWrap: "on",
+
+      // Options derived from page state
       ...this._options,
     });
 
@@ -98,6 +101,15 @@ class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
       },
     });
     monaco.editor.setTheme("projector-dark");
+  }
+
+  get autoClosingBrackets() {
+    return this._editor?.getOption(
+      monaco.editor.EditorOption.autoClosingBrackets,
+    );
+  }
+  set autoClosingBrackets(autoClosingBrackets) {
+    this._editor?.updateOptions({ autoClosingBrackets });
   }
 
   connectedCallback() {
@@ -194,7 +206,7 @@ class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
    * @returns {string}
    */
   get lineNumbers() {
-    return this.getModelOptions().lineNumbers;
+    return this._editor?.getOption(monaco.editor.EditorOption.lineNumbers);
   }
   /**
    * Set line numbers display mode
@@ -202,7 +214,7 @@ class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
    * @param {string} value - "on", "off", "relative", or "interval"
    */
   set lineNumbers(value) {
-    this.setModelOptions({ lineNumbers: value });
+    this._editor?.updateOptions({ lineNumbers: value });
   }
 
   get model() {

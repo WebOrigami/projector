@@ -180,11 +180,53 @@ export function createMenuTemplate(state, isFileOpen) {
     },
     {
       label: "Tools",
+      visible: false,
       submenu: [
         {
           label: "Audit",
           enabled: isProjectOpen,
           click: (_, window) => toolRun("audit", window),
+        },
+      ],
+    },
+    {
+      label: "Options",
+      submenu: [
+        {
+          label: "Auto-Close Brackets",
+          type: "checkbox",
+          checked: state.editor?.autoClosingBrackets === "languageDefined",
+          click: toggleAutoClosingBrackets,
+        },
+        {
+          label: "Indentation",
+          submenu: [
+            ...[2, 4, 8].map((size) => ({
+              label: `${size} Spaces`,
+              type: "radio",
+              checked: state.editor?.indentSize === size,
+              click: () => setIndentSize(size),
+            })),
+            { type: "separator" },
+            {
+              label: "Use Spaces",
+              type: "checkbox",
+              checked: state.editor?.insertSpaces === true,
+              click: () => insertSpaces(true),
+            },
+            {
+              label: "Use Tabs",
+              type: "checkbox",
+              checked: state.editor?.insertSpaces === false,
+              click: () => insertSpaces(false),
+            },
+          ],
+        },
+        {
+          label: "Show Line Numbers",
+          type: "checkbox",
+          checked: state.editor?.lineNumbers !== "off",
+          click: toggleLineNumbers,
         },
       ],
     },
@@ -329,6 +371,50 @@ export async function promptSaveChanges(window) {
   }
 
   return shouldContinue;
+}
+
+function toggleAutoClosingBrackets() {
+  const editorSettings = projector.state.editor || {};
+  const current = editorSettings.autoClosingBrackets === "languageDefined";
+  projector.setState({
+    editor: {
+      ...editorSettings,
+      autoClosingBrackets: current ? "never" : "languageDefined",
+    },
+  });
+}
+
+function setIndentSize(size) {
+  const editorSettings = projector.state.editor || {};
+  // Also set tabSize to same value
+  projector.setState({
+    editor: {
+      ...editorSettings,
+      indentSize: size,
+      tabSize: size,
+    },
+  });
+}
+
+function insertSpaces(useSpaces) {
+  const editorSettings = projector.state.editor || {};
+  projector.setState({
+    editor: {
+      ...editorSettings,
+      insertSpaces: useSpaces,
+    },
+  });
+}
+
+function toggleLineNumbers() {
+  const editorSettings = projector.state.editor || {};
+  const current = editorSettings.lineNumbers !== "off";
+  projector.setState({
+    editor: {
+      ...editorSettings,
+      lineNumbers: current ? "off" : "on",
+    },
+  });
 }
 
 async function toolRun(toolName, window) {

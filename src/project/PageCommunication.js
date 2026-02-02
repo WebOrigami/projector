@@ -177,6 +177,12 @@ export default function PageCommunication(Base) {
       }, REFRESH_DELAY_MS);
     }
 
+    async setEditorOptions(options) {
+      return this.setState({
+        editor: Object.assign({}, this.state.editor, options),
+      });
+    }
+
     async setState(changes) {
       const { newState, changed } = await super.setState(changes);
 

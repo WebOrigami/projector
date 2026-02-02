@@ -29,7 +29,8 @@ The application should let you perform basic editing of typical Origami projects
 
 - Install the application on macOS with Apple silicon.
 - Issue Origami commands and see the result instantly appear in the result pane.
-- Edit a text file (.md, .js, .ori, etc.) and see the result automatically reload.
+- Edit a text file in the [Monaco editor](https://microsoft.github.io/monaco-editor/), the same editor used by Microsoft VS Code.
+- Change a file and see the result automatically reload.
 - If the displayed HTML contains links, browse within the local site.
 - Use Back/Forward buttons to navigate command results.
 
@@ -44,7 +45,6 @@ The application should let you perform basic editing of typical Origami projects
 - Resizing the 50/50 split of the window panes
 - Reloading project settings if you edit `config.ori` or `package.json` inside the app; you’ll need to close the window and then reopen it to see the changes
 - In-app File Explorer
-- Real code editor
 - LSP integration for syntax highlighting and inline errors
 - Selectable views (YAML, JSON, SVG diagram, etc.)
 - Reloading JavaScript modules (other than ones directly loaded by Origami, just like `ori serve watch` does)
@@ -105,6 +105,7 @@ Projector persists the following settings:
 - paths of projects which were open when the application was closed
 - paths of the recent files opened within each project
 - recent commands used within each project
+- editor options (see Options menu)
 
 These settings are saved whenever their values change.
 
@@ -155,6 +156,14 @@ The menu bar shows a stock Edit menu with the usual commands: Cut, Copy, Paste, 
 
 The Back/Forward buttons generally emulate standard browser behavior with a back/forward stack.
 
+### Options menu
+
+These reflect various Monaco editor preferences:
+
+-**Auto-Close Brackets**. If checked, typing an opening bracket (`([{`) automatically types the corresponding closing bracket. Default: checked.
+-**Indentation** submenu. The first group of items lets you choose between 2 (default), 4, or 8 spaces of indentation. The second group lets you choose between indenting with spaces (true) or tabs.
+-**Show Line Numbers**. If checked, line numbers are shown. Default is unchecked.
+
 ### Window menu
 
 The Window menu is a stock menu with the usual commands: Minimize, etc.
@@ -192,7 +201,11 @@ It is possible to have no file open and hence no file tabs visible.
 
 ## Editing area
 
-The editing area is a standard, multi-line text box.
+The editing area is an instance of the [Monaco code editor](https://microsoft.github.io/monaco-editor/).
+
+You can adjust a small number of Monaco editor options through the Options menu (above). Beyond that, the editor is left  in its default configuration.
+
+While the editor has focus, pressing F1 displays a palette of editing commands.
 
 ### Auto-save
 

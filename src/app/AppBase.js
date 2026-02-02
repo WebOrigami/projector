@@ -13,6 +13,13 @@ export default class AppBase {
 
     // State shared with the project and window manager
     this._state = {
+      editor: {
+        autoClosingBrackets: "languageDefined",
+        indentSize: 2,
+        insertSpaces: true,
+        lineNumbers: "off",
+        tabSize: 2,
+      },
       openProjects: [],
       recentProjects: [],
       projects: {},

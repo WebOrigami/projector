@@ -54,6 +54,10 @@ function render(state, changed) {
     }
   }
 
+  if (changed.editor) {
+    Object.assign(editor, state.editor);
+  }
+
   if (changed.error) {
     command.classList.toggle("error", state.error !== null);
     error.textContent = state.error || "";

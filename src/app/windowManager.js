@@ -100,6 +100,9 @@ async function createProjectWindow(rootPath) {
   /** @type {any} */ (window).project = project;
   /** @type {any} */ (windowSession).project = project;
 
+  // Give the project a copy of the application editor settings
+  await project.setEditorOptions(projector._state.editor);
+
   // Broadcast state after page loads
   window.webContents.on("did-finish-load", async () => {
     // Broadcast initial state
@@ -123,7 +126,7 @@ async function createProjectWindow(rootPath) {
     if (!loading) {
       // Update open projects list to move this project to the front so that we
       // can restore windows in the same order next time.
-      addToOpenProjects(project);
+      await addToOpenProjects(project);
     }
   });
 
