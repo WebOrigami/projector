@@ -24,6 +24,7 @@ Additionally:
 - Sequences that start with a scheme (protocol) and a colon are treated as paths, e.g.: `https://example.com`. Schemes are defined in [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986#section-3.1), which defines a scheme as `ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )`.
 - Sequences containing slashes are paths: `foo/bar`, `markdown/`.
 - Sequences in angle brackets are paths: `<src>`. Spaces are legal within angle brackets. Angle brackets cannot be nested; everything up to the closing bracket is considered part of the path.
+- A path may start with a `.` or `..` but not a `...` (which represents the spread operator).
 
 Each entire path is tokenized using the Monarch `constant` token. Example: `x/y` is a single `constant` token.
 

@@ -86,6 +86,14 @@ export const language = {
       // Match complete URL: scheme + colon + non-whitespace/non-closing-bracket chars
       [/[a-zA-Z][a-zA-Z0-9+\-.]*:[^\s)\]}]+/, "constant"],
 
+      // Spread operator (must come before dot paths)
+      [/\.\.\./, "operator"],
+
+      // Relative paths and hidden files: ./foo, ../bar, .ssh/id_rsa, .vscode
+      // Starts with . or .. followed by path characters
+      // This won't match .max after Math because Math pushes afterGlobal state
+      [/\.\.?[a-zA-Z0-9_$@~!%&*+\-^|./]+/, "constant"],
+
       // Whitespace
       [/[ \t\r\n]+/, ""],
 
@@ -116,7 +124,7 @@ export const language = {
         {
           cases: {
             "@keywords": "keyword",
-            "@jsGlobals": "identifier",
+            "@jsGlobals": { token: "identifier", next: "@afterGlobal" },
             "@default": { token: "@rematch", next: "@identifierOrPath" },
           },
         },
@@ -143,6 +151,13 @@ export const language = {
       [/>/, "constant", "@pop"],
       [/[^>\\]+/, "constant"],
       [/./, "constant"],
+    ],
+
+    // State: After JS global identifier (like Math, Object, etc.)
+    // Treat . as property access delimiter, not path
+    afterGlobal: [
+      [/\./, "delimiter", "@pop"],
+      [/./, { token: "@rematch", next: "@pop" }],
     ],
 
     // State: Scheme-based path https://example.com

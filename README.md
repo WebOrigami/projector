@@ -45,7 +45,7 @@ The application should let you perform basic editing of typical Origami projects
 - Resizing the 50/50 split of the window panes
 - Reloading project settings if you edit `config.ori` or `package.json` inside the app; you’ll need to close the window and then reopen it to see the changes
 - In-app File Explorer
-- LSP integration for syntax highlighting and inline errors
+- LSP integration for inline errors and other language integration features
 - Selectable views (YAML, JSON, SVG diagram, etc.)
 - Reloading JavaScript modules (other than ones directly loaded by Origami, just like `ori serve watch` does)
 - JavaScript module isolation. All modules for all project windows are loaded in a single Node application space; if one project loads JavaScript that manipulates global state, that might interfere with the running of a project in a different window.
@@ -135,6 +135,7 @@ The application menu bar offers the standard commands for a text editor.
 - **Close**. Closes the current project window.
 - **New File**. Clears the text editor.
 - **Open File…**. Shows a standard File Open dialog to pick an existing file.
+- **Save File**. This is generally not needed as Projector auto-saves. This item exists primarily to support the corresponding standard keyboard shortcut, which is useful when editing a new file.
 - **Save File As…**. Shows a standard File Save As dialog.
 
 Opening a folder via the Open menu implies opening the project for the project’s root (see project root, above). If that project is already open in a window, that project window is made active. Otherwise the folder opens in a new window for that project.
@@ -160,9 +161,7 @@ The Back/Forward buttons generally emulate standard browser behavior with a back
 
 These reflect various Monaco editor preferences:
 
--**Auto-Close Brackets**. If checked, typing an opening bracket (`([{`) automatically types the corresponding closing bracket. Default: checked.
--**Indentation** submenu. The first group of items lets you choose between 2 (default), 4, or 8 spaces of indentation. The second group lets you choose between indenting with spaces (true) or tabs.
--**Show Line Numbers**. If checked, line numbers are shown. Default is unchecked.
+-**Auto-Close Brackets**. If checked, typing an opening bracket (`([{`) automatically types the corresponding closing bracket. Default: checked. -**Indentation** submenu. The first group of items lets you choose between 2 (default), 4, or 8 spaces of indentation. The second group lets you choose between indenting with spaces (true) or tabs. -**Show Line Numbers**. If checked, line numbers are shown. Default is unchecked.
 
 ### Window menu
 
@@ -203,7 +202,7 @@ It is possible to have no file open and hence no file tabs visible.
 
 The editing area is an instance of the [Monaco code editor](https://microsoft.github.io/monaco-editor/).
 
-You can adjust a small number of Monaco editor options through the Options menu (above). Beyond that, the editor is left  in its default configuration.
+You can adjust a small number of Monaco editor options through the Options menu (above). Beyond that, the editor is left in its default configuration.
 
 While the editor has focus, pressing F1 displays a palette of editing commands.
 

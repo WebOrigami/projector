@@ -73,7 +73,7 @@
             JSON.stringify(actualTypes) === JSON.stringify(expectedTypes);
 
           if (pass) {
-            console.log(`PASS ${description}`);
+            // console.log(`PASS ${description}`);
             passedTests++;
           } else {
             console.log(`FAIL ${description}`);
@@ -86,9 +86,18 @@
         // Run tests
         console.log("=== Path Detection Tests ===");
         assertTokens("foo/bar", ["constant.ori"], "Slash path");
-        assertTokens("<path with spaces>", ["constant.ori"], "Angle bracket path");
-        assertTokens("https://example.com", ["constant.ori"], "Scheme-based path");
+        assertTokens(
+          "<path with spaces>",
+          ["constant.ori"],
+          "Angle bracket path",
+        );
+        assertTokens(
+          "https://example.com",
+          ["constant.ori"],
+          "Scheme-based path",
+        );
         assertTokens("file.txt", ["constant.ori"], "File name with extension");
+        assertTokens(".ssh/id_rsa", ["constant.ori"], "Hidden file path");
 
         console.log("\n=== JS Globals vs Paths ===");
         assertTokens(
@@ -101,7 +110,11 @@
           ["identifier.ori", "delimiter.ori", "identifier.ori"],
           "JS global Object.keys",
         );
-        assertTokens("foo.bar", ["constant.ori"], "Non-global dotted name is path");
+        assertTokens(
+          "foo.bar",
+          ["constant.ori"],
+          "Non-global dotted name is path",
+        );
 
         console.log("\n=== Spacing-Sensitive Operators ===");
         assertTokens("x/y", ["constant.ori"], "No spaces = path");
@@ -156,6 +169,24 @@
         console.log("\n=== Extended Identifiers ===");
         assertTokens("@special", ["identifier.ori"], "Identifier with @");
         assertTokens("~tilde", ["identifier.ori"], "Identifier with ~");
+
+        console.log("\n=== Relative Paths and Spread Operator ===");
+        assertTokens("./foo", ["constant.ori"], "Relative path with ./");
+        assertTokens("../bar", ["constant.ori"], "Relative path with ../");
+        assertTokens(".foo-bar", ["constant.ori"], "Relative path with hyphen");
+        assertTokens(
+          "..config-file",
+          ["constant.ori"],
+          "Relative path with .. and hyphen",
+        );
+        assertTokens(".vscode", ["constant.ori"], "Hidden directory name");
+        assertTokens(".bashrc", ["constant.ori"], "Hidden file name");
+        assertTokens("...", ["operator.ori"], "Spread operator");
+        assertTokens(
+          "...rest",
+          ["operator.ori", "identifier.ori"],
+          "Spread operator followed by identifier",
+        );
 
         console.log("\n=== Newlines as Separators ===");
         assertTokens(
