@@ -9,7 +9,7 @@ import updateState from "../renderer/updateState.js";
 export default class AppBase {
   constructor() {
     // Internal state
-    this._isFileOpen = false;
+    this._isFileOpen = null; // not set yet
 
     // State shared with the project and window manager
     this._state = {
@@ -31,7 +31,7 @@ export default class AppBase {
   }
 
   async render(state, changed) {
-    if (changed.openProjects) {
+    if (this._isFileOpen === null || changed.openProjects) {
       // Update isFileOpen based on the new active project
       const activeProjectPath = state.openProjects.at(-1);
       const activeProjectSettings = state.projects[activeProjectPath] || {};

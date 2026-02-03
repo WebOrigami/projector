@@ -83,13 +83,12 @@ export function createMenuTemplate(state, isFileOpen) {
           click: fileOpen,
           enabled: isProjectOpen,
         },
-        // {
-        //   label: "Save",
-        //   accelerator: "CmdOrCtrl+S",
-        //   click: fileSave,
-        //   enabled: isProjectOpen,
-        //   visible: false,
-        // },
+        {
+          label: "Save",
+          accelerator: "CmdOrCtrl+S",
+          click: fileSave,
+          enabled: isFileOpen,
+        },
         {
           label: "Save File As…",
           accelerator: "CmdOrCtrl+Shift+S",
