@@ -93,7 +93,7 @@ export default function RunFeatures(Base) {
         this._result = await preprocessResource(result);
       } catch (/** @type {any} */ e) {
         this._result = null;
-        error = formatError(e);
+        error = await formatError(e);
       }
 
       let resultVersion = this.state.resultVersion;

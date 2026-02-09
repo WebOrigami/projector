@@ -7,8 +7,8 @@ import {
 import { Origami } from "@weborigami/origami";
 import * as path from "node:path";
 
-export function formatError(error) {
-  let message = cliFormatError(error);
+export async function formatError(error) {
+  let message = await cliFormatError(error);
   // Remove ANSI escape codes from the message.
   message = message.replace(/\x1b\[[0-9;]*m/g, "");
   // Prevent HTML in the error message from being interpreted as HTML.

@@ -71,8 +71,8 @@ export function registerOrigamiProtocol(ses) {
 
 // Copied from Origami server -- should be shared but that implementation
 // assumes a Node.js response object.
-function respondWithError(error) {
-  const message = formatError(error);
+async function respondWithError(error) {
+  const message = await formatError(error);
   console.error(message);
 
   const html = `<!DOCTYPE html>
