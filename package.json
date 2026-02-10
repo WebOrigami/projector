@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@emnapi/runtime": "1.8.1",
-    "@weborigami/origami": "0.6.9",
+    "@weborigami/origami": "0.6.10",
     "monaco-editor": "^0.52.0",
     "sharp": "0.34.5"
   },
