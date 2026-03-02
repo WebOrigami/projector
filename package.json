@@ -1,7 +1,7 @@
 {
   "name": "origami-projector",
   "productName": "Origami Projector",
-  "version": "0.6.11",
+  "version": "0.6.12",
   "description": "Origami project editor",
   "author": "weborigami.org",
   "license": "MIT",
@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@emnapi/runtime": "1.8.1",
-    "@weborigami/origami": "0.6.11",
+    "@weborigami/origami": "0.6.12",
     "monaco-editor": "^0.52.0",
     "sharp": "0.34.5"
   },
