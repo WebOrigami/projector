@@ -110,14 +110,24 @@ async function createProjectWindow(rootPath) {
   });
 
   // If the user closes the window while the open file is dirty, prompt to save.
-  window.on("close", async (event) => {
+  window.on("close", (event) => {
     if (/** @type {any} */ (window).project.dirty) {
-      // Show save prompt
-      const shouldContinue = await promptSaveChanges(window);
-      if (!shouldContinue) {
-        // Prevent the window from closing
-        event.preventDefault();
-      }
+      // Prevent close synchronously — async handlers can't call preventDefault()
+      // after awaiting because Electron has already processed the event by then.
+      event.preventDefault();
+      promptSaveChanges(window).then((shouldContinue) => {
+        if (shouldContinue) {
+          // Destroy bypasses the close event so we don't loop
+          window.destroy();
+          if (quitting) {
+            // We were quitting before the dialog, re-trigger quit
+            app.quit();
+          }
+        } else {
+          // User canceled quit
+          quitting = false;
+        }
+      });
     }
   });
 
@@ -226,6 +236,6 @@ export async function restoreProjectWindows() {
   }
 }
 
-app.on("before-quit", () => {
+app.on("before-quit", (event) => {
   quitting = true;
 });
