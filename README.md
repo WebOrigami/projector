@@ -18,7 +18,7 @@ For the present time, Projector is only available on macOS for Apple Silicon. Th
 
 ## Installing on macOS
 
-Save your files in source control or elsewhere before using Projector so that a bug doesn’t cause you to lose work!
+Every time you edit a file in Origami Projector, it **automatically saves changes**. Before using Projector, save your files in source control or elsewhere so that a bug doesn’t cause you to lose work!
 
 Because the app is not distributed through the App Store, you must manually download it and approve its use.
 
