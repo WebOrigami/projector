@@ -1,5 +1,5 @@
 import { protocol } from "#electron";
-import { FileMap, trailingSlash, Tree } from "@weborigami/async-tree";
+import { AsyncMap, FileMap, trailingSlash, Tree } from "@weborigami/async-tree";
 import { constructResponse, keysFromUrl } from "@weborigami/origami";
 import { defaultResultHref } from "../renderer/shared.js";
 import { formatError, preprocessResource } from "../utilities.js";
@@ -25,12 +25,10 @@ protocol.registerSchemesAsPrivileged([
 /**
  * Handle a request from the renderer via the origami: protocol
  */
-async function handleRequest(request, session) {
+async function handleRequest(request, session, debugTree) {
   // The request `url` is a string
   const url = new URL(request.url, "origami://");
   console.log(request.url);
-
-  const debugTree = await composeDebugTree(session.project);
 
   const keys = keysFromUrl(url);
   let resource;
@@ -69,7 +67,10 @@ async function handleRequest(request, session) {
 }
 
 export function registerOrigamiProtocol(ses) {
-  ses.protocol.handle("origami", (request) => handleRequest(request, ses));
+  const debugTree = composeDebugTree(ses.project);
+  ses.protocol.handle("origami", (request) =>
+    handleRequest(request, ses, debugTree),
+  );
 }
 
 // Copied from Origami server -- should be shared but that implementation
@@ -102,16 +103,25 @@ ${message}
 /**
  * Return a tree that combines the site, the result, and the renderer files.
  */
-async function composeDebugTree(project) {
-  let { site, result } = project;
+function composeDebugTree(project) {
+  return Object.assign(new AsyncMap(), {
+    async get(key) {
+      const normalizedKey = trailingSlash.remove(key);
+      if (normalizedKey === "_renderer") {
+        return renderer;
+      } else if (normalizedKey === "_result") {
+        // _result/foo and _result/_default/foo are synonyms
+        const result = project.result;
+        return (key) =>
+          trailingSlash.remove(key) === "_default" ? result : result?.get(key);
+      }
 
-  // site is a Promise, await it
-  site = await site;
+      return project.site.then((site) => Tree.from(site).get(key));
+    },
 
-  return Tree.merge(site, {
-    _renderer: renderer,
-    // _result/foo and _result/_default/foo are synonyms
-    _result: (key) =>
-      trailingSlash.remove(key) === "_default" ? result : result?.get(key),
+    async *keys() {
+      const site = Tree.from(await project.site);
+      return site.keys();
+    },
   });
 }

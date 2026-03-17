@@ -68,9 +68,6 @@ async function createProjectWindow(rootPath) {
   const partition = `project-${windowCount}`;
   const windowSession = session.fromPartition(partition);
 
-  // Register custom protocol
-  registerOrigamiProtocol(windowSession);
-
   // Create the browser window
   const window = new BrowserWindow({
     width: 1200,
@@ -99,6 +96,9 @@ async function createProjectWindow(rootPath) {
 
   /** @type {any} */ (window).project = project;
   /** @type {any} */ (windowSession).project = project;
+
+  // Register custom protocol
+  registerOrigamiProtocol(windowSession);
 
   // Give the project a copy of the application editor settings
   await project.setEditorOptions(projector._state.editor);
