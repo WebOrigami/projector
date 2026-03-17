@@ -218,7 +218,7 @@ export default function FileFeatures(Base) {
 
     // Write text to file
     async save() {
-      if (!this.state.text) {
+      if (this.state.text === null) {
         return false; // nothing to save
       }
 
