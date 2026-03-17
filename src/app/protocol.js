@@ -30,10 +30,13 @@ async function handleRequest(request, session) {
   const url = new URL(request.url, "origami://");
   console.log(request.url);
 
+  const debugTree = await composeDebugTree(session.project);
+
   const keys = keysFromUrl(url);
   let resource;
   try {
-    resource = await traverse(session.project, ...keys);
+    // resource = await traverse(session.project, ...keys);
+    resource = await Tree.traverseOrThrow(debugTree, ...keys);
     resource = await preprocessResource(resource);
   } catch (/** @type {any} */ e) {
     resource = e;
@@ -97,39 +100,18 @@ ${message}
 }
 
 /**
- * Traverse the given keys in a combination of the renderer, the project site,
- * and the project's current result.
+ * Return a tree that combines the site, the result, and the renderer files.
  */
-async function traverse(project, ...keys) {
-  let tree;
+async function composeDebugTree(project) {
+  let { site, result } = project;
 
-  const firstKey = keys.length > 0 ? trailingSlash.remove(keys[0]) : null;
-  if (firstKey === "_renderer") {
-    // Serve from the renderer files
-    keys.shift();
-    tree = renderer;
-  } else if (firstKey === "vs") {
-    // Monaco editor files try to load from /vs, serve from renderer
-    tree = renderer;
-  } else if (firstKey === "_result") {
-    // Traverse the result
-    keys = keys.slice(1);
-    if (keys.length > 0 && trailingSlash.remove(keys[0]) === "_default") {
-      // Another way of traversing the result
-      keys = keys.slice(1);
-    }
-    tree = project.result;
-  } else {
-    // Traverse the site
-    tree = await project.site;
-  }
+  // site is a Promise, await it
+  site = await site;
 
-  let resource;
-  try {
-    resource = await Tree.traverseOrThrow(tree, ...keys);
-  } catch (/** @type {any} */ error) {
-    return error;
-  }
-
-  return resource;
+  return Tree.merge(site, {
+    _renderer: renderer,
+    // _result/foo and _result/_default/foo are synonyms
+    _result: (key) =>
+      trailingSlash.remove(key) === "_default" ? result : result?.get(key),
+  });
 }
