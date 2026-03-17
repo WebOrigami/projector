@@ -3,7 +3,6 @@
 Origami Projector (hereafter, Projector) is an editor and expression evaluation system for quickly iterating on code, data, and content.
 
 - [Demo](https://www.youtube.com/watch?v=KJcAQMZNrDM)
-- [Releases](https://github.com/WebOrigami/projector/releases) - Download the `.dmg` file attached to the latest release.
 
 Projector shortens the conventional cycle in which you edit a text file (e.g., a markdown file), save it, run some code to generate an affected artifact (a HTML file incorporating that content), view the artifact, then edit again.
 
@@ -16,6 +15,20 @@ Projector is aimed at developers and designers, as well as people with a degree 
 Projector is designed to coexist with other design and development tools such as code editors (e.g., Microsoft VS Code, NeoVim), text editing applications (Obsidian, iA Writer), and command-line shells (bash).
 
 For the present time, Projector is only available on macOS for Apple Silicon. The projector is architected to allow for the possible addition of Windows and/or Linux versions in the future.
+
+## Installing on macOS
+
+Save your files in source control or elsewhere before using Projector so that a bug doesn’t cause you to lose work!
+
+Because the app is not distributed through the App Store, you must manually download it and approve its use.
+
+1. Open the [Releases](https://github.com/WebOrigami/projector/releases) page and download the `.dmg` file attached to the latest release.
+1. Open the `.dmg` file and drag the Origami Projector application into your Applications folder.
+1. Open your Applications folder and double-click Origami projector.
+1. macOS will tell you that the application cannot be opened — but it will remember that you wanted to open it.
+1. Now open macOS **System Settings**, then **Privacy & Security**.
+1. Scroll down to **Security**. You should see a message saying that Origami Projector was blocked.
+1. Click **Open Anyway**.
 
 ## Current status
 
