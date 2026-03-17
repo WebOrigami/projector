@@ -74,7 +74,11 @@ export default class Project extends RunFeatures(
     const projectSettings = await this._projector.getProjectSettings(this);
     const lastRunCrashed = projectSettings.lastRunCrashed || false;
     const recentCommands = projectSettings.recentCommands || [];
-    const recentFiles = projectSettings.recentFiles || [];
+
+    // If in last session the user had an Untitled file and quit without saving,
+    // the recentFiles list will contain `null`. It's too hard to avoid saving
+    // that in the first place, so we filter it out here.
+    const recentFiles = (projectSettings.recentFiles || []).filter(Boolean);
 
     let command;
     // Use last command if it exists, otherwise run site if that exists
