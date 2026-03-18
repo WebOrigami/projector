@@ -1,5 +1,11 @@
 import { protocol } from "#electron";
-import { AsyncMap, FileMap, trailingSlash, Tree } from "@weborigami/async-tree";
+import {
+  AsyncMap,
+  FileMap,
+  isUnpackable,
+  trailingSlash,
+  Tree,
+} from "@weborigami/async-tree";
 import { constructResponse, keysFromUrl } from "@weborigami/origami";
 import { defaultResultHref } from "../renderer/shared.js";
 import { formatError, preprocessResource } from "../utilities.js";
@@ -112,8 +118,17 @@ function composeDebugTree(project) {
       } else if (normalizedKey === "_result") {
         // _result/foo and _result/_default/foo are synonyms
         const result = project.result;
-        return (key) =>
-          trailingSlash.remove(key) === "_default" ? result : result?.get(key);
+        return async (key) => {
+          if (trailingSlash.remove(key) === "_default") {
+            return result;
+          }
+          let tree = result;
+          if (isUnpackable(tree)) {
+            tree = await tree.unpack();
+          }
+          tree = Tree.from(tree);
+          return tree.get(key);
+        };
       }
 
       return project.site.then((site) => Tree.from(site).get(key));
