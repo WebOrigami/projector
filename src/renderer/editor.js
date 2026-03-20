@@ -140,6 +140,7 @@ function resultLoaded(event) {
   const newState = {
     loadedVersion: state.resultVersion,
     pageTitle: result.contentDocument.title,
+    timeEnd: performance.now(),
   };
   if (!state.error) {
     // Clear lastScroll only if there was no error loading the result
@@ -213,11 +214,16 @@ window.addEventListener("DOMContentLoaded", () => {
 
   editor.addEventListener("input", async () => {
     // Notify main process that the content has changed
-    await window.api.invokeProjectMethod("setState", {
+    const newState = {
       dirty: true,
       text: editor.value,
       textSource: "editor",
-    });
+    };
+    if (!state.dirty) {
+      // User typed when result reflected editor; start perf timer
+      newState.timeStart = performance.now();
+    }
+    await window.api.invokeProjectMethod("setState", newState);
   });
 
   command.addEventListener("keydown", async (event) => {
