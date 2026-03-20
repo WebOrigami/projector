@@ -6,6 +6,10 @@ import updateState from "./updateState.js";
 // Page state, will be populated by main process
 window.state = {};
 
+// Performance timings: editor input -> iframe load
+let timings = [];
+let timeStart = null; // current run start time
+
 const imageExtensions = [
   ".avif",
   ".bmp",
@@ -41,6 +45,32 @@ function getNextResultFrame() {
   const activeFrameId = resultPane.getAttribute("data-active-frame");
   const nextFrameId = activeFrameId === "frame0" ? "frame1" : "frame0";
   return document.getElementById(nextFrameId);
+}
+
+function logPerformance() {
+  if (timeStart === null) {
+    return;
+  }
+
+  const timeEnd = performance.now();
+  const elapsed = timeEnd - timeStart;
+  if (elapsed < 0) {
+    return;
+  }
+  timeStart = null;
+
+  // Only keep the most recent timings
+  if (timings.length >= 5) {
+    timings = timings.slice(-4);
+  }
+  timings.push(elapsed);
+
+  // Average the times
+  const average = timings.reduce((a, b) => a + b, 0) / timings.length;
+
+  console.log(
+    `Refresh rate: ${timings.map((t) => t.toFixed(0)).join(" ")} → ${average.toFixed(0)}`,
+  );
 }
 
 function render(state, changed) {
@@ -136,11 +166,13 @@ function resultLoaded(event) {
     }
   });
 
+  // Log performance
+  logPerformance();
+
   // Notify main process that the result has loaded, also pass page title
   const newState = {
     loadedVersion: state.resultVersion,
     pageTitle: result.contentDocument.title,
-    timeEnd: performance.now(),
   };
   if (!state.error) {
     // Clear lastScroll only if there was no error loading the result
@@ -219,9 +251,9 @@ window.addEventListener("DOMContentLoaded", () => {
       text: editor.value,
       textSource: "editor",
     };
-    if (!state.dirty) {
-      // User typed when result reflected editor; start perf timer
-      newState.timeStart = performance.now();
+    if (timeStart === null) {
+      // User started typing; start perf timer
+      timeStart = performance.now();
     }
     await window.api.invokeProjectMethod("setState", newState);
   });

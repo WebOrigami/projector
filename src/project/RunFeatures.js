@@ -15,7 +15,6 @@ export default function RunFeatures(Base) {
       // Internal state
       this._result = null;
       this._runVersion = 0;
-      this._timings = [];
 
       // State shared with the renderer
       Object.assign(this.state, {
@@ -33,34 +32,6 @@ export default function RunFeatures(Base) {
     }
     set command(command) {
       this.setState({ command });
-    }
-
-    logPerformance() {
-      const timing = this._timings[this.state.loadedVersion];
-      if (!timing) {
-        return;
-      }
-
-      timing.timeEnd = this.state.timeEnd;
-      const elapsed = timing.timeEnd - timing.timeStart;
-      if (elapsed < 0) {
-        return;
-      }
-      timing.elapsed = elapsed;
-
-      // Only keep the 3 most recent timings with elapsed time
-      this._timings = this._timings
-        .filter((t) => t.elapsed !== undefined)
-        .slice(-3);
-
-      // Average the times
-      const elapsedTimes = this._timings.map((t) => t.elapsed);
-      const average =
-        elapsedTimes.reduce((a, b) => a + b, 0) / elapsedTimes.length;
-
-      // console.log(
-      //   `Refresh rate: ${elapsedTimes.map((t) => t.toFixed(0)).join(" ")} → ${average.toFixed(0)}`,
-      // );
     }
 
     async nextCommand() {
@@ -101,10 +72,6 @@ export default function RunFeatures(Base) {
 
     async run() {
       this._runVersion++;
-
-      // Record start time for this version
-      const timeStart = this.state.timeStart ?? performance.now();
-      this._timings[this._runVersion] = { timeStart };
 
       // We assume the run will crash until it completes successfully
       await this.setState({
@@ -157,16 +124,6 @@ export default function RunFeatures(Base) {
         // Set and run new command
         await this.navigateAndRun(command);
       }
-    }
-
-    async setState(changes) {
-      const { newState, changed } = await super.setState(changes);
-
-      if (changed.loadedVersion) {
-        this.logPerformance();
-      }
-
-      return { newState, changed };
     }
   };
 }
