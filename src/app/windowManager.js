@@ -7,7 +7,6 @@ import Project from "../project/Project.js";
 import recent from "../recent.js";
 import { folderOpen, promptSaveChanges } from "./menu.js";
 import projector from "./projector.js";
-import { registerOrigamiProtocol } from "./protocol.js";
 
 let windowCount = 0;
 let loading = true;
@@ -97,9 +96,6 @@ async function createProjectWindow(rootPath) {
   /** @type {any} */ (window).project = project;
   /** @type {any} */ (windowSession).project = project;
 
-  // Register custom protocol
-  registerOrigamiProtocol(windowSession);
-
   // Give the project a copy of the application editor settings
   await project.setEditorOptions(projector._state.editor);
 
@@ -155,9 +151,6 @@ async function createProjectWindow(rootPath) {
       /** @type {any} */ (windowSession).project = null;
     }
   });
-
-  // Load the renderer HTML file via our custom protocol
-  await window.loadURL("origami://app/_renderer/index.html");
 
   return window;
 }

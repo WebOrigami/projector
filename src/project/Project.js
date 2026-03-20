@@ -1,8 +1,9 @@
 import { isUnpackable, keysFromPath, Tree } from "@weborigami/async-tree";
-import { projectGlobals, projectRootFromPath } from "@weborigami/language";
+import { projectRootFromPath } from "@weborigami/language";
 import * as path from "node:path";
 import * as windowManager from "../app/windowManager.js";
 import { getSitePath } from "../utilities.js";
+import DebugFeatures from "./DebugFeatures.js";
 import FileFeatures from "./FileFeatures.js";
 import PageCommunication from "./PageCommunication.js";
 import ProjectState from "./ProjectState.js";
@@ -11,8 +12,8 @@ import RunFeatures from "./RunFeatures.js";
 /**
  * Project state
  */
-export default class Project extends RunFeatures(
-  FileFeatures(PageCommunication(ProjectState(Object))),
+export default class Project extends DebugFeatures(
+  RunFeatures(FileFeatures(PageCommunication(ProjectState(Object)))),
 ) {
   /**
    * Create a Project instance for the project root path, running in the given
@@ -59,12 +60,6 @@ export default class Project extends RunFeatures(
   async loadProject() {
     this._root = await projectRootFromPath(this._rootPath);
 
-    // Force determination of project globals so we can patch them
-    await projectGlobals(this._root);
-    const globals = /** @type {any}  */ (this._root).globals;
-    // Add all Dev globals at top level for convenience and to match CLI
-    Object.assign(globals, globals.Dev);
-
     this._packageData = await getPackageData(this._root);
     const projectName = getProjectName(this._root, this._packageData);
 
@@ -100,16 +95,16 @@ export default class Project extends RunFeatures(
     });
 
     // Watch for file changes in the project file tree
-    const project = this;
-    this._root.addEventListener("change", async (/** @type {any} */ event) => {
-      if (!project._window) {
-        debugger;
-      }
-      const { filePath } = event.options;
-      await this.onChange(filePath);
-    });
-    // @ts-ignore watch() does exist but isn't declared yet
-    this._root.watch();
+    // const project = this;
+    // this._root.addEventListener("change", async (/** @type {any} */ event) => {
+    //   if (!project._window) {
+    //     debugger;
+    //   }
+    //   const { filePath } = event.options;
+    //   await this.onChange(filePath);
+    // });
+    // // @ts-ignore watch() does exist but isn't declared yet
+    // this._root.watch();
 
     if (recentFiles.length > 0) {
       await this.loadMostRecentFile();
@@ -119,10 +114,15 @@ export default class Project extends RunFeatures(
       await this.loadFile(absolutePath);
     }
 
+    await this.startDebugger();
+
+    // Load the renderer index page
+    await this._window.loadURL(`${this.state.origin}/_debugger/index.html`);
+
     // If the last run didn't crash, auto-run the last command
-    if (!lastRunCrashed && command) {
-      await this.run();
-    }
+    // if (!lastRunCrashed && command) {
+    //   await this.run();
+    // }
   }
 
   get name() {

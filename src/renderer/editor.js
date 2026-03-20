@@ -1,6 +1,5 @@
 import { getLanguageFromPath } from "./languageMap.js";
 import * as scrollState from "./scrollState.js";
-import { appAreaHref, defaultResultHref } from "./shared.js";
 import updateState from "./updateState.js";
 
 // Page state, will be populated by main process
@@ -155,7 +154,7 @@ function resultLoaded(event) {
     const link = event.target.closest("a");
     if (link) {
       const href = link.getAttribute("href");
-      const isValidUrl = URL.canParse(href, appAreaHref);
+      const isValidUrl = URL.canParse(href, window.location.origin);
       if (!isValidUrl) {
         // Ignore invalid URLs
         return;
@@ -224,11 +223,11 @@ Object.assign(window, {
     return scrollState.getState(frame.contentWindow);
   },
 
-  reloadResult() {
-    // Force iframe to reload
-    const frame = getNextResultFrame();
-    frame.src = defaultResultHref;
-  },
+  // reloadResult() {
+  //   // Force iframe to reload
+  //   const frame = getNextResultFrame();
+  //   frame.src = defaultResultHref;
+  // },
 
   setState(changes) {
     const { newState, changed } = updateState(state, changes);
@@ -265,7 +264,10 @@ window.addEventListener("DOMContentLoaded", () => {
     ) {
       // Navigate forward to result of command
       event.preventDefault();
-      await window.api.invokeProjectMethod("navigateAndRun", command.value);
+      // await window.api.invokeProjectMethod("navigateAndRun", command.value);
+      const frame = getNextResultFrame();
+      const encoded = encodeURIComponent(command.value);
+      frame.src = `/!eval/${encoded}`;
     } else if (event.key === "ArrowDown") {
       event.preventDefault();
       await window.api.invokeProjectMethod("nextCommand");
