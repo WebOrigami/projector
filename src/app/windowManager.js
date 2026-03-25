@@ -144,7 +144,7 @@ async function createProjectWindow(rootPath) {
       await removeFromOpenProjects(project);
 
       // Tell project it's closing
-      project.close();
+      await project.close();
 
       // Break references to project so we fail faster if accessed
       /** @type {any} */ (window).project = null;

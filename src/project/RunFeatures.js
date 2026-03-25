@@ -1,6 +1,5 @@
 import { compile, projectGlobals } from "@weborigami/language";
 import recent from "../recent.js";
-import { formatError, preprocessResource } from "../utilities.js";
 
 const recentCommandsUpdater = recent(50);
 
@@ -83,36 +82,38 @@ export default function RunFeatures(Base) {
         return;
       }
 
-      let error = null;
-      try {
-        let result = await evaluate(command, {
-          enableCaching: false,
-          mode: "shell",
-          parent: this._root,
-        });
-        this._result = await preprocessResource(result);
-      } catch (/** @type {any} */ e) {
-        this._result = null;
-        error = await formatError(e);
-      }
+      // let error = null;
+      // try {
+      //   let result = await evaluate(command, {
+      //     enableCaching: false,
+      //     mode: "shell",
+      //     parent: this._root,
+      //   });
+      //   this._result = await preprocessResource(result);
+      // } catch (/** @type {any} */ e) {
+      //   this._result = null;
+      //   error = await formatError(e);
+      // }
 
-      let resultVersion = this.state.resultVersion;
-      if (!error) {
-        // Bump result version to let renderer know to reload result
-        resultVersion = this._runVersion;
-      }
+      // let resultVersion = this.state.resultVersion;
+      // if (!error) {
+      //   // Bump result version to let renderer know to reload result
+      //   resultVersion = this._runVersion;
+      // }
 
-      const commands = recentCommandsUpdater.add(
-        this.state.recentCommands || [],
-        command,
-      );
+      // const commands = recentCommandsUpdater.add(
+      //   this.state.recentCommands || [],
+      //   command,
+      // );
 
-      await this.setState({
-        error,
-        lastRunCrashed: false,
-        recentCommands: commands,
-        resultVersion,
-      });
+      // await this.setState({
+      //   error,
+      //   lastRunCrashed: false,
+      //   recentCommands: commands,
+      //   resultVersion,
+      // });
+
+      await this.invokePageFunction("reloadResult");
     }
 
     async runTool(toolName) {

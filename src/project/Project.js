@@ -45,7 +45,9 @@ export default class Project extends DebugFeatures(
   }
 
   // Project window is closing
-  close() {
+  async close() {
+    await super.close();
+
     // Stop any file watching
     // @ts-ignore unwatch() does exist but isn't declared yet
     this._root?.unwatch();

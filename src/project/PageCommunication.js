@@ -153,18 +153,16 @@ export default function PageCommunication(Base) {
         return;
       }
 
-      // Save before running
+      const lastScroll = await this.invokePageFunction("getScrollPosition");
+      await this.setState({ lastScroll });
+
+      // Save file, which will trigger a run
       if (this.dirty) {
         const saved = await this.save();
         if (!saved) {
           return;
         }
       }
-
-      const lastScroll = await this.invokePageFunction("getScrollPosition");
-      await this.setState({ lastScroll });
-
-      await this.run();
     }
 
     restartRefreshTimeout() {

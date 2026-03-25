@@ -223,11 +223,12 @@ Object.assign(window, {
     return scrollState.getState(frame.contentWindow);
   },
 
-  // reloadResult() {
-  //   // Force iframe to reload
-  //   const frame = getNextResultFrame();
-  //   frame.src = defaultResultHref;
-  // },
+  reloadResult() {
+    // Tell iframe to (re)load the command result
+    const frame = getNextResultFrame();
+    const encoded = encodeURIComponent(command.value);
+    frame.src = `/!eval/${encoded}`;
+  },
 
   setState(changes) {
     const { newState, changed } = updateState(state, changes);
@@ -264,10 +265,7 @@ window.addEventListener("DOMContentLoaded", () => {
     ) {
       // Navigate forward to result of command
       event.preventDefault();
-      // await window.api.invokeProjectMethod("navigateAndRun", command.value);
-      const frame = getNextResultFrame();
-      const encoded = encodeURIComponent(command.value);
-      frame.src = `/!eval/${encoded}`;
+      await window.api.invokeProjectMethod("navigateAndRun", command.value);
     } else if (event.key === "ArrowDown") {
       event.preventDefault();
       await window.api.invokeProjectMethod("nextCommand");
