@@ -27,10 +27,15 @@ export default function DebugFeatures(Base) {
       const dirname = path.dirname(fileURLToPath(import.meta.url));
       const debugFilesPath = path.join(dirname, "../renderer");
 
+      const { sitePath } = this.state;
+      const siteTerm = sitePath !== "." ? `...<${sitePath}>, ` : "";
+
+      // The expression we serve is the current tree plus the debugger files
+      const expression = `{ ...<.>, ${siteTerm}_debugger: <${debugFilesPath}> }`;
+
       this._debugger = await debugParent({
-        debugFilesPath,
         enableUnsafeEval: true,
-        expression: ".",
+        expression,
         parentPath: this._root.path,
       });
 
@@ -39,11 +44,7 @@ export default function DebugFeatures(Base) {
         await this.invokePageMethod("reloadResult");
       });
 
-      // Wait for debugger's "ready" event
-      const origin = await new Promise((resolve) => {
-        this._debugger.once("ready", (event) => resolve(event.origin));
-      });
-
+      const origin = this._debugger.origin;
       await this.setState({ origin });
     }
 

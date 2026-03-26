@@ -23,6 +23,9 @@ const imageExtensions = [
   ".webp",
 ];
 
+// Counter used to force reevaluation of the same command
+let evalCounter = 0;
+
 function getFileName(filePath) {
   if (!filePath) return "Untitled";
 
@@ -170,6 +173,7 @@ function resultLoaded(event) {
 
   // Notify main process that the result has loaded, also pass page title
   const newState = {
+    lastRunCrashed: false, // Clear crash state on successful load
     loadedVersion: state.resultVersion,
     pageTitle: result.contentDocument.title,
   };
@@ -227,7 +231,8 @@ Object.assign(window, {
     // Tell iframe to (re)load the command result
     const frame = getNextResultFrame();
     const encoded = encodeURIComponent(command.value);
-    frame.src = `/!eval/${encoded}`;
+    frame.src = `/!eval/${evalCounter},(${encoded})`;
+    evalCounter++;
   },
 
   setState(changes) {
