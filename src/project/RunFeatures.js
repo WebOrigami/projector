@@ -1,4 +1,3 @@
-import { compile, projectGlobals } from "@weborigami/language";
 import recent from "../recent.js";
 
 const recentCommandsUpdater = recent(50);
@@ -82,36 +81,13 @@ export default function RunFeatures(Base) {
         return;
       }
 
-      // let error = null;
-      // try {
-      //   let result = await evaluate(command, {
-      //     enableCaching: false,
-      //     mode: "shell",
-      //     parent: this._root,
-      //   });
-      //   this._result = await preprocessResource(result);
-      // } catch (/** @type {any} */ e) {
-      //   this._result = null;
-      //   error = await formatError(e);
-      // }
-
-      // let resultVersion = this.state.resultVersion;
-      // if (!error) {
-      //   // Bump result version to let renderer know to reload result
-      //   resultVersion = this._runVersion;
-      // }
-
-      // const commands = recentCommandsUpdater.add(
-      //   this.state.recentCommands || [],
-      //   command,
-      // );
-
-      // await this.setState({
-      //   error,
-      //   lastRunCrashed: false,
-      //   recentCommands: commands,
-      //   resultVersion,
-      // });
+      const commands = recentCommandsUpdater.add(
+        this.state.recentCommands || [],
+        command,
+      );
+      await this.setState({
+        recentCommands: commands,
+      });
 
       await this.invokePageFunction("reloadResult");
     }
@@ -127,17 +103,4 @@ export default function RunFeatures(Base) {
       }
     }
   };
-}
-
-async function evaluate(source, options = {}) {
-  const { parent } = options;
-  const globals = await projectGlobals(parent);
-  const fn = compile.expression(source, { ...options, globals });
-
-  let value = await fn();
-  if (value instanceof Function) {
-    value = await value();
-  }
-
-  return value;
 }
