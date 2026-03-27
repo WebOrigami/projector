@@ -91,10 +91,13 @@ async function createProjectWindow(rootPath) {
 
   // Create the Project instance for this window
   const project = new Project(rootPath, window, projector);
-  await project.loadProject();
 
+  // Bind project to window and session
   /** @type {any} */ (window).project = project;
   /** @type {any} */ (windowSession).project = project;
+
+  // Load the project
+  await project.loadProject();
 
   // Give the project a copy of the application editor settings
   await project.setEditorOptions(projector._state.editor);
