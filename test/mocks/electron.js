@@ -68,20 +68,6 @@ class MockClient {
   }
 }
 
-export const protocol = {
-  registerSchemesAsPrivileged() {},
-};
-
-export const session = {
-  fromPartition(partition) {
-    return {
-      protocol: {
-        handle(scheme, handler) {},
-      },
-    };
-  },
-};
-
 export const shell = {
   openExternal() {},
 };

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, session } from "#electron";
+import { app, BrowserWindow } from "#electron";
 import { projectRootFromPath } from "@weborigami/language";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -65,7 +65,6 @@ async function createProjectWindow(rootPath) {
   // Create a unique session for the window
   windowCount++;
   const partition = `project-${windowCount}`;
-  const windowSession = session.fromPartition(partition);
 
   // Create the browser window
   const window = new BrowserWindow({
@@ -92,9 +91,8 @@ async function createProjectWindow(rootPath) {
   // Create the Project instance for this window
   const project = new Project(rootPath, window, projector);
 
-  // Bind project to window and session
+  // Bind project to window
   /** @type {any} */ (window).project = project;
-  /** @type {any} */ (windowSession).project = project;
 
   // Load the project
   await project.loadProject();
@@ -151,7 +149,6 @@ async function createProjectWindow(rootPath) {
 
       // Break references to project so we fail faster if accessed
       /** @type {any} */ (window).project = null;
-      /** @type {any} */ (windowSession).project = null;
     }
   });
 
