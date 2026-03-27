@@ -2,7 +2,7 @@ import { isUnpackable, keysFromPath, Tree } from "@weborigami/async-tree";
 import { projectRootFromPath } from "@weborigami/language";
 import * as path from "node:path";
 import * as windowManager from "../app/windowManager.js";
-import { getSitePath } from "../utilities.js";
+import { getSitePath, isJavaScriptFile } from "../utilities.js";
 import DebugFeatures from "./DebugFeatures.js";
 import FileFeatures from "./FileFeatures.js";
 import PageCommunication from "./PageCommunication.js";
@@ -97,16 +97,11 @@ export default class Project extends DebugFeatures(
     });
 
     // Watch for file changes in the project file tree
-    // const project = this;
-    // this._root.addEventListener("change", async (/** @type {any} */ event) => {
-    //   if (!project._window) {
-    //     debugger;
-    //   }
-    //   const { filePath } = event.options;
-    //   await this.onChange(filePath);
-    // });
-    // // @ts-ignore watch() does exist but isn't declared yet
-    // this._root.watch();
+    this._root.addEventListener("change", async (/** @type {any} */ event) => {
+      const { filePath } = event.options;
+      await this.onChange(filePath);
+    });
+    this._root.watch();
 
     if (recentFiles.length > 0) {
       await this.loadMostRecentFile();
@@ -116,15 +111,19 @@ export default class Project extends DebugFeatures(
       await this.loadFile(absolutePath);
     }
 
-    await this.startDebugger();
+    if (this.isDebuggerRunning()) {
+      await this.restartDebugger();
+    } else {
+      await this.startDebugger();
+    }
 
     // Load the renderer index page
     await this._window.loadURL(`${this.state.origin}/_debugger/index.html`);
 
     // If the last run didn't crash, auto-run the last command
-    // if (!lastRunCrashed && command) {
-    //   await this.run();
-    // }
+    if (!lastRunCrashed && command) {
+      await this.run();
+    }
   }
 
   get name() {
@@ -152,14 +151,21 @@ export default class Project extends DebugFeatures(
       if (relativePath === "package.json" || relativePath === "config.ori") {
         // Need to reload project: project name, site, and config/globals may
         // have changed.
+        console.log("Project changed, reloading project...");
         await this.loadProject();
         await windowManager.addToRecentProjects(this); // in case name changed
         return;
       }
 
+      if (isJavaScriptFile(relativePath)) {
+        console.log("JavaScript file changed, restarting debugger...");
+        await this.restartDebugger();
+      }
+
       if (relativePath === this.state.sitePath) {
-        // Will need to reload site
-        this._site = null;
+        // Need to reload site
+        console.log("Site file changed, reloading site...");
+        await this.reevaluateSite();
       }
 
       if (!this._refreshTimeout) {

@@ -64,6 +64,12 @@ function getSitePathFromScript(script) {
   return match[0];
 }
 
+export function isJavaScriptFile(filePath) {
+  const extname = path.extname(filePath).toLowerCase();
+  const jsExtensions = [".cjs", ".js", ".mjs", ".ts"];
+  return jsExtensions.includes(extname);
+}
+
 /**
  * Returns true if the object is "simple": a plain object or array that does not
  * have any getters in its deep structure.

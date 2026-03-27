@@ -18,6 +18,18 @@ export default function DebugFeatures(Base) {
       await this.stopDebugger();
     }
 
+    isDebuggerRunning() {
+      return this._debugger !== null;
+    }
+
+    async reevaluateSite() {
+      await this._debugger?.reevaluate();
+    }
+
+    async restartDebugger() {
+      await this._debugger?.restart();
+    }
+
     async startDebugger() {
       if (this._debugger) {
         console.warn("Tried to start debugger but it's already running");

@@ -6,6 +6,7 @@ import * as path from "node:path";
 import * as menu from "../app/menu.js";
 import * as windowManager from "../app/windowManager.js";
 import recent from "../recent.js";
+import { isJavaScriptFile } from "../utilities.js";
 
 const recentFilesUpdater = recent(10);
 
@@ -48,25 +49,24 @@ export default function FileFeatures(Base) {
       // modules are reloaded on each request. Only top-level modules will be
       // reloaded; to reload modules those depend on will require a more complex
       // solution.
-      const extname = path.extname(filePath).toLowerCase();
-      const jsExtensions = [".cjs", ".js", ".mjs", ".ts"];
-      if (jsExtensions.includes(extname)) {
+      if (isJavaScriptFile(filePath)) {
+        console.log("JavaScript file changed, restarting debugger...");
         moduleCache.resetTimestamp();
+        await this.restartDebugger();
       }
 
+      const extname = path.extname(filePath).toLowerCase();
+
       // If a .ori file changed, reload the site
+      // TODO: Add .ori.xxx extensions
       const oriExtensions = [".ori"];
-      // if (oriExtensions.includes(extname)) {
-      //   this._site = null;
-      // }
+      if (oriExtensions.includes(extname)) {
+        console.log(".ori file changed, reloading site...");
+        await this.reevaluateSite();
+      }
 
       // If a CSS file or any of the above changed, clear the Chromium cache.
-      const cssExtensions = [".css", ".scss", ".sass", ".less"];
-      const reloadExtension = [
-        ...jsExtensions,
-        ...oriExtensions,
-        ...cssExtensions,
-      ];
+      const reloadExtension = [".css", ".js", ...oriExtensions];
       if (reloadExtension.includes(extname)) {
         await clearBrowserCache(this._window);
       }
