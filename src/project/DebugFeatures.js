@@ -37,16 +37,19 @@ export default function DebugFeatures(Base) {
       }
 
       const dirname = path.dirname(fileURLToPath(import.meta.url));
-      const debugFilesPath = path.join(dirname, "../renderer");
+      const srcPath = path.join(dirname, "..");
 
       const { sitePath } = this.state;
       const siteTerm = sitePath !== "." ? `...<${sitePath}>, ` : "";
 
       // The expression we serve is the current tree plus the debugger files
-      const expression = `{ ...<.>, ${siteTerm}_debugger: <${debugFilesPath}> }`;
+      const expression = `{
+        ...<.>,
+        "!eval": <${srcPath}/project/oriEval.js>(<.>),
+        ${siteTerm}_debugger: <${srcPath}/renderer>
+      }`;
 
       this._debugger = await debugParent({
-        enableUnsafeEval: true,
         expression,
         parentPath: this._root.path,
       });
