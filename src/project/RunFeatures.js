@@ -10,16 +10,11 @@ export default function RunFeatures(Base) {
     constructor(...args) {
       super(...args);
 
-      // Internal state
-      this._result = null;
-      this._runVersion = 0;
-
       // State shared with the renderer
       Object.assign(this.state, {
         command: "",
         error: null,
         lastRunCrashed: false,
-        loadedVersion: 0,
         resultVersion: 0,
         recentCommands: [],
       });
@@ -64,18 +59,7 @@ export default function RunFeatures(Base) {
       return this.state.recentCommands;
     }
 
-    get result() {
-      return this._result;
-    }
-
     async run() {
-      this._runVersion++;
-
-      // We assume the run will crash until it completes successfully
-      await this.setState({
-        lastRunCrashed: true,
-      });
-
       let command = this.state.command;
       if (!command) {
         return;
@@ -85,22 +69,25 @@ export default function RunFeatures(Base) {
         this.state.recentCommands || [],
         command,
       );
+
+      // Signal editor to load a new result. We consider the run to have crashed
+      // until it completes successfully.
       await this.setState({
+        lastRunCrashed: true,
         recentCommands: commands,
+        resultVersion: this.state.resultVersion + 1,
       });
-
-      await this.invokePageFunction("reloadResult");
     }
 
-    async runTool(toolName) {
-      const command = `${toolName} ${this.state.sitePath}`;
-      if (this.state.command === command) {
-        // Re-run current command
-        await this.run();
-      } else {
-        // Set and run new command
-        await this.navigateAndRun(command);
-      }
-    }
+    // async runTool(toolName) {
+    //   const command = `${toolName} ${this.state.sitePath}`;
+    //   if (this.state.command === command) {
+    //     // Re-run current command
+    //     await this.run();
+    //   } else {
+    //     // Set and run new command
+    //     await this.navigateAndRun(command);
+    //   }
+    // }
   };
 }
