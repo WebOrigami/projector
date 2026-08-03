@@ -45,7 +45,6 @@ export default function DebugFeatures(Base) {
       // The expression we serve is the current tree plus the debugger files
       const expression = `{
         ...<.>,
-        "!eval": <${srcPath}/project/oriEval.js>(<.>),
         ${siteTerm}_debugger: <${srcPath}/renderer>
       }`;
 
