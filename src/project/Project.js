@@ -2,7 +2,7 @@ import { isUnpackable, keysFromPath, Tree } from "@weborigami/async-tree";
 import { projectRootFromPath } from "@weborigami/language";
 import * as path from "node:path";
 import * as windowManager from "../app/windowManager.js";
-import { getSitePath, isJavaScriptFile } from "../utilities.js";
+import { getSitePath } from "../utilities.js";
 import DebugFeatures from "./DebugFeatures.js";
 import FileFeatures from "./FileFeatures.js";
 import PageCommunication from "./PageCommunication.js";
@@ -144,9 +144,10 @@ export default class Project extends DebugFeatures(
       return;
     }
 
+    await this.clearCacheForFileChange(filePath);
+
     if (filePath !== this._filePath) {
       // Editing some file that's not the active file
-      await this.clearCacheForFileChange(filePath);
 
       if (relativePath === "package.json" || relativePath === "config.ori") {
         // Need to reload project: project name, site, and config/globals may
@@ -155,17 +156,6 @@ export default class Project extends DebugFeatures(
         await this.loadProject();
         await windowManager.addToRecentProjects(this); // in case name changed
         return;
-      }
-
-      if (isJavaScriptFile(relativePath)) {
-        console.log("JavaScript file changed, restarting debugger...");
-        await this.restartDebugger();
-      }
-
-      if (relativePath === this.state.sitePath) {
-        // Need to reload site
-        console.log("Site file changed, reloading site...");
-        await this.reevaluateSite();
       }
 
       if (!this._refreshTimeout) {
@@ -190,7 +180,6 @@ export default class Project extends DebugFeatures(
     // Force reload of current file through our normal path
     await this.loadMostRecentFile();
 
-    await this.clearCacheForFileChange(filePath);
     if (!this._refreshTimeout) {
       // Refresh immediately
       this.refresh();

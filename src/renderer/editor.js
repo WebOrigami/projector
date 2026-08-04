@@ -72,6 +72,14 @@ function logPerformance() {
   );
 }
 
+// Tell iframe to (re)load the command result
+function reloadResult() {
+  const frame = getNextResultFrame();
+  const encoded = encodeURIComponent(command.value);
+  const { resultVersion } = state;
+  frame.src = `/!eval/${resultVersion},(${encoded})`;
+}
+
 function render(state, changed) {
   if (changed.backEnabled) {
     backButton.disabled = !state.backEnabled;
@@ -221,14 +229,6 @@ Object.assign(window, {
   getScrollPosition() {
     const frame = getCurrentResultFrame();
     return scrollState.getState(frame.contentWindow);
-  },
-
-  reloadResult() {
-    // Tell iframe to (re)load the command result
-    const frame = getNextResultFrame();
-    const encoded = encodeURIComponent(command.value);
-    const { resultVersion } = state;
-    frame.src = `/!eval/${resultVersion},(${encoded})`;
   },
 
   setState(changes) {

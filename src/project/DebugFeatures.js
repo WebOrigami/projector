@@ -22,14 +22,6 @@ export default function DebugFeatures(Base) {
       return this._debugger !== null;
     }
 
-    async reevaluateSite() {
-      await this._debugger?.reevaluate();
-    }
-
-    async restartDebugger() {
-      await this._debugger?.restart();
-    }
-
     async startDebugger() {
       if (this._debugger) {
         console.warn("Tried to start debugger but it's already running");
@@ -51,11 +43,6 @@ export default function DebugFeatures(Base) {
       this._debugger = await debugParent({
         expression,
         parentPath: this._root.path,
-      });
-
-      // When debugger has evaluated an expression, tell page to reload result
-      this._debugger.on("evaluated", async () => {
-        await this.invokePageMethod("reloadResult");
       });
 
       const origin = this._debugger.origin;
