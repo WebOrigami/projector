@@ -9,6 +9,10 @@ window.state = {};
 let timings = [];
 let timeStart = null; // current run start time
 
+// Flag to work around Monaco editor raising input events when setting the value
+// programmatically
+let ignoreEditorInput = false;
+
 const imageExtensions = [
   ".avif",
   ".bmp",
@@ -119,8 +123,10 @@ function render(state, changed) {
   }
 
   if (changed.text && state.textSource === "file") {
+    ignoreEditorInput = true;
     editor.value = state.text ?? "";
     editor.disabled = state.text === null;
+    ignoreEditorInput = false;
   }
 
   if (changed.fileName && state.fileName) {
@@ -246,6 +252,14 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   editor.addEventListener("input", async () => {
+    // Unlike a standard <input>, the Monaco editor raises input events event
+    // when setting the value programmatically, so we need to use a flag to
+    // ignore those.
+    if (ignoreEditorInput) {
+      console.log("Ignoring editor input event");
+      return;
+    }
+
     // Notify main process that the content has changed
     const newState = {
       dirty: true,
