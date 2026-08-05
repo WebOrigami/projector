@@ -96,13 +96,6 @@ export default class Project extends DebugFeatures(
       sitePath,
     });
 
-    // Watch for file changes in the project file tree
-    this._root.addEventListener("change", async (/** @type {any} */ event) => {
-      const { filePath } = event.options;
-      await this.onChange(filePath);
-    });
-    this._root.watch();
-
     if (recentFiles.length > 0) {
       await this.loadMostRecentFile();
     } else if (sitePath && sitePath !== ".") {
