@@ -80,8 +80,7 @@ function logPerformance() {
 function reloadResult() {
   const frame = getNextResultFrame();
   const encoded = encodeURIComponent(command.value);
-  const { resultVersion } = state;
-  frame.src = `/!eval/${resultVersion},(${encoded})`;
+  frame.src = `/!eval/(${encoded})`;
 }
 
 function render(state, changed) {

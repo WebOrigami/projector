@@ -137,7 +137,6 @@ export default class Project extends DebugFeatures(
     }
 
     const relativePath = path.relative(this._root.path, filePath);
-
     const keys = keysFromPath(relativePath);
     if (keys.length > 0 && keys[0].startsWith(".") && keys[0].endsWith("/")) {
       // Ignore changes in root-level dot folders like `.git`
@@ -156,33 +155,15 @@ export default class Project extends DebugFeatures(
         await windowManager.addToRecentProjects(this); // in case name changed
         return;
       }
-
-      if (!this._saveTimeout) {
-        // If we haven't already queued a save, do so now
-        this.restartSaveTimeout();
-      }
-      return;
+    } else if (this.state.dirty) {
+      // If user has edited the current file, ignore external changes
+    } else if (this.loadFileText(filePath) !== this.state.text) {
+      // File changed externally; force reload through our normal path
+      await this.loadMostRecentFile();
     }
 
-    if (this.state.dirty) {
-      // User has edited file, ignore external changes
-      return;
-    }
-
-    // See if file text has actually changed
-    const text = this.loadFileText(filePath);
-    if (text === this.state.text) {
-      // Change event was result of our own save, ignore
-      return;
-    }
-
-    // Force reload of current file through our normal path
-    await this.loadMostRecentFile();
-
-    if (!this._saveTimeout) {
-      // Run immediately
-      this.run();
-    }
+    // Run immediately
+    this.run();
   }
 
   get root() {

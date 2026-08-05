@@ -2,7 +2,7 @@ import { shell } from "#electron";
 import recent from "../recent.js";
 import { resolveHref } from "../utilities.js";
 
-const REFRESH_DELAY_MS = 250;
+const REFRESH_DELAY_MS = 0; //150;
 
 const backUpdater = recent(100);
 const forwardUpdater = recent(100);
@@ -156,6 +156,12 @@ export default function PageCommunication(Base) {
       const lastScroll = await this.invokePageFunction("getScrollPosition");
       await this.setState({ lastScroll });
 
+      // Clear any pending save timeout since we're saving now
+      if (this._saveTimeout) {
+        clearTimeout(this._saveTimeout);
+        this._saveTimeout = null;
+      }
+
       // Save file
       if (this.dirty) {
         const saved = await this.save();
@@ -168,9 +174,9 @@ export default function PageCommunication(Base) {
     restartSaveTimeout() {
       if (this._saveTimeout) {
         clearTimeout(this._saveTimeout);
+        this._saveTimeout = null;
       }
       this._saveTimeout = setTimeout(async () => {
-        this._saveTimeout = null;
         await this.refresh();
       }, REFRESH_DELAY_MS);
     }
