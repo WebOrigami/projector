@@ -180,8 +180,8 @@ export default class Project extends DebugFeatures(
     await this.loadMostRecentFile();
 
     if (!this._saveTimeout) {
-      // Save immediately
-      this.refresh();
+      // Run immediately
+      this.run();
     }
   }
 
