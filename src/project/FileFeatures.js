@@ -42,16 +42,6 @@ export default function FileFeatures(Base) {
       });
     }
 
-    async clearCacheForFileChange(filePath) {
-      // If a CSS file has changed, clear the Chromium cache.
-      const extname = path.extname(filePath).toLowerCase();
-      // const reloadExtension = [".css", ".js", ".ori"];
-      const reloadExtension = [".css"];
-      if (reloadExtension.includes(extname)) {
-        await clearBrowserCache(this._window);
-      }
-    }
-
     get dirty() {
       return this.state.dirty;
     }

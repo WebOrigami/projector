@@ -143,8 +143,6 @@ export default class Project extends DebugFeatures(
       return;
     }
 
-    await this.clearCacheForFileChange(filePath);
-
     if (filePath !== this._filePath) {
       // Editing some file that's not the active file
       if (relativePath === "package.json" || relativePath === "config.ori") {
