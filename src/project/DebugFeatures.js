@@ -45,6 +45,11 @@ export default function DebugFeatures(Base) {
         parentPath: this._root.path,
       });
 
+      this._debugger.on("change", (event) => {
+        const { filePath } = event;
+        console.log(`${filePath} changed`);
+      });
+
       const origin = this._debugger.origin;
       await this.setState({ origin });
     }

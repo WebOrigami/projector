@@ -148,7 +148,6 @@ export default class Project extends DebugFeatures(
 
     if (filePath !== this._filePath) {
       // Editing some file that's not the active file
-
       if (relativePath === "package.json" || relativePath === "config.ori") {
         // Need to reload project: project name, site, and config/globals may
         // have changed.
@@ -158,9 +157,9 @@ export default class Project extends DebugFeatures(
         return;
       }
 
-      if (!this._refreshTimeout) {
-        // If we haven't already queued a refresh, do so now
-        this.restartRefreshTimeout();
+      if (!this._saveTimeout) {
+        // If we haven't already queued a save, do so now
+        this.restartSaveTimeout();
       }
       return;
     }
@@ -180,8 +179,8 @@ export default class Project extends DebugFeatures(
     // Force reload of current file through our normal path
     await this.loadMostRecentFile();
 
-    if (!this._refreshTimeout) {
-      // Refresh immediately
+    if (!this._saveTimeout) {
+      // Save immediately
       this.refresh();
     }
   }

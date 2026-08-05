@@ -18,7 +18,7 @@ export default function PageCommunication(Base) {
       // Internal state
       this._back = [];
       this._forward = [];
-      this._refreshTimeout = null;
+      this._saveTimeout = null;
 
       // State shared with the renderer
       Object.assign(this.state, {
@@ -163,17 +163,14 @@ export default function PageCommunication(Base) {
           return;
         }
       }
-
-      // Trigger a run
-      await this.run();
     }
 
-    restartRefreshTimeout() {
-      if (this._refreshTimeout) {
-        clearTimeout(this._refreshTimeout);
+    restartSaveTimeout() {
+      if (this._saveTimeout) {
+        clearTimeout(this._saveTimeout);
       }
-      this._refreshTimeout = setTimeout(async () => {
-        this._refreshTimeout = null;
+      this._saveTimeout = setTimeout(async () => {
+        this._saveTimeout = null;
         await this.refresh();
       }, REFRESH_DELAY_MS);
     }
@@ -189,7 +186,7 @@ export default function PageCommunication(Base) {
 
       if (changed.dirty) {
         if (newState.dirty) {
-          this.restartRefreshTimeout();
+          this.restartSaveTimeout();
         }
       }
 
