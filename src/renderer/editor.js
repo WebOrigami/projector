@@ -89,8 +89,18 @@ function reloadResult() {
   }
 
   const frame = getNextResultFrame();
-  const encoded = encodeURIComponent(command.value);
-  frame.src = `/!eval/${encoded}`;
+  let unencoded = command.value;
+  const trailingSlash = unencoded.endsWith("/");
+  if (trailingSlash) {
+    // We'll shift the trailing slash to the URL
+    unencoded = unencoded.slice(0, -1);
+  }
+  const encoded = encodeURIComponent(unencoded);
+  let src = `/!eval/${encoded}`;
+  if (trailingSlash) {
+    src += "/";
+  }
+  frame.src = src;
 }
 
 function render(state, changed) {
