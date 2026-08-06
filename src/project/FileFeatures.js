@@ -6,6 +6,8 @@ import * as menu from "../app/menu.js";
 import * as windowManager from "../app/windowManager.js";
 import recent from "../recent.js";
 
+const REFRESH_DELAY_MS = 0; //150;
+
 const recentFilesUpdater = recent(10);
 
 /**
@@ -17,6 +19,7 @@ export default function FileFeatures(Base) {
       super(...args);
 
       // Internal state
+      this._saveTimeout = null;
 
       // The full path to the active file, or null if the file hasn't been saved
       // or there is no open file
@@ -186,6 +189,38 @@ export default function FileFeatures(Base) {
       this.setState({ recentFiles });
     }
 
+    // Save and tell renderer to reload result pane
+    async refresh() {
+      if (!this.filePath) {
+        // Refresh disabled until file has been saved
+        return;
+      }
+
+      // Clear any pending save timeout since we're saving now
+      if (this._saveTimeout) {
+        clearTimeout(this._saveTimeout);
+        this._saveTimeout = null;
+      }
+
+      // Save file
+      if (this.dirty) {
+        const saved = await this.save();
+        if (!saved) {
+          return;
+        }
+      }
+    }
+
+    restartSaveTimeout() {
+      if (this._saveTimeout) {
+        clearTimeout(this._saveTimeout);
+        this._saveTimeout = null;
+      }
+      this._saveTimeout = setTimeout(async () => {
+        await this.refresh();
+      }, REFRESH_DELAY_MS);
+    }
+
     // Write text to file
     async save() {
       if (this.state.text === null) {
@@ -238,6 +273,18 @@ export default function FileFeatures(Base) {
       }
 
       return saved;
+    }
+
+    async setState(changes) {
+      const { newState, changed } = await super.setState(changes);
+
+      if (changed.dirty) {
+        if (newState.dirty) {
+          this.restartSaveTimeout();
+        }
+      }
+
+      return { newState, changed };
     }
 
     get text() {

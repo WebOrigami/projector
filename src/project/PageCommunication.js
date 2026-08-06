@@ -2,8 +2,6 @@ import { shell } from "#electron";
 import recent from "../recent.js";
 import { resolveHref } from "../utilities.js";
 
-const REFRESH_DELAY_MS = 0; //150;
-
 const backUpdater = recent(100);
 const forwardUpdater = recent(100);
 
@@ -18,7 +16,6 @@ export default function PageCommunication(Base) {
       // Internal state
       this._back = [];
       this._forward = [];
-      this._saveTimeout = null;
 
       // State shared with the renderer
       Object.assign(this.state, {
@@ -146,38 +143,6 @@ export default function PageCommunication(Base) {
       await this.navigateAndRun(command);
     }
 
-    // Save and tell renderer to reload result pane
-    async refresh() {
-      if (!this.filePath) {
-        // Refresh disabled until file has been saved
-        return;
-      }
-
-      // Clear any pending save timeout since we're saving now
-      if (this._saveTimeout) {
-        clearTimeout(this._saveTimeout);
-        this._saveTimeout = null;
-      }
-
-      // Save file
-      if (this.dirty) {
-        const saved = await this.save();
-        if (!saved) {
-          return;
-        }
-      }
-    }
-
-    restartSaveTimeout() {
-      if (this._saveTimeout) {
-        clearTimeout(this._saveTimeout);
-        this._saveTimeout = null;
-      }
-      this._saveTimeout = setTimeout(async () => {
-        await this.refresh();
-      }, REFRESH_DELAY_MS);
-    }
-
     async setEditorOptions(options) {
       return this.setState({
         editor: Object.assign({}, this.state.editor, options),
@@ -186,12 +151,6 @@ export default function PageCommunication(Base) {
 
     async setState(changes) {
       const { newState, changed } = await super.setState(changes);
-
-      if (changed.dirty) {
-        if (newState.dirty) {
-          this.restartSaveTimeout();
-        }
-      }
 
       if (Object.keys(changed).length > 0) {
         // Notify renderer of state change
