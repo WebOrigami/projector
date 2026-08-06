@@ -153,9 +153,6 @@ export default function PageCommunication(Base) {
         return;
       }
 
-      const lastScroll = await this.invokePageFunction("getScrollPosition");
-      await this.setState({ lastScroll });
-
       // Clear any pending save timeout since we're saving now
       if (this._saveTimeout) {
         clearTimeout(this._saveTimeout);

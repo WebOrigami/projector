@@ -2,8 +2,12 @@ import { getLanguageFromPath } from "./languageMap.js";
 import * as scrollState from "./scrollState.js";
 import updateState from "./updateState.js";
 
-// Page state, will be populated by main process
+// Page state shared with main process
 window.state = {};
+
+// Page-only state
+let previousScrollState = null;
+let restoreScroll = false;
 
 // Performance timings: editor input -> iframe load
 let timings = [];
@@ -78,9 +82,15 @@ function logPerformance() {
 
 // Tell iframe to (re)load the command result
 function reloadResult() {
+  if (restoreScroll && previousScrollState === null) {
+    // No reload in progress, save scroll state
+    const frame = getCurrentResultFrame();
+    previousScrollState = scrollState.getState(frame.contentWindow);
+  }
+
   const frame = getNextResultFrame();
   const encoded = encodeURIComponent(command.value);
-  frame.src = `/!eval/(${encoded})`;
+  frame.src = `/!eval/${encoded}`;
 }
 
 function render(state, changed) {
@@ -157,9 +167,10 @@ function resultLoaded(event) {
     }
   }
 
-  if (state.lastScroll) {
-    // We're refreshing the command result; restore scroll position
-    scrollState.restoreState(result.contentWindow, state.lastScroll);
+  if (previousScrollState) {
+    // Restore scroll position
+    scrollState.restoreState(result.contentWindow, previousScrollState);
+    previousScrollState = null;
   }
 
   // Intercept external link clicks to open in default browser
@@ -179,7 +190,7 @@ function resultLoaded(event) {
   });
 
   // Log performance
-  logPerformance();
+  // logPerformance();
 
   // Notify main process that the result has loaded, also pass page title
   const newState = {
@@ -231,11 +242,6 @@ Object.assign(window, {
     editor.focus();
   },
 
-  getScrollPosition() {
-    const frame = getCurrentResultFrame();
-    return scrollState.getState(frame.contentWindow);
-  },
-
   setState(changes) {
     const { newState, changed } = updateState(state, changes);
     state = newState;
@@ -255,9 +261,11 @@ window.addEventListener("DOMContentLoaded", () => {
     // when setting the value programmatically, so we need to use a flag to
     // ignore those.
     if (ignoreEditorInput) {
-      console.log("Ignoring editor input event");
       return;
     }
+
+    // Changing result via editor input should preserve scroll position
+    restoreScroll = true;
 
     // Notify main process that the content has changed
     const newState = {
@@ -273,6 +281,9 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   command.addEventListener("keydown", async (event) => {
+    // Changing result via command bar should reset scroll position
+    restoreScroll = false;
+
     if (
       event.key === "Enter" &&
       !(event.shiftKey || event.ctrlKey || event.altKey)
