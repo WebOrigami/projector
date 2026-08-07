@@ -189,42 +189,27 @@ export default function FileFeatures(Base) {
       this.setState({ recentFiles });
     }
 
-    // Save and tell renderer to reload result pane
-    async refresh() {
-      if (!this.filePath) {
-        // Refresh disabled until file has been saved
-        return;
-      }
-
-      // Clear any pending save timeout since we're saving now
-      if (this._saveTimeout) {
-        clearTimeout(this._saveTimeout);
-        this._saveTimeout = null;
-      }
-
-      // Save file
-      if (this.dirty) {
-        const saved = await this.save();
-        if (!saved) {
-          return;
-        }
-      }
-    }
-
     restartSaveTimeout() {
       if (this._saveTimeout) {
         clearTimeout(this._saveTimeout);
         this._saveTimeout = null;
       }
       this._saveTimeout = setTimeout(async () => {
-        await this.refresh();
+        await this.save();
       }, REFRESH_DELAY_MS);
     }
 
-    // Write text to file
+    // If the file has text, has been saved before (has a path) and is dirty,
+    // save it now. Return true if the file was saved.
     async save() {
-      if (this.state.text === null) {
-        return false; // nothing to save
+      if (this.state.text === null || !this.filePath || !this.dirty) {
+        return false;
+      }
+
+      // Clear any pending save timeout
+      if (this._saveTimeout) {
+        clearTimeout(this._saveTimeout);
+        this._saveTimeout = null;
       }
 
       try {
@@ -278,10 +263,8 @@ export default function FileFeatures(Base) {
     async setState(changes) {
       const { newState, changed } = await super.setState(changes);
 
-      if (changed.dirty) {
-        if (newState.dirty) {
-          this.restartSaveTimeout();
-        }
+      if (changed.dirty && newState.dirty) {
+        this.restartSaveTimeout();
       }
 
       return { newState, changed };
