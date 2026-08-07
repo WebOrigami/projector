@@ -120,7 +120,7 @@ function render(state, changed) {
 
   if (changed.error) {
     command.classList.toggle("error", state.error !== null);
-    error.textContent = state.error || "";
+    error.innerHTML = state.error || "";
     error.style.display = state.error ? "block" : "none";
   }
 
@@ -133,11 +133,7 @@ function render(state, changed) {
     updateRecentBar(state);
   }
 
-  if (
-    changed.resultVersion &&
-    state.resultVersion > 0 &&
-    state.error === null
-  ) {
+  if (changed.resultVersion && state.resultVersion > 0) {
     reloadResult();
   }
 
@@ -156,6 +152,18 @@ function render(state, changed) {
 // Called when the result iframe has finished loading
 function resultLoaded(event) {
   const result = event.target;
+
+  // See if the result contains an error message
+  const errorElement = result.contentDocument.querySelector(
+    ".origami-server-error",
+  );
+  if (errorElement) {
+    window.api.invokeProjectMethod("setState", {
+      error: errorElement.innerHTML,
+    });
+    return;
+  }
+
   const frameId = result.id;
   resultPane.setAttribute("data-active-frame", frameId);
 
@@ -204,13 +212,10 @@ function resultLoaded(event) {
 
   // Notify main process that the result has loaded, also pass page title
   const newState = {
+    error: null,
     lastRunCrashed: false, // Clear crash state on successful load
     pageTitle: result.contentDocument.title,
   };
-  if (!state.error) {
-    // Clear lastScroll only if there was no error loading the result
-    newState.lastScroll = null;
-  }
   window.api.invokeProjectMethod("setState", newState);
 }
 

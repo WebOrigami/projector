@@ -176,14 +176,17 @@ monaco-editor {
     background: pink;
     color: black;
     display: none;
-    font-family: var(--code-font-family);
-    font-size: var(--code-font-size);
+    font-size: initial;
     left: 0;
-    margin: 0;
-    padding: 0.5rem;
+    margin: 1rem;
+    padding: 1rem;
     position: absolute;
+    overflow: auto;
     right: 0;
     top: 0;
-    white-space: pre-wrap;
+
+    & > :first-child {
+      margin-top: 0;
+    }
   }
 }

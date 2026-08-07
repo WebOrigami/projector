@@ -21,7 +21,6 @@ export default function PageCommunication(Base) {
       Object.assign(this.state, {
         backEnabled: false,
         forwardEnabled: false,
-        lastScroll: null,
         pageTitle: "",
       });
     }

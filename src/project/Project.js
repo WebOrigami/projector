@@ -170,14 +170,6 @@ export default class Project extends DebugFeatures(
     });
   }
 
-  // Used by protocol to signal error to renderer
-  async setError(error) {
-    // Don't overwrite an error already present in state
-    if (!this.state.error) {
-      await this.setState({ error });
-    }
-  }
-
   async setState(changes) {
     const { newState, changed } = await super.setState(changes);
 
