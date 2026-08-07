@@ -90,16 +90,25 @@ function reloadResult() {
 
   const frame = getNextResultFrame();
   let unencoded = command.value;
+
   const trailingSlash = unencoded.endsWith("/");
   if (trailingSlash) {
     // We'll shift the trailing slash to the URL
     unencoded = unencoded.slice(0, -1);
   }
+
+  // The browser will normalize away the path `.`, so we rewrite that as `(.)`
+  // so that it is preserved in the URL. The result will be the same.
+  if (unencoded === ".") {
+    unencoded = "(.)";
+  }
+
   const encoded = encodeURIComponent(unencoded);
   let src = `/!eval/${encoded}`;
   if (trailingSlash) {
     src += "/";
   }
+
   frame.src = src;
 }
 
