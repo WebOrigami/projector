@@ -1,4 +1,4 @@
-import { debugParent } from "@weborigami/origami";
+import { DebugParent } from "@weborigami/origami";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -40,10 +40,11 @@ export default function DebugFeatures(Base) {
         ${siteTerm}_debugger: <${srcPath}/renderer>
       }`;
 
-      this._debugger = await debugParent({
+      this._debugger = new DebugParent({
         expression,
         parentPath: this._root.path,
       });
+      await this._debugger.start();
 
       this._debugger.on("change", async (event) => {
         const { filePath } = event;
