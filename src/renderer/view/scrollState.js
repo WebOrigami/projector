@@ -1,9 +1,3 @@
-export const defaultState = {
-  x: 0,
-  y: 0,
-  elements: [],
-};
-
 /**
  * Check if an element is scrollable
  */
@@ -100,8 +94,12 @@ export function getState(window) {
       }
     }
   } catch (e) {
-    // Ignore errors (e.g., if iframe is cross-origin)
-    scrollState = defaultState;
+    // Ignore errors (e.g., if iframe is cross-origin) and return default state
+    scrollState = {
+      x: 0,
+      y: 0,
+      elements: [],
+    };
   }
 
   return scrollState;

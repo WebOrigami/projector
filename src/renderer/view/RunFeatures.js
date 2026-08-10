@@ -15,10 +15,6 @@ const imageExtensions = [
   ".webp",
 ];
 
-// Page-only state
-window.previousScrollState = null;
-window.restoreScroll = false;
-
 // Performance timings: editor input -> iframe load
 // let timings = [];
 // let timeStart = null; // current run start time
@@ -26,12 +22,20 @@ window.restoreScroll = false;
 // Mixin to handle features related to running a command
 export default function RunFeatures(Base) {
   return class extends Base {
+    constructor() {
+      console.log("RunFeatures");
+      super();
+
+      this.previousScrollState = null;
+      this.restoreScroll = false;
+    }
+
     loaded() {
       super.loaded?.();
 
-      command.addEventListener("keydown", async (event) => {
+      window.command.addEventListener("keydown", async (event) => {
         // Changing result via command bar should reset scroll position
-        window.restoreScroll = false;
+        this.restoreScroll = false;
 
         if (
           event.key === "Enter" &&
@@ -39,7 +43,10 @@ export default function RunFeatures(Base) {
         ) {
           // Navigate forward to result of command
           event.preventDefault();
-          await window.api.invokeProjectMethod("navigateAndRun", command.value);
+          await window.api.invokeProjectMethod(
+            "navigateAndRun",
+            window.command.value,
+          );
         } else if (event.key === "ArrowDown") {
           event.preventDefault();
           await window.api.invokeProjectMethod("nextCommand");
@@ -49,17 +56,58 @@ export default function RunFeatures(Base) {
         }
       });
 
-      backButton.addEventListener("click", async () => {
+      window.backButton.addEventListener("click", async () => {
         await window.api.invokeProjectMethod("goBack");
       });
 
-      forwardButton.addEventListener("click", async () => {
+      window.forwardButton.addEventListener("click", async () => {
         await window.api.invokeProjectMethod("goForward");
       });
 
       [window.frame0, window.frame1].forEach((frame) => {
-        frame.addEventListener("load", (event) => resultLoaded(event.target));
+        frame.addEventListener("load", (event) =>
+          this.resultLoaded(event.target),
+        );
       });
+    }
+
+    // Pick an iframe to the load the next result into and trigger the load
+    reloadResult() {
+      const activeFrameId = window.resultPane.getAttribute("data-active-frame");
+
+      if (this.restoreScroll && this.previousScrollState === null) {
+        // No reload in progress, save scroll state of active frame
+        const frame = document.getElementById(activeFrameId);
+        this.previousScrollState = scrollState.getState(frame.contentWindow);
+      }
+
+      // Pick the next iframe
+      const nextFrameId = activeFrameId === "frame0" ? "frame1" : "frame0";
+      const frame = document.getElementById(nextFrameId);
+
+      // Construct a URL for the iframe src based on the command
+      let unencoded = window.state.command;
+
+      const trailingSlash = unencoded.endsWith("/");
+      if (trailingSlash) {
+        // We'll shift the trailing slash to the URL
+        unencoded = unencoded.slice(0, -1);
+      }
+
+      // The browser will normalize away the path `.`, so we rewrite that as `(.)`
+      // so that it is preserved in the URL. The result will be the same.
+      if (unencoded === ".") {
+        unencoded = "(.)";
+      }
+
+      const encoded = encodeURIComponent(unencoded);
+      let src = `/!eval/${encoded}`;
+      if (trailingSlash) {
+        src += "/";
+      }
+
+      // Setting the iframe src triggers the load
+      frame.src = src;
     }
 
     render(state, changed) {
@@ -82,12 +130,80 @@ export default function RunFeatures(Base) {
       }
 
       if (changed.forwardEnabled) {
-        forwardButton.disabled = !state.forwardEnabled;
+        window.forwardButton.disabled = !state.forwardEnabled;
       }
 
       if (changed.resultVersion && state.resultVersion > 0) {
-        reloadResult();
+        this.reloadResult();
       }
+    }
+
+    // Called when a result iframe has finished loading
+    resultLoaded(frame) {
+      // See if the result contains an error message
+      const errorElement = frame.contentDocument.querySelector(
+        ".origami-server-error",
+      );
+      if (errorElement) {
+        window.api.invokeProjectMethod("setState", {
+          error: errorElement.innerHTML,
+        });
+        return;
+      }
+
+      const frameId = frame.id;
+      window.resultPane.setAttribute("data-active-frame", frameId);
+
+      // If the command ends with image extension, limit the width of the image to
+      // fit within the iframe
+      const command = window.state.command || "";
+      if (imageExtensions.some((ext) => command.endsWith(ext))) {
+        const img = frame.contentDocument.querySelector("img");
+        if (img) {
+          Object.assign(frame.contentDocument.body.style, {
+            backgroundColor: "black",
+            display: "grid",
+            height: "100%",
+          });
+          Object.assign(img.style, {
+            margin: "auto",
+            maxWidth: "100%",
+          });
+        }
+      }
+
+      if (this.previousScrollState) {
+        // Restore scroll position
+        scrollState.restoreState(frame.contentWindow, this.previousScrollState);
+        this.previousScrollState = null;
+      }
+
+      // Intercept external link clicks to open in default browser
+      frame.contentDocument.addEventListener("click", async (event) => {
+        const link = event.target.closest("a");
+        if (link) {
+          const href = link.getAttribute("href");
+          const isValidUrl = URL.canParse(href, window.location.origin);
+          if (!isValidUrl) {
+            // Ignore invalid URLs
+            return;
+          }
+          event.preventDefault();
+
+          await window.api.invokeProjectMethod("navigateToHref", href);
+        }
+      });
+
+      // Log performance
+      // logPerformance();
+
+      // Notify main process that the result has loaded, also pass page title
+      const newState = {
+        error: null,
+        lastRunCrashed: false, // Clear crash state on successful load
+        pageTitle: frame.contentDocument.title,
+      };
+      window.api.invokeProjectMethod("setState", newState);
     }
   };
 }
@@ -117,108 +233,3 @@ export default function RunFeatures(Base) {
 //     `Refresh rate: ${timings.map((t) => t.toFixed(0)).join(" ")} → ${average.toFixed(0)}`,
 //   );
 // }
-
-// Pick an iframe to the load the next result into and trigger the load
-function reloadResult() {
-  const activeFrameId = resultPane.getAttribute("data-active-frame");
-
-  if (window.restoreScroll && window.previousScrollState === null) {
-    // No reload in progress, save scroll state of active frame
-    const frame = document.getElementById(activeFrameId);
-    window.previousScrollState = scrollState.getState(frame.contentWindow);
-  }
-
-  // Pick the next iframe
-  const nextFrameId = activeFrameId === "frame0" ? "frame1" : "frame0";
-  const frame = document.getElementById(nextFrameId);
-
-  let unencoded = window.state.command;
-
-  const trailingSlash = unencoded.endsWith("/");
-  if (trailingSlash) {
-    // We'll shift the trailing slash to the URL
-    unencoded = unencoded.slice(0, -1);
-  }
-
-  // The browser will normalize away the path `.`, so we rewrite that as `(.)`
-  // so that it is preserved in the URL. The result will be the same.
-  if (unencoded === ".") {
-    unencoded = "(.)";
-  }
-
-  const encoded = encodeURIComponent(unencoded);
-  let src = `/!eval/${encoded}`;
-  if (trailingSlash) {
-    src += "/";
-  }
-
-  frame.src = src;
-}
-
-// Called when a result iframe has finished loading
-function resultLoaded(frame) {
-  // See if the result contains an error message
-  const errorElement = frame.contentDocument.querySelector(
-    ".origami-server-error",
-  );
-  if (errorElement) {
-    window.api.invokeProjectMethod("setState", {
-      error: errorElement.innerHTML,
-    });
-    return;
-  }
-
-  const frameId = frame.id;
-  window.resultPane.setAttribute("data-active-frame", frameId);
-
-  // If the command ends with image extension, limit the width of the image to
-  // fit within the iframe
-  const command = window.state.command || "";
-  if (imageExtensions.some((ext) => command.endsWith(ext))) {
-    const img = frame.contentDocument.querySelector("img");
-    if (img) {
-      Object.assign(frame.contentDocument.body.style, {
-        backgroundColor: "black",
-        display: "grid",
-        height: "100%",
-      });
-      Object.assign(img.style, {
-        margin: "auto",
-        maxWidth: "100%",
-      });
-    }
-  }
-
-  if (window.previousScrollState) {
-    // Restore scroll position
-    scrollState.restoreState(frame.contentWindow, window.previousScrollState);
-    window.previousScrollState = null;
-  }
-
-  // Intercept external link clicks to open in default browser
-  frame.contentDocument.addEventListener("click", async (event) => {
-    const link = event.target.closest("a");
-    if (link) {
-      const href = link.getAttribute("href");
-      const isValidUrl = URL.canParse(href, window.location.origin);
-      if (!isValidUrl) {
-        // Ignore invalid URLs
-        return;
-      }
-      event.preventDefault();
-
-      await window.api.invokeProjectMethod("navigateToHref", href);
-    }
-  });
-
-  // Log performance
-  // logPerformance();
-
-  // Notify main process that the result has loaded, also pass page title
-  const newState = {
-    error: null,
-    lastRunCrashed: false, // Clear crash state on successful load
-    pageTitle: frame.contentDocument.title,
-  };
-  window.api.invokeProjectMethod("setState", newState);
-}

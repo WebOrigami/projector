@@ -1,14 +1,8 @@
 import updateState from "./updateState.js";
 import View from "./view/View.js";
 
-// Create the view singleton
-window.view = new View();
-
-// Page state shared with main process
-window.state = {};
-
 /**
- * Add methods to window so main process can call them
+ * Define globals and add methods to window so main process can call them
  */
 Object.assign(window, {
   focusCommand() {
@@ -21,17 +15,24 @@ Object.assign(window, {
   },
 
   setState(changes) {
-    const { newState, changed } = updateState(state, changes);
-    state = newState;
-    window.view.render(state, changed);
+    const { newState, changed } = updateState(window.state, changes);
+    window.state = newState;
+    window.view.render(window.state, changed);
   },
+
+  // Page state shared with the Project object in the main process
+  state: {},
+
+  // Create the view singleton
+  view: new View(),
 });
 
+// Tell the view when the DOM is ready
 window.addEventListener("DOMContentLoaded", () => {
   window.view.loaded();
 });
 
-// Subscribe to state changes from main process
+// Subscribe to state changes from main process and save the unsubscribe function
 const invokePageMethodUnsubscribe = window.api.onInvokePageMethod(
   async (...args) => {
     const fnName = args.shift();

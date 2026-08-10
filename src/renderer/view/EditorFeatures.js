@@ -1,12 +1,16 @@
 import { getLanguageFromPath } from "./languageMap.js";
 
-// Flag to work around Monaco editor raising input events when setting the value
-// programmatically
-window.ignoreEditorInput = false;
-
 // Mixin to handle editor-related features in the project window
 export default function EditorFeatures(Base) {
   return class extends Base {
+    constructor() {
+      super();
+
+      // Flag to work around Monaco editor raising input events when setting the
+      // value programmatically
+      this.ignoreEditorInput = false;
+    }
+
     loaded() {
       super.loaded?.();
 
@@ -14,26 +18,24 @@ export default function EditorFeatures(Base) {
         // Unlike a standard <input>, the Monaco editor raises input events event
         // when setting the value programmatically, so we need to use a flag to
         // ignore those.
-        if (window.ignoreEditorInput) {
+        if (this.ignoreEditorInput) {
           return;
         }
 
         // Changing result via editor input should preserve scroll position
-        window.restoreScroll = true;
-
-        // Notify main process that the content has changed
-        const newState = {
-          dirty: true,
-          text: window.editor.value,
-          textSource: "editor",
-        };
+        this.restoreScroll = true;
 
         // if (timeStart === null) {
         //   // User started typing; start perf timer
         //   timeStart = performance.now();
         // }
 
-        await window.api.invokeProjectMethod("setState", newState);
+        // Notify main process that the content has changed
+        await window.api.invokeProjectMethod("setState", {
+          dirty: true,
+          text: window.editor.value,
+          textSource: "editor",
+        });
       });
 
       // Editor gets initial focus
@@ -52,10 +54,10 @@ export default function EditorFeatures(Base) {
       }
 
       if (changed.text && state.textSource === "file") {
-        window.ignoreEditorInput = true;
+        this.ignoreEditorInput = true;
         window.editor.value = state.text ?? "";
         window.editor.disabled = state.text === null;
-        window.ignoreEditorInput = false;
+        this.ignoreEditorInput = false;
       }
     }
   };
