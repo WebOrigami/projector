@@ -39,7 +39,13 @@ export default function EditorFeatures(Base) {
       });
 
       // Editor gets initial focus
-      window.editor.focus();
+      if (window.editor.getMonacoInstance()) {
+        window.focusEditor();
+      } else {
+        window.editor.addEventListener("ready", window.focusEditor, {
+          once: true,
+        });
+      }
     }
 
     render(state, changed) {

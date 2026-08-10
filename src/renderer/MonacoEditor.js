@@ -12,6 +12,7 @@ class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
     super();
 
     this._editor = null;
+    this._ready = false;
 
     // Cache all options (both before and after editor is ready)
     this._options = {
@@ -114,6 +115,9 @@ class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
       },
     });
     monaco.editor.setTheme("projector-dark");
+
+    this._ready = true;
+    this.dispatchEvent(new Event("ready", { bubbles: true, composed: true }));
   }
 
   get autoClosingBrackets() {

@@ -23,7 +23,6 @@ const imageExtensions = [
 export default function RunFeatures(Base) {
   return class extends Base {
     constructor() {
-      console.log("RunFeatures");
       super();
 
       this.previousScrollState = null;
