@@ -173,7 +173,8 @@ monaco-editor {
   }
 
   #error {
-    background: pink;
+    background: #ffc;
+    box-shadow: 3px 3px 10px 0px #0000004a;
     color: black;
     display: none;
     font-size: initial;
