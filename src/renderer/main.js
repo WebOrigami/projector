@@ -2,8 +2,17 @@ import updateState from "./updateState.js";
 import View from "./view/View.js";
 
 /**
- * Define globals and add methods to window so main process can call them
+ * Main entry point for the renderer process
  */
+
+// Create the page state shared with the Project object in the main process
+const state = {};
+
+// Create the view singleton
+const view = new View();
+
+// Define globals and add methods to window so main process can call them and so
+// we can easily inspect them in the console
 Object.assign(window, {
   focusCommand() {
     window.command.focus();
@@ -20,11 +29,9 @@ Object.assign(window, {
     window.view.render(window.state, changed);
   },
 
-  // Page state shared with the Project object in the main process
-  state: {},
+  state,
 
-  // Create the view singleton
-  view: new View(),
+  view,
 });
 
 // Tell the view when the DOM is ready
