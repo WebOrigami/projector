@@ -8,6 +8,7 @@ html {
 
 body {
   --background-color: oklch(10% 0 0);
+  --background-color-error: #ffc;
   --code-font-family: Consolas, Monaco, monospace;
   --code-font-size: 13px;
   --text-color: oklch(98% 0 0);
@@ -127,7 +128,7 @@ input, textarea {
       background: var(--input-background);
     
       &.error {
-        background: pink;
+        background: var(--background-color-error);
       }
     }
   }

@@ -104,9 +104,7 @@ export default class Project extends DebugFeatures(
       await this.loadFile(absolutePath);
     }
 
-    if (this.isDebuggerRunning()) {
-      await this.restartDebugger();
-    } else {
+    if (!this.isDebuggerRunning()) {
       await this.startDebugger();
     }
 
@@ -136,21 +134,22 @@ export default class Project extends DebugFeatures(
       return;
     }
 
-    if (filePath !== this._filePath) {
-      // Editing some file that's not the active file
-      if (relativePath === "package.json" || relativePath === "config.ori") {
-        // Need to reload project: project name, site, and config/globals may
-        // have changed.
-        console.log("Project changed, reloading project...");
-        await this.loadProject();
-        await windowManager.addToRecentProjects(this); // in case name changed
-        return;
+    if (relativePath === "package.json") {
+      // Reload project: name or site may have changed
+      console.log("Project changed, reloading...");
+      await this.loadProject();
+      await windowManager.addToRecentProjects(this); // in case name changed
+      return;
+    }
+
+    if (filePath === this._filePath) {
+      // Active file changed
+      if (this.state.dirty) {
+        // User has edited the current file; ignore external changes
+      } else if (this.loadFileText(filePath) !== this.state.text) {
+        // File changed externally; force reload through our normal path
+        await this.loadMostRecentFile();
       }
-    } else if (this.state.dirty) {
-      // If user has edited the current file, ignore external changes
-    } else if (this.loadFileText(filePath) !== this.state.text) {
-      // File changed externally; force reload through our normal path
-      await this.loadMostRecentFile();
     }
 
     // Run immediately
@@ -224,7 +223,20 @@ function getProjectName(root, packageData) {
 
 async function getPackageData(root) {
   const packageJson = await root?.get("package.json");
-  return packageJson?.unpack();
+
+  // If we call unpack(), the file data will be cached. We work around that by
+  // doing the parsing ourselves.
+  let data;
+  if (packageJson) {
+    const text = new TextDecoder("utf-8").decode(packageJson);
+    try {
+      data = JSON.parse(text);
+    } catch (error) {
+      console.warn(`Parsing error reading ${root.path}/package.json`);
+    }
+  }
+
+  return data;
 }
 
 async function loadSite(root, sitePath) {
