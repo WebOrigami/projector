@@ -145,8 +145,16 @@ export function resolveHref(href, command, sitePath) {
   }
 
   if (!isTraversal) {
-    // Wrap in parentheses and append the path
-    return `(${trimmed})/${href}`;
+    if (trimmed.endsWith("/")) {
+      // Append the path to the command
+      return `${trimmed}${href}`;
+    } else {
+      // Wrap in parentheses and append the path
+      return `(${trimmed})/${href}`;
+    }
+  } else if (trimmed.endsWith(">")) {
+    // Extending an angle bracket path
+    return `${trimmed}/${href}`;
   }
 
   // Extend the path using URL rules
