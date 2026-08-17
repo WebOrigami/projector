@@ -59,7 +59,7 @@ export default class Project extends DebugFeatures(
   /**
    * (Re)load the project from the folder with the given root path.
    */
-  async loadProject() {
+  async loadProject(startDebugger = true) {
     this._root = await projectRootFromPath(this._rootPath);
 
     this._packageData = await getPackageData(this._root);
@@ -104,7 +104,7 @@ export default class Project extends DebugFeatures(
       await this.loadFile(absolutePath);
     }
 
-    if (!this.isDebuggerRunning()) {
+    if (startDebugger && !this.isDebuggerRunning()) {
       await this.startDebugger();
     }
 

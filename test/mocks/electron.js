@@ -41,6 +41,8 @@ export class BrowserWindow {
     return [];
   }
 
+  loadURL() {}
+
   setDocumentEdited() {}
 
   setTitle() {}
