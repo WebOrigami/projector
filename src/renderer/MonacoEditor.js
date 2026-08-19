@@ -132,6 +132,20 @@ class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
   connectedCallback() {
     this.style.display = "block";
     this.style.overflow = "hidden";
+
+    if (!this._keyboardHandler) {
+      this._keyboardHandler = (event) => {
+        if (!this.handleKeyboardEvent(event)) {
+          event.stopImmediatePropagation();
+        }
+      };
+      this.addEventListener("keydown", this._keyboardHandler);
+    }
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener("keydown", this._keyboardHandler);
+    this._keyboardHandler = null;
   }
 
   get disabled() {
@@ -242,6 +256,32 @@ class MonacoEditor extends AttributeMarshallingMixin(HTMLElement) {
   setModelOptions(options) {
     Object.assign(this._options, options);
     this.model?.updateOptions(options);
+  }
+
+  // Suppress handling of keyboard shortcuts that the app wants to handle.
+  handleKeyboardEvent(event) {
+    const cmdOrCtrl = event.metaKey || event.ctrlKey;
+    if (!cmdOrCtrl) {
+      return true;
+    }
+
+    const key = event.key.toLowerCase();
+
+    // Match your menu accelerators from app/menu.js
+    if (!event.shiftKey && !event.altKey && key === "l") {
+      return false; // CmdOrCtrl+L (Focus Command)
+    }
+    if (!event.shiftKey && !event.altKey && key === "[") {
+      return false; // Back
+    }
+    if (!event.shiftKey && !event.altKey && key === "]") {
+      return false; // Forward
+    }
+    if (event.shiftKey && !event.altKey && key === "h") {
+      return false; // Home
+    }
+
+    return true;
   }
 
   /**

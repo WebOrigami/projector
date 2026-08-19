@@ -5,6 +5,10 @@ import * as windowManager from "./windowManager.js";
 
 /**
  * Return a template for the application menu
+ *
+ * Note: Keyboard shortcuts can be swallowed by the Monaco editor. Those
+ * shortcuts need to be flagged in MonacoEditor.js handleKeyboardEvent() to
+ * allow the app to handle them.
  */
 export function createMenuTemplate(state, isFileOpen) {
   // Build Open Recent submenu
