@@ -84,26 +84,7 @@ export default function RunFeatures(Base) {
       const nextFrameId = activeFrameId === "frame0" ? "frame1" : "frame0";
       const frame = document.getElementById(nextFrameId);
 
-      // Construct a URL for the iframe src based on the command
-      let unencoded = window.state.command;
-
-      const trailingSlash = unencoded.endsWith("/");
-      if (trailingSlash) {
-        // We'll shift the trailing slash to the URL
-        unencoded = unencoded.slice(0, -1);
-      }
-
-      // The browser will normalize away the path `.`, so we rewrite that as `(.)`
-      // so that it is preserved in the URL. The result will be the same.
-      if (unencoded === ".") {
-        unencoded = "(.)";
-      }
-
-      const encoded = encodeURIComponent(unencoded);
-      let src = `/!eval/${encoded}`;
-      if (trailingSlash) {
-        src += "/";
-      }
+      const src = encodeCommand(window.state.command);
 
       // Setting the iframe src triggers the load
       frame.src = src;
@@ -153,10 +134,11 @@ export default function RunFeatures(Base) {
       const frameId = frame.id;
       window.resultPane.setAttribute("data-active-frame", frameId);
 
+      const command = window.state.command;
+
       // If the command ends with image extension, limit the width of the image to
       // fit within the iframe
-      const command = window.state.command || "";
-      if (imageExtensions.some((ext) => command.endsWith(ext))) {
+      if (imageExtensions.some((ext) => command?.endsWith(ext))) {
         const img = frame.contentDocument.querySelector("img");
         if (img) {
           Object.assign(frame.contentDocument.body.style, {
@@ -202,6 +184,15 @@ export default function RunFeatures(Base) {
         lastRunCrashed: false, // Clear crash state on successful load
         pageTitle: frame.contentDocument.title,
       };
+
+      // If the frame was redirected to the URL that's the command with an added
+      // trailing slash, then update the command.
+      const pathname = frame.contentWindow.location.pathname;
+      const encoded = encodeCommand(command);
+      if (pathname === `${encoded}/`) {
+        newState.command = `${window.state.command}/`;
+      }
+
       window.api.invokeProjectMethod("setState", newState);
     }
   };
@@ -232,3 +223,27 @@ export default function RunFeatures(Base) {
 //     `Refresh rate: ${timings.map((t) => t.toFixed(0)).join(" ")} → ${average.toFixed(0)}`,
 //   );
 // }
+
+// Construct a URL for the iframe src based on the command
+function encodeCommand(command) {
+  let unencoded = command;
+
+  const trailingSlash = unencoded.endsWith("/");
+  if (trailingSlash) {
+    // We'll shift the trailing slash to the URL
+    unencoded = unencoded.slice(0, -1);
+  }
+
+  // The browser will normalize away the path `.`, so we rewrite that as `(.)`
+  // so that it is preserved in the URL. The result will be the same.
+  if (unencoded === ".") {
+    unencoded = "(.)";
+  }
+
+  const encoded = encodeURIComponent(unencoded);
+  let src = `/!eval/${encoded}`;
+  if (trailingSlash) {
+    src += "/";
+  }
+  return src;
+}
