@@ -132,7 +132,7 @@ export default function RunFeatures(Base) {
         window.forwardButton.disabled = !state.forwardEnabled;
       }
 
-      if (changed.resultVersion && state.resultVersion > 0) {
+      if (changed.runVersion && state.runVersion > 0) {
         this.reloadResult();
       }
     }

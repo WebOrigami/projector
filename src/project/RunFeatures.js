@@ -15,7 +15,9 @@ export default function RunFeatures(Base) {
         command: "",
         error: null,
         lastRunCrashed: false,
-        resultVersion: 0,
+        // The runVersion is incremented each time a run is started. The
+        // renderer uses this to know when to reload the result iframe.
+        runVersion: 0,
         recentCommands: [],
       });
     }
@@ -70,12 +72,12 @@ export default function RunFeatures(Base) {
         command,
       );
 
-      // Signal editor to load a new result. We consider the run to have crashed
-      // until it completes successfully.
+      // Signal editor to reload. We consider the run to have crashed until it
+      // completes successfully.
       await this.setState({
         lastRunCrashed: true,
         recentCommands: commands,
-        resultVersion: this.state.resultVersion + 1,
+        runVersion: this.state.runVersion + 1,
       });
     }
 

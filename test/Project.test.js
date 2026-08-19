@@ -43,7 +43,7 @@ describe("Project", () => {
         error: null,
         lastRunCrashed: true, // because test won't actually run command
         recentCommands: ["./", "add.ori(1, 2)"],
-        resultVersion: 2,
+        runVersion: 2,
       },
       project.state,
     );
