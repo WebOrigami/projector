@@ -33,6 +33,7 @@ export default class Project extends DebugFeatures(
     this._projector = projector;
 
     // Internal state
+    this._config = null;
     this._packageData = null;
     this._root = null;
     this._site = null;
@@ -56,6 +57,10 @@ export default class Project extends DebugFeatures(
     /** @type {any} */ (this._window) = null;
   }
 
+  get config() {
+    return this._config;
+  }
+
   /**
    * (Re)load the project from the folder with the given root path.
    */
@@ -64,6 +69,9 @@ export default class Project extends DebugFeatures(
 
     this._packageData = await getPackageData(this._root);
     const projectName = getProjectName(this._root, this._packageData);
+
+    const configFile = await this._root.get("config.ori");
+    this._config = isUnpackable(configFile) ? await configFile.unpack() : null;
 
     const sitePath = getSitePath(this._packageData);
     this._site = null;

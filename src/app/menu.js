@@ -44,6 +44,15 @@ export function createMenuTemplate(state, isFileOpen) {
   // Do we have an open project?
   const isProjectOpen = state.openProjects.length > 0;
 
+  let toolsMenu;
+  if (isProjectOpen) {
+    const activeProjectPath = state.openProjects.at(-1);
+    const activeProject = windowManager.getProject(activeProjectPath);
+    if (activeProject) {
+      toolsMenu = activeProject.config?.projectorTools;
+    }
+  }
+
   return [
     {
       label: app.name,
@@ -182,17 +191,18 @@ export function createMenuTemplate(state, isFileOpen) {
         },
       ],
     },
-    // {
-    //   label: "Tools",
-    //   visible: false,
-    //   submenu: [
-    //     {
-    //       label: "Audit",
-    //       enabled: isProjectOpen,
-    //       click: (_, window) => toolRun("audit", window),
-    //     },
-    //   ],
-    // },
+    {
+      label: "Tools",
+      visible: toolsMenu?.length > 0,
+      submenu: toolsMenu,
+      // submenu: [
+      //   {
+      //     label: "Audit",
+      //     enabled: isProjectOpen,
+      //     click: (_, window) => toolRun("audit", window),
+      //   },
+      // ],
+    },
     {
       label: "Options",
       submenu: [
