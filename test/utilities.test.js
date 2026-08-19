@@ -52,22 +52,4 @@ describe("utilities", () => {
       "(fn.js data)/key",
     );
   });
-
-  describe("preprocessResource", () => {
-    test("returns map index.html if it exists", async () => {
-      const fixture = new Map([["index.html", "<h1>Hello World</h1>"]]);
-      const result = await utilities.preprocessResource(fixture);
-      assert.strictEqual(String(result), "<h1>Hello World</h1>");
-    });
-
-    test("generates default index page is map isn't simple", async () => {
-      const fixture = {
-        a: {
-          b: Uint8Array.from("data"),
-        },
-      };
-      const result = await utilities.preprocessResource(fixture);
-      assert.match(String(result), /<h1>Index<\/h1>/);
-    });
-  });
 });

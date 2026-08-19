@@ -1,10 +1,9 @@
-import { box, isPlainObject, isPrimitive, Tree } from "@weborigami/async-tree";
+import { isPlainObject, isPrimitive } from "@weborigami/async-tree";
 import {
   formatError as cliFormatError,
   markers,
   parse,
 } from "@weborigami/language";
-import { Origami } from "@weborigami/origami";
 import * as path from "node:path";
 
 export async function formatError(error) {
@@ -162,40 +161,4 @@ export function resolveHref(href, command, sitePath) {
   const resolved = new URL(href, base);
   const pathname = resolved.pathname;
   return pathname.startsWith("/") ? pathname.slice(1) : pathname;
-}
-
-/**
- * Apply preprocessing to the resource before constructing a response.
- */
-export async function preprocessResource(resource) {
-  if (resource instanceof Function) {
-    // Invoke the function to get the final desired result
-    resource = await resource();
-  }
-
-  if (Tree.isMaplike(resource)) {
-    // Note: the following operations can invoke project code, so may throw
-    let map = await Tree.from(resource);
-    let indexHtml = await map.get("index.html");
-    if (indexHtml instanceof Function) {
-      indexHtml = await indexHtml(); // Get the actual index page
-    }
-    if (indexHtml) {
-      // Return index.html page
-      resource = indexHtml;
-      // Like Origami.indexPage() does, we attach an unpack() method to get the
-      // underlying map. If the index page loads relative resources, those will
-      // be loaded from the map.
-      resource = box(resource);
-      resource.unpack = () => map;
-    } else if (isSimpleObject(resource)) {
-      // Serialize to YAML
-      resource = await Origami.yaml(map);
-    } else {
-      // Return index page
-      resource = await Origami.indexPage(map);
-    }
-  }
-
-  return resource;
 }
