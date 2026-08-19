@@ -6,8 +6,6 @@ import * as menu from "../app/menu.js";
 import * as windowManager from "../app/windowManager.js";
 import recent from "../recent.js";
 
-const REFRESH_DELAY_MS = 0; //150;
-
 const recentFilesUpdater = recent(10);
 
 /**
@@ -189,27 +187,11 @@ export default function FileFeatures(Base) {
       this.setState({ recentFiles });
     }
 
-    restartSaveTimeout() {
-      if (this._saveTimeout) {
-        clearTimeout(this._saveTimeout);
-        this._saveTimeout = null;
-      }
-      this._saveTimeout = setTimeout(async () => {
-        await this.save();
-      }, REFRESH_DELAY_MS);
-    }
-
     // If the file has text, has been saved before (has a path) and is dirty,
     // save it now. Return true if the file was saved.
     async save() {
       if (this.state.text === null || !this.filePath || !this.dirty) {
         return false;
-      }
-
-      // Clear any pending save timeout
-      if (this._saveTimeout) {
-        clearTimeout(this._saveTimeout);
-        this._saveTimeout = null;
       }
 
       try {
@@ -264,7 +246,9 @@ export default function FileFeatures(Base) {
       const { newState, changed } = await super.setState(changes);
 
       if (changed.dirty && newState.dirty) {
-        this.restartSaveTimeout();
+        // Don't wait for save to complete; this will trigger its own setState
+        // call and it's simpler to let it run in the background.
+        this.save();
       }
 
       return { newState, changed };
