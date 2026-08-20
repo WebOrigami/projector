@@ -50,6 +50,10 @@ export default function EditorFeatures(Base) {
         });
       });
 
+      // Stop propagation of keyboard events that match any of the app's
+      // accelerators. Note: As of 2026-08-20, this does not seem to work for
+      // certain accelerators such as CmdOrCtrl+U. The event is stopped, but any
+      // command with that accelerator will not be triggered.
       window.editor.addEventListener("keydown", (event) => {
         if (isEventForAccelerator(event, this._accelerators)) {
           event.stopImmediatePropagation();
