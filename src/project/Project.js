@@ -10,6 +10,16 @@ import PageCommunication from "./PageCommunication.js";
 import ProjectState from "./ProjectState.js";
 import RunFeatures from "./RunFeatures.js";
 
+// These should match the accelerators in app/menu.js.
+const projectorAccelerators = [
+  "CmdOrCtrl+L",
+  "CmdOrCtrl+Left",
+  "CmdOrCtrl+Right",
+  "CmdOrCtrl+[",
+  "CmdOrCtrl+]",
+  "Shift+CmdOrCtrl+H",
+];
+
 /**
  * Project state
  */
@@ -43,6 +53,7 @@ export default class Project extends CommandFeatures(
 
     // State shared with the renderer
     Object.assign(this.state, {
+      accelerators: [],
       projectName: "New project",
       sitePath: null,
     });
@@ -76,6 +87,12 @@ export default class Project extends CommandFeatures(
     const configFile = await this._root.get("config.ori");
     this._config = isUnpackable(configFile) ? await configFile.unpack() : null;
 
+    const commands = this._config?.projectorCommands || [];
+    const projectAccelerators = commands
+      .filter((command) => command.accelerator)
+      .map((command) => command.accelerator);
+    const accelerators = [...projectorAccelerators, ...projectAccelerators];
+
     const sitePath = getSitePath(this._packageData);
     this._site = null;
 
@@ -99,6 +116,7 @@ export default class Project extends CommandFeatures(
     }
 
     await this.setState({
+      accelerators,
       command,
       lastRunCrashed,
       projectName,

@@ -128,15 +128,6 @@ async function createProjectWindow(rootPath) {
     }
   });
 
-  // Track when window becomes active
-  window.on("focus", async () => {
-    if (!loading) {
-      // Update open projects list to move this project to the front so that we
-      // can restore windows in the same order next time.
-      await addToOpenProjects(project);
-    }
-  });
-
   // Clean up after the window is closed
   window.on("closed", async () => {
     if (!quitting) {
@@ -149,6 +140,15 @@ async function createProjectWindow(rootPath) {
 
       // Break references to project so we fail faster if accessed
       /** @type {any} */ (window).project = null;
+    }
+  });
+
+  // Track when window becomes active
+  window.on("focus", async () => {
+    if (!loading) {
+      // Update open projects list to move this project to the front so that we
+      // can restore windows in the same order next time.
+      await addToOpenProjects(project);
     }
   });
 
