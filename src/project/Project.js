@@ -75,15 +75,7 @@ export default class Project extends CommandFeatures(
     return this._config;
   }
 
-  /**
-   * (Re)load the project from the folder with the given root path.
-   */
-  async loadProject(startDebugger = true) {
-    this._root = await projectRootFromPath(this._rootPath);
-
-    this._packageData = await getPackageData(this._root);
-    const projectName = getProjectName(this._root, this._packageData);
-
+  async loadConfig() {
     const configFile = await this._root.get("config.ori");
     this._config = isUnpackable(configFile) ? await configFile.unpack() : null;
 
@@ -93,8 +85,25 @@ export default class Project extends CommandFeatures(
       .map((command) => command.accelerator);
     const accelerators = [...projectorAccelerators, ...projectAccelerators];
 
+    await this.setState({ accelerators });
+  }
+
+  /**
+   * (Re)load the project from the folder with the given root path.
+   */
+  async loadProject(startDebugger = true) {
+    this._root = await projectRootFromPath(this._rootPath);
+
+    // Watch for changes
+    this._root.watch?.();
+
+    this._packageData = await getPackageData(this._root);
+    const projectName = getProjectName(this._root, this._packageData);
+
     const sitePath = getSitePath(this._packageData);
     this._site = null;
+
+    await this.loadConfig();
 
     const projectSettings = await this._projector.getProjectSettings(this);
     const lastRunCrashed = projectSettings.lastRunCrashed || false;
@@ -116,7 +125,6 @@ export default class Project extends CommandFeatures(
     }
 
     await this.setState({
-      accelerators,
       command,
       lastRunCrashed,
       projectName,
@@ -169,6 +177,11 @@ export default class Project extends CommandFeatures(
       await this.loadProject();
       await windowManager.addToRecentProjects(this); // in case name changed
       return;
+    } else if (relativePath === "config.ori") {
+      console.log("Project config changed, reloading...");
+      await this.loadConfig();
+      // HACK: Force menu update in case accelerators changed
+      this._projector.createMenu();
     }
 
     if (filePath === this._filePath) {
