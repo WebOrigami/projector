@@ -17,6 +17,7 @@
   "dependencies": {
     "@emnapi/runtime": "1.11.3",
     "@weborigami/origami": "0.7.0",
+    "@weborigami/netlify-deploy": "0.0.18",
     "monaco-editor": "0.56.0",
     "sharp": "0.35.3"
   },

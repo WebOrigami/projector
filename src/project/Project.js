@@ -3,6 +3,7 @@ import { projectRootFromPath } from "@weborigami/language";
 import * as path from "node:path";
 import * as windowManager from "../app/windowManager.js";
 import { getSitePath } from "../utilities.js";
+import CommandFeatures from "./CommandFeatures.js";
 import DebugFeatures from "./DebugFeatures.js";
 import FileFeatures from "./FileFeatures.js";
 import PageCommunication from "./PageCommunication.js";
@@ -12,8 +13,10 @@ import RunFeatures from "./RunFeatures.js";
 /**
  * Project state
  */
-export default class Project extends DebugFeatures(
-  RunFeatures(FileFeatures(PageCommunication(ProjectState(Object)))),
+export default class Project extends CommandFeatures(
+  DebugFeatures(
+    RunFeatures(FileFeatures(PageCommunication(ProjectState(Object)))),
+  ),
 ) {
   /**
    * Create a Project instance for the project root path, running in the given

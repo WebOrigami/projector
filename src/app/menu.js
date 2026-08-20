@@ -49,8 +49,10 @@ export function createMenuTemplate(state, isFileOpen) {
     const activeProjectPath = state.openProjects.at(-1);
     const activeProject = windowManager.getProject(activeProjectPath);
     if (activeProject) {
-      toolsMenu = activeProject.config?.projectorTools;
+      toolsMenu = createToolsMenu(activeProject);
     }
+  } else {
+    toolsMenu = null;
   }
 
   return [
@@ -250,6 +252,19 @@ export function createMenuTemplate(state, isFileOpen) {
   ];
 }
 
+// Convert the Electron-like menu declaration into a real Electron menu template.
+function createToolsMenu(project) {
+  const commands = project.config?.projectorCommands;
+  if (!Array.isArray(commands)) {
+    return null;
+  }
+  return commands.map((option, index) => ({
+    label: option.label,
+    accelerator: option.accelerator,
+    click: async () => await project.runCommand(index),
+  }));
+}
+
 async function fileNew(_menuItem, window) {
   // Have project load a new untitled file
   await window.project.newFile();
@@ -430,10 +445,6 @@ function toggleLineNumbers() {
     },
   });
 }
-
-// async function toolRun(toolName, window) {
-//   await window.project.runTool(toolName);
-// }
 
 async function viewGoBack(_menuItem, window) {
   await window.project.goBack();

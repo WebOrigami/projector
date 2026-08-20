@@ -80,16 +80,5 @@ export default function RunFeatures(Base) {
         runVersion: this.state.runVersion + 1,
       });
     }
-
-    // async runTool(toolName) {
-    //   const command = `${toolName} ${this.state.sitePath}`;
-    //   if (this.state.command === command) {
-    //     // Re-run current command
-    //     await this.run();
-    //   } else {
-    //     // Set and run new command
-    //     await this.navigateAndRun(command);
-    //   }
-    // }
   };
 }
