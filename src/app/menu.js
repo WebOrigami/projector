@@ -44,15 +44,15 @@ export function createMenuTemplate(state, isFileOpen) {
   // Do we have an open project?
   const isProjectOpen = state.openProjects.length > 0;
 
-  let toolsMenu;
+  let commandsMenu;
   if (isProjectOpen) {
     const activeProjectPath = state.openProjects.at(-1);
     const activeProject = windowManager.getProject(activeProjectPath);
     if (activeProject) {
-      toolsMenu = createToolsMenu(activeProject);
+      commandsMenu = createCommandsMenu(activeProject);
     }
   } else {
-    toolsMenu = null;
+    commandsMenu = null;
   }
 
   return [
@@ -194,16 +194,9 @@ export function createMenuTemplate(state, isFileOpen) {
       ],
     },
     {
-      label: "Tools",
-      visible: toolsMenu?.length > 0,
-      submenu: toolsMenu,
-      // submenu: [
-      //   {
-      //     label: "Audit",
-      //     enabled: isProjectOpen,
-      //     click: (_, window) => toolRun("audit", window),
-      //   },
-      // ],
+      label: "Commands",
+      visible: commandsMenu?.length > 0,
+      submenu: commandsMenu,
     },
     {
       label: "Options",
@@ -252,8 +245,10 @@ export function createMenuTemplate(state, isFileOpen) {
   ];
 }
 
-// Convert the Electron-like menu declaration into a real Electron menu template.
-function createToolsMenu(project) {
+// Convert the Electron-like menu declaration in Origami into a real Electron
+// menu template in which selecting the nth command will call
+// project.runCommand(n).
+function createCommandsMenu(project) {
   const commands = project.config?.projectorCommands;
   if (!Array.isArray(commands)) {
     return null;
