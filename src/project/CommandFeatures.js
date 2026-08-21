@@ -9,7 +9,21 @@ const oriPath = new URL(
 
 export default function CommandFeatures(Base) {
   return class extends Base {
+    constructor(...args) {
+      super(...args);
+
+      // State shared with the renderer
+      Object.assign(this.state, {
+        // True if a command is in progress
+        operationInProgress: false,
+      });
+    }
+
     async runCommand(index) {
+      await this.setState({
+        operationInProgress: true,
+      });
+
       const command = this.config?.projectorCommands?.[index];
       if (!command) {
         console.warn(`No command found at index ${index}`);
@@ -45,6 +59,10 @@ export default function CommandFeatures(Base) {
       });
 
       await promise;
+
+      await this.setState({
+        operationInProgress: false,
+      });
     }
   };
 }

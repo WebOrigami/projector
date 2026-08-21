@@ -57,7 +57,6 @@ export default function EditorFeatures(Base) {
       window.editor.addEventListener("keydown", (event) => {
         if (isEventForAccelerator(event, this._accelerators)) {
           event.stopImmediatePropagation();
-          console.log("stopped");
         }
       });
 
